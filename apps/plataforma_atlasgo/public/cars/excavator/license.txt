@@ -1,0 +1,11 @@
+Model Information:
+* title:	Excavator
+* source:	https://sketchfab.com/3d-models/excavator-84cd8adb9d104010b10f3fa89e5f6a70
+* author:	RhymOne (https://sketchfab.com/rhymone)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Excavator" (https://sketchfab.com/3d-models/excavator-84cd8adb9d104010b10f3fa89e5f6a70) by RhymOne (https://sketchfab.com/rhymone) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

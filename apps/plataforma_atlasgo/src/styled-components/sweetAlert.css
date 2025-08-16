@@ -1,0 +1,28 @@
+.custom-btn-success {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+  }
+  
+  .custom-btn-success:hover {
+    background-color: #218838;
+  }
+  
+  .custom-btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+  }
+  
+  .custom-btn-danger:hover {
+    background-color: #c82333;
+  }
+    
