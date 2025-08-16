@@ -1,0 +1,13 @@
+# Dependencias
+node_modules/
+
+# Archivos de caché y build de Turborepo y Vite
+.turbo/
+dist/
+
+# Archivos de entorno (contraseñas, llaves de API, etc.)
+.env
+.env.local
+
+# Archivos del sistema operativo
+.DS_Store
