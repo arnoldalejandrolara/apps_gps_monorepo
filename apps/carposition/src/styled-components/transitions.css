@@ -1,0 +1,23 @@
+/* Cuando la nueva pantalla entra desde la derecha */
+.slide-enter {
+  transform: translateX(100%);
+  opacity: 0; /* Opcional: para que la pantalla entre de forma suave */
+  transition: transform 1000ms ease-in-out, opacity 1000ms ease-in-out; /* Cambiado a 1000ms (1 segundo) */
+}
+
+.slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Cuando la pantalla actual sale hacia la izquierda */
+.slide-exit {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 1000ms ease-in-out, opacity 1000ms ease-in-out; /* Cambiado a 1000ms (1 segundo) */
+}
+
+.slide-exit-active {
+  transform: translateX(-100%);
+  opacity: 0; /* Opcional: para que desaparezca suavemente */
+}
