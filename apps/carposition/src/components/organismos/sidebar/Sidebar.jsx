@@ -1,115 +1,42 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { CiLogout } from "react-icons/ci";
 import { logout } from "../../../store/thunks/authThunks";
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from "react-redux";
-import { 
-  FaChartBar, 
-  FaDrawPolygon, 
-  FaBell, 
-  FaRoute, 
-  FaHistory, 
-  FaMapPin, 
-  FaSearchLocation, 
-  FaShareAlt, 
-  FaUsers 
-} from "react-icons/fa";
+import { useModal } from "../../../hooks/useModal";
+import { PuntosInteresControl } from "../ContentModals/PuntosInteresControl";
+import { menuItems , logoutItem } from "../../../utilities/dataEstatica";
 
-const menuItems = [
-    {
-        label: "Reportes",
-        icon: <FaChartBar />, 
-        subMenu: [
-            { label: "Crear Reporte", to: "/reports/new" },
-            { label: "Historial de Reportes", to: "/reports/history" }
-        ]
-    },
-    {
-        label: "Geocercas",
-        icon: <FaDrawPolygon />,
-        subMenu: [
-            { label: "Ver Geocercas", to: "/geofences/view" },
-            { label: "Crear Nueva", to: "/geofences/create" }
-        ]
-    },
-    {
-        label: "Alertas",
-        icon: <FaBell />,
-        subMenu: [
-            { label: "Ver Alertas Activas", to: "/alerts/active" },
-            { label: "Configurar Alertas", to: "/alerts/config" }
-        ]
-    },
-    {
-        label: "Ruta del Día",
-        icon: <FaRoute />,
-        subMenu: [
-            { label: "Asignar Ruta", to: "/daily-route/assign" },
-            { label: "Optimizar Rutas", to: "/daily-route/optimize" }
-        ]
-    },
-    {
-        label: "Historial",
-        icon: <FaHistory />,
-        subMenu: [
-            { label: "Historial de Viajes", to: "/history/trips" },
-            { label: "Historial de Eventos", to: "/history/events" }
-        ]
-    },
-    {
-        label: "PDI",
-        icon: <FaMapPin />,
-        subMenu: [
-            { label: "Mis Puntos de Interés", to: "/poi/list" },
-            { label: "Agregar PDI", to: "/poi/add" }
-        ]
-    },
-    {
-        label: "Ver Ruta",
-        icon: <FaSearchLocation />,
-        subMenu: [
-            { label: "Buscar Ruta Actual", to: "/view-route/current" },
-            { label: "Planificar Nueva Ruta", to: "/view-route/plan" }
-        ]
-    },
-    {
-        label: "Compartir Ubicación",
-        icon: <FaShareAlt />,
-        subMenu: [
-            { label: "Compartir Viaje Actual", to: "/share-location/live" },
-            { label: "Crear Enlace Temporal", to: "/share-location/link" }
-        ]
-    },
-    {
-        label: "Cuenta Espejo",
-        icon: <FaUsers />,
-        subMenu: [
-            { label: "Administrar Cuentas", to: "/mirror-account/manage" },
-            { label: "Solicitar Acceso", to: "/mirror-account/request" }
-        ]
-    }
-];
-
-const logoutItem = {
-    label: "Salir",
-    icon: <CiLogout />,
-    subMenu: [
-        { label: "Confirmar Salida", action: 'logout' }
-    ]
-};
-
-export function Sidebar() {
+export function Sidebar({onToggleNotifications}) {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [activeSubMenu, setActiveSubMenu] = useState(null);
     const [subMenuTop, setSubMenuTop] = useState(0);
+    const { openModal } = useModal();
+    const [isAlertsPanelOpen, setAlertsPanelOpen] = useState(false);
+    const [alertsPanelTop, setAlertsPanelTop] = useState(0);
 
     const cerrarSesion = () => {
         dispatch(logout());
         navigate('/login');
     };
 
+    const handleOpenPdiTable = () => {
+        openModal(
+            <PuntosInteresControl initialView="table" />,
+            'Control de Puntos de Interes', 
+            'large'
+        );
+    };
+    
+    const handleOpenPdiForm = () => {
+        openModal(
+            <PuntosInteresControl initialView="form" />, // <-- Pasa la prop para abrir el formulario directamente
+            'Agregar Nuevo Punto de Interés',
+             'large'
+        );
+    };
+    
     const handleMouseEnter = (index, e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setSubMenuTop(rect.top);
@@ -121,9 +48,16 @@ export function Sidebar() {
     };
 
     const handleSubMenuClick = (item) => {
-        if (item.action === 'logout') {
-            cerrarSesion();
-        } else if (item.to) {
+        console.log('Submenu item clicked:', item);
+
+        if (item.action === 'openPdiTable') {
+            handleOpenPdiTable();
+        } else if (item.action === 'openPdiForm') {
+            handleOpenPdiForm();
+        } else if (item.action === 'openAlertsPanel') {
+            console.log('Toggle Notifications');
+            onToggleNotifications();
+        } else {
             navigate(item.to); 
         }
         setActiveSubMenu(null);
@@ -220,7 +154,6 @@ const ContentContainer = styled.div`
   flex-direction: column;
   height: 100%;
   flex: 1 1 auto;
-  /* CAMBIO: Se quita justify-content y se añade overflow para el scroll */
   align-items: stretch;
   width: 100%;
   padding: 0px;
@@ -319,6 +252,5 @@ const ProfileCircle = styled.div`
 
 const BottomOptions = styled.div`
   width: 100%;
-  /* CAMBIO: Este truco empuja el botón de logout hasta abajo */
   margin-top: auto;
 `;

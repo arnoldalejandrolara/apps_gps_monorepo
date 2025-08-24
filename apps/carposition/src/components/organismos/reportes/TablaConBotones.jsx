@@ -315,7 +315,7 @@ const StyledTable = styled.table`
   min-width: 720px;
   border-collapse: collapse;
   background: transparent;
-  color: #fff;
+  color: black;
   table-layout: fixed;
 
   th,
@@ -333,36 +333,41 @@ const StyledTable = styled.table`
     position: sticky; // 👈 Lo hace "pegajoso"
     top: 0;          // 👈 Se pega al inicio del contenedor con scroll
     z-index: 1;      // 👈 Se asegura que esté sobre el contenido del body
-
-    background: #29292d; // Esencial para que no se vea el texto de abajo
-    font-weight: bold;
-    height: 60px;
+    color: #647381;
+    background: #F5F6F8; // Esencial para que no se vea el texto de abajo
+    font-weight: 500;
+    font-size: 12px;
+    height: 57px;
 
     &.cursor-pointer {
       cursor: pointer;
     }
   }
 
-  tbody tr:hover {
-    background: #29292d;
+  td{
+    height: 75px; // Asegura que las celdas tengan la misma altura que el header
   }
 
-  th::after {
-    content: '';
-    position: absolute;
-    top: 25%;
-    bottom: 25%;
-    right: 0;
-    width: 1px;
-    background-color: #474747;
+  tbody tr:hover {
+    background: #F5F6F8;
   }
+
+  // th::after {
+  //   content: '';
+  //   position: absolute;
+  //   top: 25%;
+  //   bottom: 25%;
+  //   right: 0;
+  //   width: 1px;
+  //   background-color: #647381;
+  // }
 
   th:last-child::after {
     content: none;
   }
 
   td {
-    border-bottom: 1px dashed #474747;
+    border-bottom: 1px dashed #EAECEE;
   }
 
   tr:last-child td {
