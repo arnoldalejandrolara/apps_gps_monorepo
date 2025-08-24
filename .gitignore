@@ -11,3 +11,4 @@ dist/
 
 # Archivos del sistema operativo
 .DS_Store
+node_modules

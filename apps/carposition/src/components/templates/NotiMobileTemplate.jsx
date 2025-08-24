@@ -7,8 +7,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import engineIcon from "../../assets/Engine.svg";
 import { formatLocalDate } from "../../utilities/Functions";
 import { ModalFilters } from '../organismos/ModelScreenConfig/ModalFilter';
-import { getAlertasList } from "../../services/AlertasService";
-import { addNotificationList } from "../../store/slices/notificationSlice";
+import { getAlertasList } from "@mi-monorepo/common/services";
+import { addNotificationList } from "@mi-monorepo/common/store/notification";
 
 // Función de debounce
 const debounce = (func, wait) => {

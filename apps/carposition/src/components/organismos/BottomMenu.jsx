@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CiMap, CiInboxIn } from "react-icons/ci";
 import { IoCarOutline } from "react-icons/io5";
 import { GoHome } from "react-icons/go";
-import { useMapaWeb } from '../../context/MapViewContext';
+import { useMapView } from '@mi-monorepo/common/context';
 
 // Punto verde pegado al ícono
 const GreenDot = styled.span`
@@ -82,7 +82,7 @@ const BottomMenuWrapper = styled.footer`
 `;
 
 export const BottomMenu = () => {
-  const { showMapMobile, setShowMapMobile } = useMapaWeb();
+  const { showMapMobile, setShowMapMobile } = useMapView();
   const navigate = useNavigate();
   const location = useLocation();
 

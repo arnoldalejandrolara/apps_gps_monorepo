@@ -1,0 +1,66 @@
+/* Estilos específicos para Leaflet OSM Map */
+@import 'leaflet/dist/leaflet.css';
+
+/* Asegurar que el mapa OSM tenga el tamaño correcto */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+  cursor: grab !important;
+}
+
+.leaflet-container:active {
+  cursor: grabbing !important;
+}
+
+/* Asegurar que los controles de zoom funcionen */
+.leaflet-control-zoom {
+  margin-left: 10px !important;
+  margin-top: 10px !important;
+  z-index: 1000 !important;
+}
+
+/* Asegurar que el mapa responda a eventos de mouse */
+.leaflet-pane {
+  pointer-events: auto !important;
+}
+
+.leaflet-overlay-pane {
+  pointer-events: auto !important;
+}
+
+/* Mejorar la apariencia de los popups */
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-content h3 {
+  margin: 0 0 8px 0 !important;
+  color: #333 !important;
+  font-size: 16px !important;
+}
+
+.leaflet-popup-content p {
+  margin: 4px 0 !important;
+  font-size: 14px !important;
+  color: #666 !important;
+}
+
+/* Asegurar que los iconos de marcadores se vean correctamente */
+.leaflet-marker-icon {
+  margin-left: -12px !important;
+  margin-top: -41px !important;
+}
+
+/* Estilo para los controles de zoom */
+.leaflet-control-zoom {
+  margin-left: 10px !important;
+  margin-top: 10px !important;
+}
+
+/* Ocultar el atributo de Leaflet en el mapa para una vista más limpia */
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}

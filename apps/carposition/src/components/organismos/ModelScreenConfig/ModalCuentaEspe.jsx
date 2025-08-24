@@ -12,7 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import CustomSelect from '../../moleculas/CustomeSelect';
 import { useSelector } from 'react-redux';
-import { createCuentasEspejo, updateCuentasEspejo } from '../../../services/CuentasEspejoService.js';
+import { createCuentasEspejo, updateCuentasEspejo } from '@mi-monorepo/common/services';
 
 const steps = ['Datos principales', 'Medio de envío', 'Cuenta enviada'];
 

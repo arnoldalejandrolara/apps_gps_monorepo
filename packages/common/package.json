@@ -1,0 +1,37 @@
+{
+    "name": "@mi-monorepo/common",
+    "version": "1.0.0",
+    "description": "Componentes y lógica compartida para las aplicaciones",
+    "main": "src/index.js",
+    "exports": {
+        ".": "./src/index.js",
+        "./store": "./src/store/index.js",
+        "./store/auth": "./src/store/slices/authSlice.js",
+        "./store/vehicle": "./src/store/slices/vehicleSlice.js",
+        "./store/notification": "./src/store/slices/notificationSlice.js",
+        "./store/thunks": "./src/store/thunks/index.js",
+        "./store/slices": "./src/store/slices/index.js",
+        "./hooks": "./src/hooks/index.js",
+        "./context": "./src/context/index.js",
+        "./services": "./src/services/index.js",
+        "./utils": "./src/utils/index.js",
+        "./routers": "./src/routers/index.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "@reduxjs/toolkit": "^2.0.0",
+        "js-cookie": "^3.0.0",
+        "react": "^18.0.0",
+        "@loaders.gl/core": "^4.3.3",
+        "@loaders.gl/gltf": "^4.3.3"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "packageManager": "pnpm@10.14.0"
+}

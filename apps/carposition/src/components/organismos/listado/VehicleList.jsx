@@ -5,6 +5,10 @@ import { IoClose } from "react-icons/io5";
 
 // MUY IMPORTANTE: Asegúrate de que la ruta a tu componente VehicleCard sea correcta.
 import { VehicleCard } from '../CardVehicle'; 
+import { useSelector } from 'react-redux';
+import { getLast5Routes } from '@mi-monorepo/common/services';
+import { setVehicleRoute, addSelectedVehicle } from '@mi-monorepo/common/store/vehicle';
+import { useDispatch } from 'react-redux';
 
 // Datos de ejemplo actualizados para incluir la propiedad 'updated'.
 const dummyVehicles = [
@@ -18,13 +22,52 @@ const dummyVehicles = [
     { id: 8, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
 ];
 
-export function VehicleList({ isOpen, onClose, vehicles = dummyVehicles }) {
+export function VehicleList({ isOpen, onClose }) {
     const [searchTerm, setSearchTerm] = useState('');
+    const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
+    const dispatch = useDispatch();
+    const token = useSelector((state) => state.auth?.token);
 
     const filteredVehicles = vehicles.filter(vehicle =>
-        vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.driver.toLowerCase().includes(searchTerm.toLowerCase())
+        vehicle.info.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.info.chofer.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleCardClick = async (vehicle) => {
+        try {
+            if (!vehicle || !vehicle.imei) {
+                console.error("❌ Datos del vehículo inválidos:", vehicle);
+                return;
+            }
+    
+            // Primero actualizamos la ruta si es necesario
+            if(vehicle.route.length <= 1){
+                //console.log("🔍 Obteniendo últimas 5 rutas");
+                let last5Routes = await getLast5Routes(token, vehicle.imei);
+    
+                if(last5Routes.status == 200){
+                    let coordinates = last5Routes.registros.map(registro => [registro.location.y, registro.location.x]).reverse();
+                    // Actualizamos la ruta primero
+                    await dispatch(setVehicleRoute({ id: vehicle.id, route: coordinates }));
+                    // Esperamos un momento para asegurar que la actualización se complete
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    // Actualizamos el vehículo con la nueva ruta
+                    vehicle = {
+                        ...vehicle,
+                        route: coordinates
+                    };
+                } else {
+                    console.error("❌ Error al obtener las últimas 5 rutas:", last5Routes);
+                }
+            }
+    
+            // Después de asegurarnos de que la ruta está actualizada, seleccionamos el vehículo
+            dispatch(addSelectedVehicle(vehicle));
+            
+        } catch (error) {
+            console.error("❌ Error al procesar el vehículo:", error);
+        }
+    };
 
     return (
         <VehicleListContainer $isOpen={isOpen}>
@@ -54,11 +97,13 @@ export function VehicleList({ isOpen, onClose, vehicles = dummyVehicles }) {
                 {filteredVehicles.map(vehicle => (
                     <VehicleCard
                         key={vehicle.id}
-                        name={vehicle.name}
-                        driver={vehicle.driver}
+                        name={vehicle.info.nombre}
+                        driver={vehicle.info.chofer}
                         status={vehicle.status}
-                        updated={vehicle.updated}
-                        onClick={() => console.log(`Vehículo seleccionado: ${vehicle.name}`)}
+                        updated={vehicle.posicion_actual.fecha}
+                        onClick={() => {
+                            handleCardClick(vehicle);
+                        }}
                     />
                 ))}
             </List>

@@ -13,7 +13,7 @@ import { NotificationManager } from '../NotificationManager';
 import logoSrc from '../../assets/logoblanco2.png';
 import NotificationTest from '../NotificationTest';
 import { useMediaQuery } from 'react-responsive';
-import { useNotifications } from '../../hooks/useNotifications';
+import { useNotifications } from '@mi-monorepo/common/hooks';
 
 const FullScreenContainer = styled.div`
   width: 100vw;

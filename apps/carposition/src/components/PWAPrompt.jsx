@@ -1,4 +1,4 @@
-import { usePWA } from '../hooks/usePWA'
+import { usePWA } from '@mi-monorepo/common/hooks'
 import { CheckCircle, RefreshCw, X } from 'lucide-react'
 
 export const PWAPrompt = () => {

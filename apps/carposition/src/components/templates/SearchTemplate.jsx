@@ -6,10 +6,9 @@ import { useMediaQuery } from 'react-responsive';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from "react-redux";
-import { addSelectedVehicleMobile, setVehicleRoute } from "../../store/slices/vehicleSlice";
-import { getLast5Routes } from "../../services/DispositivosService";
-// import { useMapView } from '../../context/MapViewContext';
-import { useMapaWeb } from '../../context/MapViewContext';
+import { addSelectedVehicleMobile, setVehicleRoute } from "@mi-monorepo/common/store/vehicle";
+import { getLast5Routes } from "@mi-monorepo/common/services";
+import { useMapView } from '@mi-monorepo/common/context';
 
 const FullScreenContainer = styled.div`
   width: 100%;
@@ -107,7 +106,7 @@ const SearchTemplate = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
-  const { setShowMapMobile } = useMapaWeb();
+  const { setShowMapMobile } = useMapView();
   const dispatch = useDispatch();
 
   const vehicles = useSelector((state) => state.vehicle?.vehicles || []);

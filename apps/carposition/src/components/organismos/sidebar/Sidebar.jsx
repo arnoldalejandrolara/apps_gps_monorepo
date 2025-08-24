@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { CiLogout } from "react-icons/ci";
-import { logout } from "../../../store/thunks/authThunks";
+import { logout } from "@mi-monorepo/common/store/thunks";
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from "react-redux";
 import { 
@@ -121,6 +121,7 @@ export function Sidebar() {
     };
 
     const handleSubMenuClick = (item) => {
+        console.log(item);
         if (item.action === 'logout') {
             cerrarSesion();
         } else if (item.to) {

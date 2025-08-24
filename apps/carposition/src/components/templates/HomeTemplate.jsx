@@ -6,10 +6,14 @@ import { ScenegraphLayer } from '@deck.gl/mesh-layers';
 import { TripBuilder } from '../../utilities/TripBuilder';
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
-import { useWebSocket } from "../../context/WebSocketContext";
+import { useWebSocket } from "@mi-monorepo/common/context";
 import { useSelector, useDispatch } from "react-redux";
 
 import { SidebarListaCar } from "../organismos/sidebar/SidebarListaCar.jsx";
+import { OSMMap } from "../organismos/OSMMap.jsx";
+import { OSMMapSimple } from "../organismos/OSMMapSimple.jsx";
+import { OSMMapVanilla } from "../organismos/OSMMapVanilla.jsx";
+import { MapTypeSelector } from "../atomos/MapTypeSelector.jsx";
 import "../../styled-components/sweetAlert.css";
 import { useCommandDialog } from "../../utilities/useCommandDialog.jsx";
 
@@ -35,6 +39,7 @@ export function HomeTemplate() {
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSeverity, setAlertSeverity] = useState("success");
     const [alertKey, setAlertKey] = useState(0);
+    const [mapType, setMapType] = useState("osm"); // "google" o "osm"
 
     const showCommandDialog = useCommandDialog({ setAlertMessage, setAlertSeverity });
 
@@ -195,41 +200,59 @@ export function HomeTemplate() {
             <MainContent>
                 {/* <SidebarListaCar vehicles={vehicles} handleCardClick={() => {}} /> */}
                 <MapSection>
+                    {/* Selector de tipo de mapa */}
+                    {/* <MapTypeSelector 
+                        mapType={mapType} 
+                        onMapTypeChange={setMapType} 
+                    /> */}
+                    
                     {/* Ventana flotante SIEMPRE en la esquina inferior izquierda */}
                     {/* <VehicleWindowInfo vehicle={vehicleToShow} /> */}
-                    <DeckGL
-                        initialViewState={viewState}
-                        controller={true}
-                        layers={layers}
-                        onViewStateChange={(params) => setViewState(params.viewState)}
-                    >
-                        <Map
-                            mapId="64d9b619826759eb"
-                            mapTypeId={"roadmap"}
-                            colorScheme={"LIGHT"}
-                            defaultZoom={14}
-                            defaultCenter={{ lat: 19.4326, lng: -99.1332 }}
-                            onTilesLoaded={() => {
-                                console.log(
-                                    "Mapa cargado correctamente - Tiles cargados"
-                                );
-                            }}
-                            options={{
-                                mapTypeControl: false,
-                                mapTypeControlOptions: {
-                                    style: 2,
-                                    position: 3,
-                                },
-                                streetViewControl: false,
-                                fullscreenControl: false,
-                                zoomControl: false,
-                                zoomControlOptions: {
-                                    position: 3,
-                                },
-                                gestureHandling: "cooperative",
-                            }}
+                    
+                    {mapType === "google" ? (
+                        <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                            <DeckGL
+                                initialViewState={viewState}
+                                controller={true}
+                                layers={layers}
+                                onViewStateChange={(params) => setViewState(params.viewState)}
+                            >
+                                <Map
+                                    mapId="64d9b619826759eb"
+                                    mapTypeId={"roadmap"}
+                                    colorScheme={"LIGHT"}
+                                    defaultZoom={14}
+                                    defaultCenter={{ lat: 19.4326, lng: -99.1332 }}
+                                    onTilesLoaded={() => {
+                                        console.log(
+                                            "Mapa cargado correctamente - Tiles cargados"
+                                        );
+                                    }}
+                                    options={{
+                                        mapTypeControl: false,
+                                        mapTypeControlOptions: {
+                                            style: 2,
+                                            position: 3,
+                                        },
+                                        streetViewControl: false,
+                                        fullscreenControl: false,
+                                        zoomControl: false,
+                                        zoomControlOptions: {
+                                            position: 3,
+                                        },
+                                        gestureHandling: "cooperative",
+                                    }}
+                                />
+                            </DeckGL>
+                        </APIProvider>
+                    ) : (
+                        <OSMMapVanilla
+                            viewState={viewState}
+                            onViewStateChange={(params) => setViewState(params.viewState)}
+                            vehicles={vehicles}
+                            selectedVehicles={selectedVehicles}
                         />
-                    </DeckGL>
+                    )}
                 </MapSection>
             </MainContent>
 

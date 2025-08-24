@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import styled from 'styled-components'
-import { useNotifications } from '../hooks/useNotifications'
+import { useNotifications } from '@mi-monorepo/common/hooks'
 import { Bell, BellOff, Send, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 const Container = styled.div`

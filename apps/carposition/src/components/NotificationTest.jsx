@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNotifications } from '../hooks/useNotifications'
+import { useNotifications } from '@mi-monorepo/common/hooks'
 import DebugConsole from './DebugConsole'
 
 const NotificationTest = ({ serverUrl = import.meta.env.VITE_API_URL_ONLY }) => {

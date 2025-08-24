@@ -10,7 +10,7 @@ import ModalFormulario from '../organismos/ModelScreenConfig/ModalCuentaEspe.jsx
 import { useMediaQuery } from 'react-responsive';
 import ListCEMobile from '../ListCEMobile.jsx';
 import { useNavigate } from 'react-router-dom';
-import { getCuentasEspejoTable } from '../../services/CuentasEspejoService.js';
+import { getCuentasEspejoTable } from '@mi-monorepo/common/services';
 import { useSelector } from 'react-redux';
 
 export function CuentasEspejoTemplate() {

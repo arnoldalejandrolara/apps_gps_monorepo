@@ -9,7 +9,7 @@ import FloatingButton from "../moleculas/FloatingButton";
 import BottomSheetCar from '../organismos/BottomSheetCar';
 import { getOrientation } from "../../utilities/Functions";
 import { slides } from "../../utilities/dataEstatica";
-import { sendComando } from "../../services/DispositivosService";
+import { sendComando } from "@mi-monorepo/common/services";
 import Swal from "sweetalert2";
 import Alert from "@mui/material/Alert"; // Importa el componente Alert de Material UI
 import Stack from "@mui/material/Stack"; // Para organizar las alertas

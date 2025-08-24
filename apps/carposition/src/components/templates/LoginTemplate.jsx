@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { Btnsave } from "../moleculas/Btnsave";
 import { v } from "../../utilities/variables";
-import { loginService } from "../../services/AuthService.js";
+import { loginService } from "@mi-monorepo/common/services";
 import CustomInput from "../organismos/formularios/InputTextCustom";
 import { FooterLogin } from "../organismos/FooterLogin";
 import {ContactCard} from "../moleculas/ContactCard";
@@ -15,7 +15,7 @@ import logo from "../../assets/logo_atlasgo.png"; // tu icono
 import { FaWhatsapp } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
 import { useDispatch } from "react-redux";
-import { login } from '../../store/slices/authSlice';
+import { login } from '@mi-monorepo/common/store/auth';
 import { useMediaQuery } from 'react-responsive';
 import { useLocation } from 'react-router-dom';
 
