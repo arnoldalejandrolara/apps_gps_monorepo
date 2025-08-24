@@ -1,35 +1,116 @@
-import React, { useState, useRef } from 'react';
-import styled from 'styled-components';
-import iconmap from '../../../assets/map_pin.svg';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled, { createGlobalStyle, css } from 'styled-components';
 import {
   useReactTable,
   getCoreRowModel,
+  getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { OptionsMenu } from '../../moleculas/OptionsMenu';
+import { MdModeEditOutline, MdDelete } from 'react-icons/md';
+import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { FaInfo } from 'react-icons/fa';
+import { HiPhone } from 'react-icons/hi';
+import { OptionsMenu } from '../../moleculas/OptionsMenu.jsx';
 
-const data = [
-  { id: 1, nombre: 'Parque Central', categoria: 'Parque', ciudad: 'Madrid', iconos: true },
-  { id: 2, nombre: 'Museo de Arte', categoria: 'Cultura', ciudad: 'Barcelona', iconos: true },
-  { id: 3, nombre: 'Playa Dorada', categoria: 'Playa', ciudad: 'Valencia', iconos: true },
-];
+const SelectedBanner = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  background-color: #e6f7e9;
+  color: #389e0d;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid #b7eb8f;
+  
+  // Posicionamiento para que flote encima
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2; // Asegura que esté encima del encabezado de la tabla
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+`;
 
-const columns = [
+const BannerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const TrashIcon = styled(FaTrash)`
+  font-size: 16px;
+  color: #647381;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover {
+    color: #f44336;
+  }
+`;
+
+// Global styles for the resizer (if needed)
+const GlobalStyles = createGlobalStyle`
+  .resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 1;
+    user-select: none;
+    touch-action: none;
+  }
+  .resizer:hover {
+    background: #ccc;
+  }
+`;
+
+// Helper function to format time
+const formatTimeAgo = (minutes) => {
+  if (!minutes) return 'Nunca';
+  if (minutes === 0) return 'hace 0 minutos';
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (mins > 0 || parts.length === 0) parts.push(`${mins}m`);
+  return 'hace ' + parts.join(' ');
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return dateString;
+  }
+};
+
+const columnsPdi = [
   {
     header: ({ table }) => (
       <CheckboxContainer>
         <input
           type="checkbox"
-          onChange={(e) => {
-            const isChecked = e.target.checked;
-            table.getRowModel().rows.forEach((row) => {
-              row.getToggleSelectedHandler()(isChecked);
-            });
-          }}
+          checked={table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
         />
       </CheckboxContainer>
     ),
     accessorKey: 'checkbox',
+    size: 90,    
     cell: ({ row }) => (
       <CheckboxContainer>
         <input
@@ -40,177 +121,345 @@ const columns = [
       </CheckboxContainer>
     ),
   },
-  { header: 'ID', accessorKey: 'id' },
-  { header: 'Nombre', accessorKey: 'nombre' },
-  { header: 'Fecha Creacion', accessorKey: 'fecha_creacion' },
-  { header: 'Ultima Modificacion', accessorKey: 'ultima_modificacion' },
   {
-    header: 'Iconos',
-    accessorKey: 'iconos',
-    cell: () => (
-      <IconContainer>
-        <img src={iconmap} alt="pin" className="map-icon" />
-      </IconContainer>
+    header: 'Nombre',
+    accessorKey: 'nombre',
+    cell: ({ row }) => (
+      <StyledTextCell>
+        <div>{row.original.nombre}</div>
+        <StyledSubtext>{row.original.email}</StyledSubtext>
+      </StyledTextCell>
+    ),
+  },
+  {
+    header: 'Fecha de creación',
+    accessorKey: 'fecha_creacion',
+    cell: ({ row }) => (
+      <StyledTextCell>
+        <div>{row.original.telefono}</div>
+      </StyledTextCell>
+    ),
+  },
+  {
+    header: 'Empresa',
+    accessorKey: 'empresa',
+    cell: ({ row }) => (
+      <StyledTextCell>
+        <div>{row.original.empresa}</div>
+      </StyledTextCell>
+    ),
+  },
+  {
+    header: 'Tipo',
+    accessorKey: 'tipo',
+    cell: ({ row }) => (
+      <StyledTextCell>
+        <div>{row.original.tipo_usuario}</div>
+      </StyledTextCell>
+    ),
+  },
+  {
+    header: 'Status',
+    accessorKey: 'status',
+    cell: ({ row }) => (
+      <StyledStatusCell status={row.original.status}>
+        {row.original.status}
+      </StyledStatusCell>
     ),
   },
   {
     header: '',
     accessorKey: 'options',
-    cell: ({ row }) => <OptionsMenu row={row} />,
+    size: 90,    
+    cell: ({ row }) => {
+      const actions = [
+        {
+          label: 'Editar',
+          icon: <MdModeEditOutline />,
+          onClick: () => handleEdit(row),
+        },
+        {
+          label: 'Eliminar',
+          icon: <MdDelete />,
+          className: 'delete',
+          onClick: () => handleDelete(row),
+        },
+      ];
+      return (
+        <CenteredCell>
+          <OptionsMenu actions={actions} />
+        </CenteredCell>
+      );
+    },
   },
 ];
 
-// function OptionsMenu({ row }) {
-//   const [isMenuOpen, setMenuOpen] = useState(false);
-//   const buttonRef = useRef(null);
+export function TablaPuntosInteres({
+  type,
+  data,
+  isLoading,
+  onPaginationChange,
+  pagination: controlledPagination,
+  pageCount,
+}) {
+  const navigate = useNavigate();
+  const [pagination, setPagination] = useState(controlledPagination || { pageIndex: 0, pageSize: 5 });
 
-//   const toggleMenu = () => {
-//     setMenuOpen(!isMenuOpen);
-//   };
+  const handlePaginationChange = (newPagination) => {
+    setPagination(newPagination);
+    if (onPaginationChange) {
+      onPaginationChange(newPagination);
+    }
+  };
 
-//   return (
-//     <OptionsWrapper>
-//       <ThreeDots ref={buttonRef} onClick={toggleMenu}>⋮</ThreeDots>
-//       {isMenuOpen && (
-//         <FloatingMenu>
-//           <ul>
-//             <li>Editar</li>
-//             <li>Eliminar</li>
-//             <li>Detalles</li>
-//           </ul>
-//         </FloatingMenu>
-//       )}
-//     </OptionsWrapper>
-//   );
-// }
+  let columns;
+  switch (type) {
+    case 'dispositivo':
+      columns = null;
+      break;
+    case 'pdi':
+      columns = columnsPdi;
+      break;
+    default:
+      console.error('Tipo de tabla no reconocido:', type);
+      return null;
+  }
 
-export function TablaPuntosInteres() {
+  const [rowSelection, setRowSelection] = useState({});
+
+  
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
+    state: {
+      pagination,
+      rowSelection, 
+    },
+    onPaginationChange: handlePaginationChange,
+    onRowSelectionChange: setRowSelection,
+    pageCount,
+    manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <LoadingSpinner />
+        <LoadingText>Cargando datos...</LoadingText>
+      </LoadingContainer>
+    );
+  }
+
+  const selectedCount = Object.keys(table.getState().rowSelection).length;
+  
+  const handleClearSelection = () => {
+    table.resetRowSelection();
+  };
+
   return (
-    <TableWrapper>
-      <table>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className={
-                    header.column.columnDef.accessorKey === 'iconos' ||
-                    header.column.columnDef.accessorKey === 'checkbox' ||
-                    header.column.columnDef.accessorKey === 'options' ||
-                    header.column.columnDef.accessorKey === 'id'
-                      ? 'icon-column'
-                      : ''
-                  }
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
+    <>
+      <GlobalStyles />
+      <TableContainer>
+        <TableResponsiveWrapper>
+          <StyledTable>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id}
+                        style={{ width: header.column.getSize() }}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className={
-                    cell.column.columnDef.accessorKey === 'iconos'
-                      ? 'icon-column'
-                      : ''
-                  }
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </TableWrapper>
+            </tbody>
+          </StyledTable>
+        </TableResponsiveWrapper>
+        {selectedCount > 0 && (
+          <SelectedBanner>
+            <BannerContent>
+              <CheckboxContainer>
+                <input
+                  type="checkbox"
+                  checked={true} // Siempre marcado cuando hay selección
+                  onChange={handleClearSelection} // Al hacer clic, deselecciona todo
+                />
+              </CheckboxContainer>
+              {selectedCount} registro{selectedCount > 1 ? 's' : ''} seleccionado{selectedCount > 1 ? 's' : ''}
+            </BannerContent>
+            <TrashIcon />
+          </SelectedBanner>
+        )}
+        <PaginationWrapper>
+          <RowsPerPage>
+            <span>Filas por página: </span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+            >
+              {[5, 10, 25].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+          </RowsPerPage>
+          <PaginationControls>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              title="Página anterior"
+            >
+              &lt;
+            </button>
+            <span>
+              Página{' '}
+              <strong>
+                {table.getState().pagination.pageIndex + 1} de {pageCount}
+              </strong>
+            </span>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              title="Página siguiente"
+            >
+              &gt;
+            </button>
+          </PaginationControls>
+        </PaginationWrapper>
+      </TableContainer>
+    </>
   );
 }
 
-const TableWrapper = styled.div`
-  padding: 10px 60px;
-  margin-top: 20px;
-  overflow-x: auto;
+const StyledSubtext = styled.div`
+  font-size: 12px;
+  color: #888;
+`;
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #2a2a2a;
-    table-layout: fixed;
-    border-radius: 8px;
-    overflow: hidden;
-    color: #fff;
-  }
+// Styled components with white theme
+const StyledTable = styled.table`
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  background: #fff;
+  color: #333;
+  table-layout: fixed;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
 
-  th,
-  td {
+  th, td {
     padding: 12px 16px;
-    font-size: 12px;
-    text-align: center;
+    text-align: left;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  th.icon-column,
-  td.icon-column {
-    width: 10%;
-    padding: 0;
-  }
-
   th {
-    background-color: #202020;
-    font-weight: bold;
-    height: 50px;
-    position: relative;
-  }
-
-  th::after {
-    content: '';
-    position: absolute;
-    top: 25%;
-    bottom: 25%;
-    right: 0;
-    width: 1px;
-    background-color: #444;
-  }
-
-  th:last-child::after {
-    content: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: #647381;
+    background: #f8f9fa;
+    font-weight: 600;
+    font-size: 12px;
+    height: 57px;
+    border-bottom: 2px solid #e9ecef;
   }
 
   td {
-    border-bottom: 1px dashed #444;
+    height: 75px;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  tbody tr:hover {
+    background: #f1f3f5;
   }
 
   tr:last-child td {
     border-bottom: none;
   }
 
-  tr:hover td {
-    background-color: #333;
+  @media (max-width: 768px) {
+    min-width: 100%;
+    font-size: 12px;
+    thead {
+      display: none;
+    }
+    th {
+      position: static;
+    }
+    tbody, tr, td {
+      display: block;
+      width: 100%;
+    }
+    tr {
+      margin-bottom: 12px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    td {
+      border: none;
+      padding: 10px 16px;
+      text-align: left;
+    }
+    td:last-child {
+      border-bottom: 0;
+    }
+    td:before {
+      content: attr(data-label) ": ";
+      font-weight: bold;
+      color: #adb5bd;
+      display: inline-block;
+      width: 40%;
+      min-width: 90px;
+    }
   }
+`;
+
+const TableContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative; // Contenedor para la barra flotante
+`;
+
+const TableResponsiveWrapper = styled.div`
+  flex: 1;
+  overflow: auto;
 `;
 
 const CheckboxContainer = styled.label`
   display: flex;
   justify-content: center;
   align-items: center;
-
   input[type='checkbox'] {
     width: 18px;
     height: 18px;
@@ -219,64 +468,156 @@ const CheckboxContainer = styled.label`
   }
 `;
 
-const IconContainer = styled.div`
+const StyledTextCell = styled.div`
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding: 2px;
-
-  img {
-    width: 65px;
-    height: 55px;
+  align-items: flex-start;
+  color: #333;
+  div {
+    line-height: 1.4;
+  }
+  div:first-child {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  div:last-child {
+    font-size: 12px;
+    color: #6c757d;
   }
 `;
 
-const OptionsWrapper = styled.div`
-  position: relative;
-  cursor: pointer;
+const StyledStatusCell = styled.div`
   display: inline-block;
-  // background: red;
-  padding: 0px 15px;
-  border-radius: 50%;
-
-  &:hover {
-    background: #444;
-  }
-`;
-
-const ThreeDots = styled.div`
-  cursor: pointer;
-  font-size: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const FloatingMenu = styled.div`
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
+  padding: 6px 12px;
   border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-  padding: 10px;
-  z-index: 100;
+  font-weight: 500;
+  font-size: 12px;
 
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  ${props => props.status === 'Active' && css`
+    background-color: #e6f7e9;
+    color: #389e0d;
+    // border: 1px solid #b7eb8f;
+  `}
 
-    li {
-      padding: 8px 12px;
-      cursor: pointer;
+  ${props => props.status === 'Banned' && css`
+    background-color: #ffebee;
+    color: #f44336;
+    // border: 1px solid #f44336;
+  `}
 
-      &:hover {
-        background: #444;
-      }
+  ${props => props.status === 'Pending' && css`
+    background-color: #fff8e1;
+    color: #f57c00;
+    // border: 1px solid #ffecb3;
+  `}
+
+  ${props => props.status === 'Suspended' && css`
+    background-color: #f5f5f5;
+    color: #757575;
+    // border: 1px solid #e0e0e0;
+  `}
+
+  /* Puedes añadir más estilos para otros estados si es necesario */
+`;
+
+const PaginationWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  gap: 50px;
+`;
+
+const RowsPerPage = styled.div`
+  display: flex;
+  align-items: center;
+  color: #6c757d;
+  span {
+    margin-right: 8px;
+    font-size: 14px;
+  }
+  select {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ced4da;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    &:focus {
+      outline: none;
+      border-color: #00aaff;
+      box-shadow: 0 0 0 2px rgba(0, 170, 255, 0.25);
     }
   }
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  button {
+    background-color: #fff;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 44px;
+    transition: all 0.2s ease-in-out;
+    &:hover:not(:disabled) {
+      background-color: #e9ecef;
+      color: #333;
+    }
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+  span {
+    font-size: 14px;
+    color: #6c757d;
+    white-space: nowrap;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  color: #333;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #00aaff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  color: #333;
+  margin-left: 15px;
+  font-size: 14px;
+`;
+
+// New styled component to center the options menu
+const CenteredCell = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 `;

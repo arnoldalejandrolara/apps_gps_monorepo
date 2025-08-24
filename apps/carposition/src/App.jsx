@@ -3,9 +3,13 @@ import { createContext, useState, useEffect } from 'react';
 import { Login } from './pages/Login';
 import { Sidebar } from './components/organismos/sidebar/Sidebar';
 import { AppRouter } from '@mi-monorepo/common/routers';
+import { AuthProvider } from './context/AuthContext';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+import Map from 'react-map-gl/mapbox';
+
 import { Light, Dark } from './utilities/themes';
 import styled, { ThemeProvider, keyframes } from 'styled-components';
-import { Device } from './utilities/breakpoints';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { VehicleList } from './components/organismos/listado/VehicleList.jsx';
 import { useMediaQuery } from 'react-responsive';
@@ -26,21 +30,54 @@ import { LeftSidebar } from './components/organismos/sidebar/LeftSidebar.jsx';
 import { ReusableModal } from './components/organismos/ModalScreen/ReusableModal.jsx';
 import { UserControlComponent } from './components/organismos/ContentModals/UserControl.jsx';
 import { DeviceConfigComponent } from './components/organismos/ContentModals/DeviceConfig.jsx';
-import {NotifiConfigComponent} from './components/organismos/ContentModals/NotifiConfig.jsx';
+import { NotifiConfigComponent } from './components/organismos/ContentModals/NotifiConfig.jsx';
+import { ReportsComponent } from './components/organismos/ContentModals/ReportsControl.jsx';
+import { PuntosInteresControl } from './components/organismos/ContentModals/PuntosInteresControl.jsx';
+import { GeoCercasControl } from './components/organismos/ContentModals/GeoCercasControl.jsx';
+import { CuentasEspejoControl } from './components/organismos/ContentModals/CuentasEspejoControl.jsx';
+// --- 1. IMPORTA EL NUEVO COMPONENTE ---
+import { FloatingActionButtons } from './components/organismos/ButtomComands/FloatingActionsButton.jsx';
+import { VehicleListButton } from './components/organismos/ButtomComands/VehicleListButton.jsx';
+
 export const ThemeContext = createContext(null);
+export const ModalContext = createContext();
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
 
 function App() {
     const [themeuse, setTheme] = useState('dark');
     const theme = themeuse === 'light' ? 'light' : 'dark';
     const themeStyles = theme === 'light' ? Light : Dark;
-    const isMobile = useMediaQuery({ maxWidth: 768 });
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
-    const [vehicleListOpen, setVehicleListOpen] = useState(false);
-    const [modalContent, setModalContent] = useState(null); // Nuevo estado para el contenido
-
+    const [vehicleListOpen, setVehicleListOpen] = useState(true);
+    const [modalContent, setModalContent] = useState(null);
+    const [modalSize, setModalSize] = useState('medium'); 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
+
+    const [viewState, setViewState] = useState({
+        longitude: -99.1332,
+        latitude: 19.4326,
+        zoom: 10,
+        pitch: 30,
+        bearing: -17.6
+    });
+
+    const modalValue = {
+        openModal: (content, title, size = 'medium') => {
+            setModalContent(content);
+            setModalTitle(title);
+            setModalSize(size);
+            setIsModalOpen(true);
+        },
+        closeModal: () => {
+            setIsModalOpen(false);
+            setModalContent(null);
+            setModalTitle('');
+            setModalSize('medium');
+        },
+    };
 
     const { pathname } = useLocation();
     const navigate = useNavigate();
@@ -49,9 +86,12 @@ function App() {
         setNavigate(navigate);
     }, [navigate]);
 
+    const [notifiOpen, setNotifiOpen] = useState(false);
+
     const sidebarProps = {
         state: sidebarOpen,
         setState: () => setSidebarOpen(!sidebarOpen),
+        onToggleNotifications: () => setNotifiOpen(!notifiOpen),
     };
 
     const [alertMessage, setAlertMessage] = useState('');
@@ -73,33 +113,32 @@ function App() {
             triggerNotification(notifications[0].title + ' - ' + notifications[0].message);
             dispatch(removeNotification(notifications[0].id));
         }
-    }, [notifications]);
-
+    }, [dispatch, notifications]);
 
     const handleMenuItemClick = (item) => {
         setModalTitle(item.label);
-    
-        // Un switch decide qué "foto" poner en el "marco"
         switch (item.to) {
-            case '/configuration-user':
-                setModalContent(<UserControlComponent />);
-                break;
-            case '/device-config':
-                setModalContent(<DeviceConfigComponent />);
-                break;
-            case '/notifications-config':
-                setModalContent(<NotifiConfigComponent />);
-            break;
-            // Agrega un 'case' para cada una de tus opciones
-            default:
-                setModalContent(<p>Contenido para {item.label}</p>);
+            case '/configuration-user': setModalContent(<UserControlComponent />); setModalSize('large'); break;
+            case '/device-config': setModalContent(<DeviceConfigComponent />); setModalSize('large'); break;
+            case '/notifications-config': setModalContent(<NotifiConfigComponent />); setModalSize('large'); break;
+            case '/reports': setModalContent(<ReportsComponent />); setModalSize('large'); break;
+            case '/pdi': setModalContent(<PuntosInteresControl />); setModalSize('large'); break;
+            case '/geocercas': setModalContent(<GeoCercasControl />); setModalSize('large'); break;
+            case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('large'); break;
+            default: setModalContent(<p>Contenido para {item.label}</p>); setModalSize('small');
         }
-    
-        setIsModalOpen(true); // Abre el modal
+        setIsModalOpen(true);
+    };
+
+    const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+
+    const handleVehicleSelect = (vehicleId) => {
+        setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
     };
 
     return (
         <AuthProvider>
+            <ModalContext.Provider value={modalValue}>
             <ThemeContext.Provider value={{ theme, setTheme }}>
                 <ThemeProvider theme={themeStyles}>
                     <UbicacionProvider>
@@ -107,80 +146,154 @@ function App() {
                             {pathname === '/login' ? (
                                 <Login />
                             ) : (
-                                <APIProvider apiKey="AIzaSyBgNmR7s6iIP55wskrCK-735AxUNm1KpU0">
-                                    <AppGrid>
-                                        <HamburgerButton onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>
-                                            <IoMenu />
-                                        </HamburgerButton>
+                                <AppGrid>
+                                    <HamburgerButton onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>
+                                        <IoMenu />
+                                    </HamburgerButton>
 
-                                        {/* CAMBIO: Se le pasa el estado $isOpen para controlar la animación de desaparición */}
-                                        <VehicleListButton 
-                                            onClick={() => setVehicleListOpen(!vehicleListOpen)}
-                                            $isOpen={vehicleListOpen}
-                                        >
-                                            <img
-                                                src={Car}
-                                                alt="Car Icon"
-                                                style={{ width: "30px", height: "30px" }}
-                                            />
-                                        </VehicleListButton>
+                                    {/* --- 3. RENDERIZA EL NUEVO COMPONENTE --- */}
+                                    <VehicleListButton 
+                                        onClick={() => setVehicleListOpen(!vehicleListOpen)}
+                                        isOpen={vehicleListOpen}
+                                    />
+                                    
+                                    {leftSidebarOpen && <Backdrop onClick={() => setLeftSidebarOpen(false)} />}
+                                    
+                                    <LeftSidebar
+                                        isOpen={leftSidebarOpen}
+                                        onClose={() => setLeftSidebarOpen(false)}
+                                        onMenuItemClick={handleMenuItemClick}
+                                    />
+                                    <ReusableModal
+                                        isOpen={isModalOpen}
+                                        onClose={() => setIsModalOpen(false)}
+                                        title={modalTitle}
+                                        size={modalSize} 
+                                    >
+                                        {modalContent}
+                                    </ReusableModal>
+                                    <VehicleList 
+                                        isOpen={vehicleListOpen} 
+                                        onClose={() => setVehicleListOpen(false)} 
+                                        onVehicleSelect={handleVehicleSelect} 
+                                    />
+                                    
+                                    <FloatingActionButtons isVisible={!!selectedVehicleId} />
+
+                                    <Container className={`${sidebarOpen ? "sidebar-active" : ""} ${notifiOpen ? "notifi-active" : ""}`}>
                                         
-                                        {leftSidebarOpen && <Backdrop onClick={() => setLeftSidebarOpen(false)} />}
+                                        {notifiOpen && <Overlay onClick={() => setNotifiOpen(false)} />}
 
-                                         
-                                        {/* CAMBIO: Se usa el nuevo componente LeftSidebar */}
-                                        <LeftSidebar
-                                            isOpen={leftSidebarOpen}
-                                            onClose={() => setLeftSidebarOpen(false)}
-                                            onMenuItemClick={handleMenuItemClick}
-                                        />
-
-                                        {/* CAMBIO: Se renderiza el modal reutilizable */}
-                                        <ReusableModal
-                                            isOpen={isModalOpen}
-                                            onClose={() => setIsModalOpen(false)}
-                                            title={modalTitle}
-                                        >
-                                            {/* Aquí se renderiza el componente que guardamos en el estado */}
-                                            {modalContent}
-                                        </ReusableModal>
-
-
-                                        <VehicleList isOpen={vehicleListOpen} onClose={() => setVehicleListOpen(false)} />
-
-                                        <Container sidebaropen={sidebarOpen}>
-                                            <section className="mapaView">
-                                                <HomeTemplate />
-                                            </section>
-
-                                            <section className="ContentSidebar">
-                                                <Sidebar {...sidebarProps} />
-                                            </section>
-
-                                            <PWAPrompt />
-                                            <InstallPWA />
-                                            {alertMessage && (
-                                                <AlertContainer key={alertKey}>
-                                                    <Stack sx={{ width: '100%' }} spacing={2}>
-                                                        <Alert variant="filled" severity="info">
-                                                            {alertMessage}
-                                                        </Alert>
-                                                    </Stack>
-                                                </AlertContainer>
-                                            )}
-                                        </Container>
-                                    </AppGrid>
-                                </APIProvider>
+                                        <section className="mapaView">
+                                            <Map
+                                                {...viewState}
+                                                onMove={evt => setViewState(evt.viewState)}
+                                                style={{ width: '100%', height: '100%' }}
+                                                mapStyle="mapbox://styles/mapbox/standard"
+                                                mapboxAccessToken={MAPBOX_TOKEN}
+                                                terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
+                                            />
+                                        </section>
+                                        <section className="ContentSidebar">
+                                            <Sidebar {...sidebarProps} />
+                                        </section>
+                                        <section className='ContentNotifi'>
+                                            <Notificaciones state={notifiOpen} setState={() => setNotifiOpen(!notifiOpen)} />
+                                        </section>
+                                        <PWAPrompt />
+                                        <InstallPWA />
+                                        {alertMessage && (
+                                            <AlertContainer key={alertKey}>
+                                                <Stack sx={{ width: '100%' }} spacing={2}>
+                                                    <Alert variant="filled" severity="info">
+                                                        {alertMessage}
+                                                    </Alert>
+                                                </Stack>
+                                            </AlertContainer>
+                                        )}
+                                    </Container>
+                                </AppGrid>
                             )}
                         </WebSocketProvider>
                     </UbicacionProvider>
                 </ThemeProvider>
             </ThemeContext.Provider>
+            </ModalContext.Provider>
         </AuthProvider>
     );
 }
 
 // --- ESTILOS ---
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1001; 
+  background: rgba(0, 0, 0, 0.1);
+`;
+
+const AppGrid = styled.div`
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows:1fr; 
+    background: ${({ theme }) => theme.bgtotal};
+    position: relative;
+    overflow: hidden;
+`;
+
+const slideInRight = keyframes`from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}`;
+const slideOutLeft = keyframes`from {transform: translateX(0);opacity: 1;} to {transform: translateX(-100%);opacity: 0;}`;
+
+const AlertContainer = styled.div`
+    position: fixed;
+    top: 20px;
+    right: 70px;
+    z-index: 1000;
+    width: auto;
+    max-width: 300px;
+    animation: ${slideInRight} 0.5s ease-in-out, ${slideOutLeft} 0.5s ease-in-out 3s;
+`;
+
+const Container = styled.main`
+    display: grid;
+    grid-template-columns: 1fr 55px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.3s ease-in-out;
+
+    .mapaView, .ContentSidebar {
+        height: 100%;
+    }
+    .mapaView {
+        grid-column: 1;
+    }
+    .ContentSidebar {
+        grid-column: 2;
+    }
+
+    .ContentNotifi {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 420px;
+        height: 100%;
+        box-shadow: -10px 0 20px -10px rgba(0,0,0,0.2);
+        z-index: 1002; 
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+  }
+
+  &.notifi-active {
+    .ContentNotifi {
+      transform: translateX(0);
+    }
+  }
+`;
 
 const HamburgerButton = styled.button`
     position: fixed;
@@ -201,34 +314,6 @@ const HamburgerButton = styled.button`
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 `;
 
-const VehicleListButton = styled.button`
-    position: fixed;
-    top: 50%;
-    left: 0;
-    /* CAMBIO: Se combina la transformación vertical con la horizontal para la animación */
-    transform: ${(props) => (props.$isOpen ? 'translateY(-50%) translateX(-100%)' : 'translateY(-50%) translateX(0)')};
-    opacity: ${(props) => (props.$isOpen ? 0 : 1)};
-    pointer-events: ${(props) => (props.$isOpen ? 'none' : 'auto')};
-    
-    z-index: 1000;
-    background: #ffffff;
-    color: #333333;
-    border: 1px solid #dddddd;
-    border-radius: 0 8px 8px 0;
-    width: 40px;
-    height: 45px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    font-size: 22px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-left: none;
-    
-    /* CAMBIO: Se añade la transición para la animación */
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-`;
-
 
 const Backdrop = styled.div`
     position: fixed;
@@ -238,49 +323,6 @@ const Backdrop = styled.div`
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
-`;
-
-const slideOutLeft = keyframes`from {transform: translateX(0);opacity: 1;} to {transform: translateX(-100%);opacity: 0;}`;
-const slideInRight = keyframes`from {transform: translateX(100%);opacity: 0;} to {transform: translateX(0);opacity: 1;}`;
-
-const AppGrid = styled.div`
-    width: 100vw;
-    height: 100vh;
-    min-height: 100vh;
-    display: grid;
-    grid-template-rows:1fr; 
-    background: ${({ theme }) => theme.bgtotal};
-`;
-
-const AlertContainer = styled.div`
-    position: fixed;
-    top: 20px;
-    right: 70px;
-    z-index: 1000;
-    width: auto;
-    max-width: 300px;
-    animation: ${slideInRight} 0.5s ease-in-out, ${slideOutLeft} 0.5s ease-in-out 3s;
-`;
-
-const Container = styled.main`
-    display: grid;
-    grid-template-columns: 1fr 55px;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    background-color: ${({ theme }) => theme.bgtotal};
-
-    .mapaView, .ContentSidebar {
-        height: 100%;
-        min-height: 0;
-    }
-    .mapaView {
-        grid-column: 1;
-        overflow-y: auto;
-    }
-    .ContentSidebar {
-        grid-column: 2;
-    }
 `;
 
 export default App;

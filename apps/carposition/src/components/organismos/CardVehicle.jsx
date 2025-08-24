@@ -1,16 +1,17 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 import Car from "../../assets/Car.svg";
 import { calculateDateDifference } from "../../utilities/Functions";
 
-export function VehicleCard({ name, status, updated, driver, onClick }) {
+export function VehicleCard({ name, status, updated, driver, onClick, isSelected }) {
   let formato_actualizado = calculateDateDifference(updated);
 
   return (
-    <CardContainer onClick={onClick}>
+    <CardContainer onClick={onClick} $isSelected={isSelected}>
       <CardTop>
-        <Checkbox type="checkbox" onClick={(e) => e.stopPropagation()} />
+        {/* El checkbox se sincroniza con el estado de selección de la tarjeta */}
+        <Checkbox type="checkbox" onClick={(e) => e.stopPropagation()} checked={isSelected} readOnly />
         <CarIconContainer>
           <img
             src={Car}
@@ -39,12 +40,28 @@ const CardContainer = styled.div`
   gap: 0;
   width: 100%;
   position: relative;
-  transition: background-color 0.18s, box-shadow 0.18s;
+  transition: background-color 0.18s, border-color 0.18s;
   user-select: none;
+  cursor: pointer;
 
+  /* Estilo hover para tarjetas NO seleccionadas */
   &:hover {
     background-color: #F8F9FA;
   }
+
+  /* --- CAMBIOS APLICADOS --- */
+  /* Estilos para tarjetas SI seleccionadas */
+  ${(props) =>
+    props.$isSelected &&
+    css`
+      background-color: #e0f2e9; /* Verde para seleccionado */
+      border-bottom-color: #b3e0c7; /* Borde verde para destacar */
+      
+      /* Estilo hover para tarjetas SI seleccionadas */
+      &:hover {
+        background-color: #cce9d9; /* Verde más claro para hover en seleccionado */
+      }
+    `}
 `;
 
 const CardTop = styled.div`
@@ -54,7 +71,7 @@ const CardTop = styled.div`
   padding: 5px 10px;
 `;
 
-// --- ESTILOS DEL CHECKBOX MEJORADOS ---
+// --- ESTILOS DEL CHECKBOX ---
 const Checkbox = styled.input`
   /* Reseteo de estilos */
   appearance: none;
@@ -75,14 +92,12 @@ const Checkbox = styled.input`
     border-color: #adb5bd;
   }
 
-  /* Estilo cuando está seleccionado (CHECKED) */
+  /* El checkbox solo se marca cuando la tarjeta está seleccionada */
   &:checked {
-    /* CAMBIO: Color verde */
     background-color: #28a745;
     border-color: #28a745;
   }
 
-  /* La marca de verificación (palomita) */
   &::after {
     content: '';
     position: absolute;
@@ -93,13 +108,11 @@ const Checkbox = styled.input`
     border: solid white;
     border-width: 0 2.5px 2.5px 0;
     
-    /* CAMBIO: Animación de entrada (por defecto está oculta) */
     transform: rotate(45deg) scale(0);
     opacity: 0;
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
   }
 
-  /* CAMBIO: Animación de salida (se muestra cuando está 'checked') */
   &:checked::after {
     transform: rotate(45deg) scale(1);
     opacity: 1;

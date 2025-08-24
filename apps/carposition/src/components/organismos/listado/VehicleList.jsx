@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React, { useState } from "react";
+import styled from "styled-components";
 import { FaTimes, FaSearch, FaFilter } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
 
@@ -10,16 +10,15 @@ import { getLast5Routes } from '@mi-monorepo/common/services';
 import { setVehicleRoute, addSelectedVehicle } from '@mi-monorepo/common/store/vehicle';
 import { useDispatch } from 'react-redux';
 
-// Datos de ejemplo actualizados para incluir la propiedad 'updated'.
 const dummyVehicles = [
     { id: 1, name: 'Unidad #1', driver: 'Juan Pérez', status: 'En movimiento', updated: 'Hace 1 min' },
     { id: 2, name: 'Unidad #2', driver: 'Ana García', status: 'Detenido', updated: 'Hace 5 min' },
     { id: 3, name: 'Unidad #3', driver: 'Luis Martínez', status: 'Sin conexión', updated: 'Hace 1 hora' },
     { id: 4, name: 'Unidad #4', driver: 'Sofía López', status: 'En movimiento', updated: 'Ahora mismo' },
     { id: 5, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 6, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 7, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 8, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
+    { id: 6, name: 'Unidad #6', driver: 'Laura Gómez', status: 'En taller', updated: 'Hace 3 días' },
+    { id: 7, name: 'Unidad #7', driver: 'Pedro Sanchez', status: 'En taller', updated: 'Hace 3 días' },
+    { id: 8, name: 'Unidad #8', driver: 'Maria Lopez', status: 'En taller', updated: 'Hace 3 días' },
 ];
 
 export function VehicleList({ isOpen, onClose }) {
@@ -27,6 +26,7 @@ export function VehicleList({ isOpen, onClose }) {
     const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
     const dispatch = useDispatch();
     const token = useSelector((state) => state.auth?.token);
+    const [activeVehicleId, setActiveVehicleId] = useState(null);
 
     const filteredVehicles = vehicles.filter(vehicle =>
         vehicle.info.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,6 +60,10 @@ export function VehicleList({ isOpen, onClose }) {
                     console.error("❌ Error al obtener las últimas 5 rutas:", last5Routes);
                 }
             }
+
+            setActiveVehicleId(activeVehicleId === vehicle.id ? null : vehicle.id);
+            // Notifica al componente App sobre el cambio de selección
+            onVehicleSelect(vehicle.id);
     
             // Después de asegurarnos de que la ruta está actualizada, seleccionamos el vehículo
             dispatch(addSelectedVehicle(vehicle));
@@ -104,6 +108,7 @@ export function VehicleList({ isOpen, onClose }) {
                         onClick={() => {
                             handleCardClick(vehicle);
                         }}
+                        isSelected={vehicle.id === activeVehicleId}
                     />
                 ))}
             </List>
@@ -111,15 +116,12 @@ export function VehicleList({ isOpen, onClose }) {
     );
 }
 
-// --- Estilos ---
-
 const VehicleListContainer = styled.div`
     position: fixed;
     top: 100px;
     left: 15px;
     width: 320px;
     height: calc(100vh - 200px);
-    /* CAMBIO: Se añade una altura mínima para evitar que sea demasiado pequeña */
     min-height: 300px; 
     
     background: #ffffff;
@@ -137,7 +139,7 @@ const VehicleListContainer = styled.div`
         left: 10px;
         top: 15px;
         height: calc(100vh - 30px);
-        min-height: 0; /* En móvil no necesitamos altura mínima, que ocupe todo */
+        min-height: 0;
     }
 `;
 

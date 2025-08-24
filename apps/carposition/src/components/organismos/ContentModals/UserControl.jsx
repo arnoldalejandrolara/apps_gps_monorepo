@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import  { styled } from 'styled-components';
+import React, { useState } from 'react';
+import { styled } from 'styled-components';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
-import { keyframes } from 'styled-components';
-import { CustomSelect } from '../formularios/CustomSelect';
+
+// Importa el nuevo componente UserForm
+import { UserForm } from '../formularios/UserForm';
 
 // --- Datos de Ejemplo ---
 const dummyUsers = [
@@ -16,87 +17,6 @@ const dummyUsers = [
     { id: 8, name: 'Elena Gómez', email: 'elena.g@example.com', role: 'Miembro', status: 'Activo' },
     { id: 9, name: 'David Torres', email: 'david.t@example.com', role: 'Admin', status: 'Activo' },
 ];
-
-// --- Componente del Formulario ---
-function UserForm({ user, onSave }) {
-    const [formData, setFormData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        role: user?.role || 'Miembro',
-        password: '',
-        confirmPassword: '',
-    });
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        if (!user && formData.password !== formData.confirmPassword) {
-            alert("Las contraseñas no coinciden. Por favor, inténtalo de nuevo.");
-            return;
-        }
-
-        const userDataToSave = { ...user, ...formData };
-        delete userDataToSave.password;
-        delete userDataToSave.confirmPassword;
-
-        onSave(userDataToSave);
-    };
-
-    const rolesDeUsuario = [
-        { value: 'owner', label: 'Owner' },
-        { value: 'admin', label: 'Administrator' },
-        { value: 'dev', label: 'Developer' },
-        { value: 'viewer', label: 'Viewer' }
-    ];
-
-    const [rolSeleccionado, setRolSeleccionado] = useState('dev');
-
-    return (
-        <Form onSubmit={handleSubmit}>
-            <FormGroup>
-                <Label>Nombre Completo</Label>
-                <Input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Ej. Juan Pérez" required />
-            </FormGroup>
-            <FormGroup>
-                <Label>Correo Electrónico</Label>
-                <Input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="ejemplo@correo.com" required />
-            </FormGroup>
-            <FormGroup>
-                
-                <CustomSelect
-                label="Rol"
-                options={rolesDeUsuario}
-                value={rolSeleccionado}
-                onChange={setRolSeleccionado}
-            />
-
-            </FormGroup>
-
-            {!user && (
-                <>
-                    <FormGroup>
-                        <Label>Contraseña</Label>
-                        <Input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" required />
-                    </FormGroup>
-                    <FormGroup>
-                        <Label>Confirmar Contraseña</Label>
-                        <Input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="••••••••" required />
-                    </FormGroup>
-                </>
-            )}
-
-            <FormActions>
-                <SaveButton type="submit">Guardar</SaveButton>
-            </FormActions>
-        </Form>
-    );
-}
-
 
 // --- Componente Principal ---
 export function UserControlComponent() {
@@ -183,6 +103,7 @@ export function UserControlComponent() {
                             Regresar
                         </BackButton>
                     </FormHeader>
+                    {/* Renderiza el componente importado */}
                     <UserForm 
                         user={editingUser} 
                         onSave={handleSaveUser}
@@ -195,7 +116,6 @@ export function UserControlComponent() {
 
 
 // --- Estilos Modernos y Responsivos ---
-
 const ComponentWrapper = styled.div`
     padding: 25px; 
     background-color: #F8F9FA; 
@@ -203,20 +123,16 @@ const ComponentWrapper = styled.div`
     height: 100%; 
     display: flex; 
     flex-direction: column;
-    position: relative; // Necesario para el contexto de posicionamiento
-    overflow: hidden; // Clave para que la animación funcione sin scrollbars
+    position: relative;
+    overflow: hidden;
     @media (max-width: 768px) { padding: 15px; }
 `;
-
-// Contenedor para las vistas animadas
 const ContentArea = styled.div`
     position: relative;
     flex-grow: 1;
     width: 100%;
     height: 100%;
 `;
-
-// Componente base para las vistas que se animarán
 const AnimatedView = styled.div`
     position: absolute;
     top: 0;
@@ -226,14 +142,10 @@ const AnimatedView = styled.div`
     display: flex;
     flex-direction: column;
     transition: transform 0.4s ease-in-out;
-    // Lógica de la animación:
-    // Si la vista no está activa, se mueve fuera de la pantalla.
-    // La dirección determina si se va a la izquierda (-100vw) o a la derecha (100vw).
     transform: translateX(${({ $isActive, $direction }) => 
         $isActive ? '0%' : ($direction === 'left' ? '-100vw' : '100vw')
     });
 `;
-
 const Header = styled.div`
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 20px; flex-wrap: wrap; flex-shrink: 0; 
@@ -266,7 +178,6 @@ const CreateButton = styled.button`
 const UserList = styled.div`
     flex-grow: 1; overflow-y: auto; height: 100%; 
 `;
-
 const UserCard = styled.div`
     display: flex; align-items: center; background: #FFFFFF; padding: 12px;
     border-radius: 8px; border: 1px solid #E9ECEF; margin-bottom: 10px;
@@ -302,7 +213,6 @@ const IconButton = styled.button`
     cursor: pointer; padding: 5px; transition: color 0.2s ease;
     &:hover { color: #007BFF; }
 `;
-
 const FormHeader = styled.div`
     display: flex; align-items: center; justify-content: space-between;
     padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #DEE2E6;
@@ -313,39 +223,4 @@ const BackButton = styled.button`
     border-radius: 6px; padding: 8px 15px; font-size: 13px; font-weight: 500;
     cursor: pointer; display: flex; align-items: center; transition: all 0.2s ease;
     &:hover { background-color: #E9ECEF; }
-`;
-const FormGroup = styled.div`margin-bottom: 0;`;
-const Label = styled.label`
-    display: block; margin-bottom: 8px; font-size: 13px;
-    font-weight: 500; color: #495057;
-`;
-const Input = styled.input`
-    width: 100%;
-    height: 35px;
-    padding: 10px; border: 1px solid #CED4DA;
-    border-radius: 6px; font-size: 13px;
-    &:focus { outline: none; border-color: #007BFF; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
-`;
-
-const SaveButton = styled.button`
-    background-color: #28a745; color: white; border: none; border-radius: 6px;
-    padding: 10px 20px; font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: background-color 0.2s ease;
-    &:hover { background-color: #218838; }
-`;
-
-const Form = styled.form`
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px 25px;
-`;
-
-const FormActions = styled.div`
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
 `;

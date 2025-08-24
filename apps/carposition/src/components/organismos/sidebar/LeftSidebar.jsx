@@ -12,16 +12,16 @@ const topMenuItems = [
 ];
 
 const mainMenuItems = [
-    { icon: <FaRoute />, label: 'Rutas', to: '/routes' },
+    // { icon: <FaRoute />, label: 'Rutas', to: '/routes' },
     { icon: <FaChartBar />, label: 'Reportes', to: '/reports' },
-    { icon: <FaMapPin />, label: 'Puntos de Interés', to: '/poi' },
-    { icon: <FaDrawPolygon />, label: 'Geocercas', to: '/geofences' },
-    { icon: <FaCalendarAlt />, label: 'Eventos', to: '/events' },
+    { icon: <FaMapPin />, label: 'Puntos de Interes', to: '/pdi' },
+    { icon: <FaDrawPolygon />, label: 'Geocercas', to: '/geocercas' },
     { icon: <FaUsers />, label: 'Cuentas Espejo', to: '/mirror-accounts' },
-    { icon: <FaTachometerAlt />, label: 'Dashboard', to: '/dashboard' },
-    { icon: <FaGasPump />, label: 'Dashboard Combustible', to: '/fuel-dashboard' },
-    { icon: <FaMapSigns />, label: 'Viajes', to: '/trips' },
-    { icon: <FaLayerGroup />, label: 'Grupos', to: '/groups' },
+    // { icon: <FaCalendarAlt />, label: 'Eventos', to: '/events' },
+    // { icon: <FaTachometerAlt />, label: 'Dashboard', to: '/dashboard' },
+    // { icon: <FaGasPump />, label: 'Dashboard Combustible', to: '/fuel-dashboard' },
+    // { icon: <FaMapSigns />, label: 'Viajes', to: '/trips' },
+    // { icon: <FaLayerGroup />, label: 'Grupos', to: '/groups' },
 ];
 
 export function LeftSidebar({ isOpen, onClose, onMenuItemClick }) {
@@ -68,7 +68,7 @@ const LeftSidebarContainer = styled.div`
     position: fixed;
     top: 0;
     left: 0;
-    width: 300px;
+    width: 340px;
     height: 100vh;
     background: #ffffff;
     color: #333333;
@@ -115,6 +115,7 @@ const MenuItem = styled.a`
     color: #333;
     transition: background-color 0.2s ease;
     &:hover { background-color: #f8f8f8; }
+    cursor: pointer;
 `;
 const MenuIcon = styled.span`
     margin-right: 15px;
