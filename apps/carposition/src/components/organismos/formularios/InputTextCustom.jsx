@@ -13,16 +13,17 @@ const LabelContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 5px;
+  padding-left: 10px;
 `;
 
 const Label = styled.label`
-  color: #B4B4B4;
-  font-size: 13px;
+  color: #555;
+  font-size: 14px;
   text-align: left;
 `;
 
 const ForgotPasswordLink = styled.a`
-  color: #898989;
+  color: #007bff;
   font-size: 12px;
   text-decoration: none;
   &:hover {
@@ -38,66 +39,48 @@ const InputWrapper = styled.div`
 
 const StyledInput = styled.input`
   width: 100%;
-  height: 38px;
-  padding: 10px 40px 10px 12px;
-  border: 1px solid #373737;
-  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
   outline: none;
   font-size: 14px;
-  background: #1D1D1D;
-  color: #fff;
-  transition: border-color 0.2s;
-  &::placeholder {
-    color: #373737;
-    font-size: 13px;
-    letter-spacing: 1px;
-  }
   &:focus {
-    border-color: #555;
-    background: #232323;
+    border-color: #888;
   }
 `;
 
-const PasswordIconWrapper = styled.div`
+const IconWrapper = styled.div`
   position: absolute;
   right: 10px;
-  color: #bbb;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  font-size: 20px;
 `;
 
 function CustomInput({ label, label_inside, type, icon, register, name, errors }) {
   const [showPassword, setShowPassword] = useState(false);
 
-  // Definir placeholder según el tipo
-  let placeholderValue = label_inside;
-  if (name === 'correo' || label.toLowerCase().includes('usuario')) {
-    placeholderValue = "user@example.com";
-  }
-  if (type === 'password') {
-    placeholderValue = "••••••••";
-  }
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <CustomInputContainer>
       <LabelContainer>
-        <Label>{label}</Label>
+        <Label>{label + ' *'}</Label>
         {type === 'password' && (
-          <ForgotPasswordLink href="#">¿Has olvidado tu contraseña?</ForgotPasswordLink>
+          <ForgotPasswordLink href="#">¿Olvidaste la contraseña?</ForgotPasswordLink>
         )}
       </LabelContainer>
       <InputWrapper>
+        {icon && <IconWrapper>{icon}</IconWrapper>}
         <StyledInput
           type={type === 'password' && showPassword ? 'text' : type}
-          placeholder={placeholderValue}
+          placeholder={label_inside}
           {...register(name, { required: true })}
         />
         {type === 'password' && (
-          <PasswordIconWrapper onClick={() => setShowPassword(s => !s)}>
+          <IconWrapper onClick={toggleShowPassword}>
             {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-          </PasswordIconWrapper>
+          </IconWrapper>
         )}
       </InputWrapper>
       {errors[name]?.type === 'required' && <p style={{fontSize : '13px' , color : 'red'}}>Campo requerido</p>}
