@@ -5,6 +5,8 @@ import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
 import { CuentasEspejoForm } from '../formularios/CuentasEspejoForm.jsx';
+import { useSelector } from 'react-redux';
+import { getCuentasEspejoTable } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
 export function CuentasEspejoControl({ initialView = 'table' }) {
@@ -18,29 +20,31 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     const [pageCount, setPageCount] = useState(Math.ceil(mockPagosData.length / 10));
     const [totalRows, setTotalRows] = useState(mockPagosData.length);
     // const [view, setView] = useState('table'); // Estado para controlar la vista
+    const token = useSelector(state => state.auth.token);
+    const [data, setData] = useState([]);
 
-    const data = React.useMemo(() => {
-        const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
-        const empresas = ['Wuckert Inc', 'Stark Industries', 'Wayne Enterprises', 'Daily Planet', 'Oscorp', 'Cyberdyne Systems', 'Tyrell Corporation', 'Umbrella Corp'];
-        const tipos = ['Content Creator', 'Admin', 'User', 'Moderator'];
-        const estados = ['Active', 'Banned', 'Pending', 'Suspended'];
+    // const data = React.useMemo(() => {
+    //     const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
+    //     const empresas = ['Wuckert Inc', 'Stark Industries', 'Wayne Enterprises', 'Daily Planet', 'Oscorp', 'Cyberdyne Systems', 'Tyrell Corporation', 'Umbrella Corp'];
+    //     const tipos = ['Content Creator', 'Admin', 'User', 'Moderator'];
+    //     const estados = ['Active', 'Banned', 'Pending', 'Suspended'];
     
-        return Array.from({ length: 20 }, (_, i) => {
-            const nombreCompleto = nombres[i % nombres.length];
-            const [primerNombre, apellido] = nombreCompleto.split(' ');
-            const email = `${primerNombre.toLowerCase()}${i}@yahoo.com`;
+    //     return Array.from({ length: 20 }, (_, i) => {
+    //         const nombreCompleto = nombres[i % nombres.length];
+    //         const [primerNombre, apellido] = nombreCompleto.split(' ');
+    //         const email = `${primerNombre.toLowerCase()}${i}@yahoo.com`;
     
-            return {
-                id: i + 1,
-                nombre: nombreCompleto,
-                email: email,
-                telefono: `+46 8 123 ${i + 1}`,
-                empresa: empresas[i % empresas.length],
-                tipo_usuario: tipos[i % tipos.length],
-                status: estados[i % estados.length],
-            };
-        });
-    }, []);
+    //         return {
+    //             id: i + 1,
+    //             nombre: nombreCompleto,
+    //             email: email,
+    //             telefono: `+46 8 123 ${i + 1}`,
+    //             empresa: empresas[i % empresas.length],
+    //             tipo_usuario: tipos[i % tipos.length],
+    //             status: estados[i % estados.length],
+    //         };
+    //     });
+    // }, []);
 
     useEffect(() => {
         const handleResize = () => {
@@ -61,6 +65,28 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     const handleBackClick = () => {
         setView('table');
     };
+
+    const handlePaginationChange = (updater) => {
+        const newPagination =
+            typeof updater === 'function' ? updater(pagination) : updater;
+        setPagination(newPagination);
+        fetchData(newPagination);
+    };
+
+    const fetchData = async (pagination) => {
+        const response = await getCuentasEspejoTable(token, pagination.pageIndex, pagination.pageSize, sorting, null, '');
+        setTotalRows(response.table.recordsTotal);
+        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+        setData(response.table.data);
+
+        console.log(response);
+    };
+
+    useEffect(() => {
+        if(token){
+            fetchData(pagination);
+        }
+    }, [token]);
 
     return (
         <ComponentWrapper>
@@ -100,11 +126,11 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                             ) : (
                                 <TableWrapper>
                                     <TablaPuntosInteres
-                                        type="pdi"
+                                        type="cuentas-espejo"
                                         data={data}
                                         isLoading={isLoading}
                                         pagination={pagination}
-                                        onPaginationChange={setPagination}
+                                        onPaginationChange={handlePaginationChange}
                                         sorting={sorting}
                                         onSortingChange={setSorting}
                                         pageCount={pageCount}

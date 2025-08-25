@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FaCheck, FaTimes, FaLock } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 // Importa los mismos archivos de sonido
 import successSoundFile from '../../../assets/sounds/done.mp3';
 import errorSoundFile from '../../../assets/sounds/error.mp3';
+import { sendComando } from '@mi-monorepo/common/services';
 
 // --- Animaciones ---
 const scanline = keyframes`
@@ -129,13 +131,27 @@ export function LockEngineModal({ onClose }) {
   const [status, setStatus] = useState('confirming'); // 'confirming', 'sending', 'success', 'error'
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
+  const selectedVehicles = useSelector(state => state.vehicle.selectedVehicles);
+  const token = useSelector(state => state.auth.token);
 
   useEffect(() => {
     let timer;
     if (status === 'sending') {
-      timer = setTimeout(() => {
-        const didSucceed = Math.random() < 0.4; // 90% de probabilidad de éxito
-        setStatus(didSucceed ? 'success' : 'error');
+      timer = setTimeout(async () => {
+        try {
+          const imei = selectedVehicles[0].imei;
+          if(!imei){
+            setStatus('error');
+            return;
+          }
+
+          const response = await sendComando(token, imei, 'bloqueo_motor');
+          const response_cmd = JSON.parse(response.response);
+          setStatus(response_cmd.type == 1 ? 'success' : 'error');
+        } catch (error) {
+          console.error(error);
+          setStatus('error');
+        }
       }, 4000); // 4 segundos para enviar comando
     }
     if (status === 'success') {

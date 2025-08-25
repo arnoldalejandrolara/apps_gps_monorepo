@@ -3,6 +3,7 @@ import styled from 'styled-components';
 // --- Iconos importados para las alertas ---
 import { IoCheckmarkDoneSharp, IoSettingsOutline } from 'react-icons/io5';
 import { FaTachometerAlt, FaKey, FaGasPump } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 // --- NUEVOS DATOS DE EJEMPLO PARA ALERTAS DE VEHÍCULOS ---
 const mockNotifications = [
@@ -55,22 +56,22 @@ const tabs = ['Todas', 'No Leídas'];
 
 // --- MAPA DE ICONOS Y TEXTOS PARA CADA TIPO DE ALERTA ---
 const alertConfig = {
-  speeding: {
+  'speed': {
     icon: <FaTachometerAlt />,
     text: 'excedió el límite de velocidad.',
     color: '#DC3545', // Rojo
   },
-  ignition_on: {
+  'acc on': {
     icon: <FaKey />,
     text: 'ha encendido el motor.',
-    color: '#6C757D', // Gris
+    color: '#28A745', // Verde
   },
-  ignition_off: {
+  'acc off': {
     icon: <FaKey />,
     text: 'ha apagado el motor.',
     color: '#6C757D', // Gris
   },
-  low_fuel: {
+  'fuel low': {
     icon: <FaGasPump />,
     text: 'tiene un nivel de combustible bajo.',
     color: '#FD7E14', // Naranja
@@ -81,7 +82,7 @@ const alertConfig = {
 // --- COMPONENTE PRINCIPAL ---
 export const Notificaciones = () => {
   const [activeTab, setActiveTab] = useState('Todas');
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const notifications = useSelector(state => state.notification.notifications_list);
 
   const getFilteredNotifications = () => {
     if (activeTab === 'No Leídas') {
@@ -117,28 +118,28 @@ export const Notificaciones = () => {
 
       <NotificationList>
         {filteredNotifications.map(notification => {
-          const config = alertConfig[notification.type];
+          const config = alertConfig[notification.alerta_codigo];
           return (
-            <NotificationItem key={notification.id} $isNew={notification.isNew}>
+            <NotificationItem key={notification.id} $isNew={notification.is_new}>
               <NotificationIcon color={config.color}>{config.icon}</NotificationIcon>
               <NotificationContent>
                 <p>
-                  <strong>{notification.vehicleName}</strong>{' '}
+                  <strong>{notification.unidad_nombre}</strong>{' '}
                   {config.text}
                 </p>
                 <Metadata>
-                  {notification.timestamp.toLocaleDateString()} - {notification.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(notification.fecha).toLocaleDateString()} - {new Date(notification.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Metadata>
                 
                 {/* --- RENDERIZADO DE DETALLES ADICIONALES --- */}
                 <DetailsContainer>
-                    {notification.details.location && <span><strong>Ubicación:</strong> {notification.details.location}</span>}
-                    {notification.details.speed && <span><strong>Velocidad:</strong> {notification.details.speed} (Límite: {notification.details.limit})</span>}
-                    {notification.details.level && <span><strong>Nivel:</strong> {notification.details.level} ({notification.details.range})</span>}
+                    {notification.location.x && <span><strong>Ubicación:</strong> {notification.location.x}, {notification.location.y}</span>}
+                    {notification.velocidad && <span><strong>Velocidad:</strong> {notification.velocidad} (Límite: {notification.velocidad_limite})</span>}
+                    {notification.nivel_combustible && <span><strong>Nivel:</strong> {notification.nivel_combustible} ({notification.nivel_combustible_rango})</span>}
                 </DetailsContainer>
 
               </NotificationContent>
-              {notification.isNew && <NewIndicator />}
+              {notification.is_new && <NewIndicator />}
             </NotificationItem>
           )
         })}

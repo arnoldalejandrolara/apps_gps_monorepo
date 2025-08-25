@@ -42,6 +42,7 @@ export {
     getProtectedData,
     getLast5Routes,
     sendComando,
+    goStreetView,
     configureApi,
     getApiUrl,
     getCommonHeaders,

@@ -13,6 +13,7 @@ import { SidebarListaCar } from "../organismos/sidebar/SidebarListaCar.jsx";
 import { OSMMap } from "../organismos/OSMMap.jsx";
 import { OSMMapSimple } from "../organismos/OSMMapSimple.jsx";
 import { OSMMapVanilla } from "../organismos/OSMMapVanilla.jsx";
+import { MapboxMap } from "../organismos/MapboxMap.jsx";
 import { MapTypeSelector } from "../atomos/MapTypeSelector.jsx";
 import "../../styled-components/sweetAlert.css";
 import { useCommandDialog } from "../../utilities/useCommandDialog.jsx";
@@ -39,7 +40,7 @@ export function HomeTemplate() {
     const [alertMessage, setAlertMessage] = useState("");
     const [alertSeverity, setAlertSeverity] = useState("success");
     const [alertKey, setAlertKey] = useState(0);
-    const [mapType, setMapType] = useState("osm"); // "google" o "osm"
+    const [mapType, setMapType] = useState("mapbox"); // "google" o "osm"
 
     const showCommandDialog = useCommandDialog({ setAlertMessage, setAlertSeverity });
 
@@ -245,6 +246,13 @@ export function HomeTemplate() {
                                 />
                             </DeckGL>
                         </APIProvider>
+                    ) : mapType === "mapbox" ? (
+                        <MapboxMap
+                            viewState={viewState}
+                            onViewStateChange={(params) => setViewState(params.viewState)}
+                            vehicles={vehicles}
+                            selectedVehicles={selectedVehicles}
+                        />
                     ) : (
                         <OSMMapVanilla
                             viewState={viewState}

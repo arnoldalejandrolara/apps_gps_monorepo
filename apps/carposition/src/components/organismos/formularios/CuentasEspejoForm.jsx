@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FormInput } from './FormInput'; // Asegúrate de tener este componente creado
 import { CustomSelect } from './CustomSelect'; // Asegúrate de tener este componente creado
+import { useSelector } from 'react-redux';
 
 // --- ESTILOS ---
 
@@ -247,6 +248,8 @@ const OptionBoxCheckbox = styled.input`
 
 export function CuentasEspejoForm({ onBack }) {
   const [currentStep, setCurrentStep] = useState(1);
+  const vehicles = useSelector(state => state.vehicle.vehicles);
+
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -272,11 +275,11 @@ export function CuentasEspejoForm({ onBack }) {
 
   const steps = ['Datos principales', 'Medio de envío', 'Confirmación'];
 
-  const unidades = [
-    { id: 1, name: 'Unidad 1 - Tsuru', value: 'unidad1' },
-    { id: 2, name: 'Unidad 2 - Versa', value: 'unidad2' },
-    { id: 3, name: 'Unidad 3 - Camioneta', value: 'unidad3' }
-  ];
+  const unidades = vehicles.map(vehicle => ({
+    id: vehicle.id,
+    name: vehicle.info.nombre_corto,
+    value: vehicle.id
+  }));
 
   const [selectUnidad, setSelectUnidad] = useState('');
 
@@ -317,7 +320,7 @@ export function CuentasEspejoForm({ onBack }) {
                 <FormGroup>
                   <CustomSelect
                       showSearch={true}
-                      label="Unidades"
+                      label="Unidades" 
                       options={unidades}
                       value={selectUnidad}
                       onChange={setSelectUnidad}

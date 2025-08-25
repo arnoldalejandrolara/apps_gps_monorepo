@@ -98,7 +98,7 @@ const formatDate = (dateString) => {
   }
 };
 
-const columnsPdi = [
+const columnsCuentasEspejo = [
   {
     header: ({ table }) => (
       <CheckboxContainer>
@@ -132,11 +132,11 @@ const columnsPdi = [
     ),
   },
   {
-    header: 'Fecha de creación',
-    accessorKey: 'fecha_creacion',
+    header: 'Fecha de expiración',
+    accessorKey: 'fecha_expiracion',
     cell: ({ row }) => (
       <StyledTextCell>
-        <div>{row.original.telefono}</div>
+        <div>{row.original.fecha_expiracion ? new Date(row.original.fecha_expiracion).toLocaleDateString() : ''}</div>
       </StyledTextCell>
     ),
   },
@@ -145,16 +145,16 @@ const columnsPdi = [
     accessorKey: 'empresa',
     cell: ({ row }) => (
       <StyledTextCell>
-        <div>{row.original.empresa}</div>
+        <div>{row.original.cliente}</div>
       </StyledTextCell>
     ),
   },
   {
-    header: 'Tipo',
-    accessorKey: 'tipo',
+    header: 'Unidades',
+    accessorKey: 'unidades',
     cell: ({ row }) => (
       <StyledTextCell>
-        <div>{row.original.tipo_usuario}</div>
+        <div>{row.original.unidades}</div>
       </StyledTextCell>
     ),
   },
@@ -162,8 +162,8 @@ const columnsPdi = [
     header: 'Status',
     accessorKey: 'status',
     cell: ({ row }) => (
-      <StyledStatusCell status={row.original.status}>
-        {row.original.status}
+      <StyledStatusCell status={row.original.libre ? 'Active' : ''}>
+        {row.original.libre ? 'Acceso Libre' : ''}
       </StyledStatusCell>
     ),
   },
@@ -217,8 +217,8 @@ export function TablaPuntosInteres({
     case 'dispositivo':
       columns = null;
       break;
-    case 'pdi':
-      columns = columnsPdi;
+    case 'cuentas-espejo':
+      columns = columnsCuentasEspejo;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);

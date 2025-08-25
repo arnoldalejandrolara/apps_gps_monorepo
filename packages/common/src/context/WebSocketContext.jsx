@@ -84,7 +84,7 @@ export const WebSocketProvider = ({ children }) => {
                             const vehicleObject = {
                                 id: vehicle.id,
                                 route: vehicle.historial_coordenadas == null ? [] : [
-                                    [vehicle.historial_coordenadas.y, vehicle.historial_coordenadas.x]
+                                    [vehicle.historial_coordenadas.x, vehicle.historial_coordenadas.y]
                                 ],
                                 posicion_actual: {
                                     id_alerta: vehicle.historial_alerta_id,
@@ -102,8 +102,8 @@ export const WebSocketProvider = ({ children }) => {
                                     temperatura: vehicle.historial_temperatura,
                                     voltaje_principal: vehicle.historial_voltaje_principal,
                                     voltaje_respaldo: vehicle.historial_voltaje_respaldo,
-                                    lat: vehicle.historial_coordenadas?.y,
-                                    lng: vehicle.historial_coordenadas?.x,
+                                    lat: vehicle.historial_coordenadas?.x,
+                                    lng: vehicle.historial_coordenadas?.y,
                                 },
                                 imei: vehicle.imei,
                                 status: vehicle.status,

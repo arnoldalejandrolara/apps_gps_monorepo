@@ -3,7 +3,6 @@ import { createContext, useState, useEffect } from 'react';
 import { Login } from './pages/Login';
 import { Sidebar } from './components/organismos/sidebar/Sidebar';
 import { AppRouter } from '@mi-monorepo/common/routers';
-import { AuthProvider } from './context/AuthContext';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import Map from 'react-map-gl/mapbox';
@@ -18,6 +17,7 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import { WebSocketProvider } from '@mi-monorepo/common/context';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import { Notificaciones } from './components/organismos/sidebar/Notificaciones.jsx';
 import { useSelector, useDispatch } from 'react-redux';
 import { removeNotification } from '@mi-monorepo/common/store/notification';
 import { HomeTemplate } from './components/templates/HomeTemplate.jsx';
@@ -38,7 +38,6 @@ import { CuentasEspejoControl } from './components/organismos/ContentModals/Cuen
 // --- 1. IMPORTA EL NUEVO COMPONENTE ---
 import { FloatingActionButtons } from './components/organismos/ButtomComands/FloatingActionsButton.jsx';
 import { VehicleListButton } from './components/organismos/ButtomComands/VehicleListButton.jsx';
-
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
@@ -185,14 +184,7 @@ function App() {
                                         {notifiOpen && <Overlay onClick={() => setNotifiOpen(false)} />}
 
                                         <section className="mapaView">
-                                            <Map
-                                                {...viewState}
-                                                onMove={evt => setViewState(evt.viewState)}
-                                                style={{ width: '100%', height: '100%' }}
-                                                mapStyle="mapbox://styles/mapbox/standard"
-                                                mapboxAccessToken={MAPBOX_TOKEN}
-                                                terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
-                                            />
+                                            <HomeTemplate />
                                         </section>
                                         <section className="ContentSidebar">
                                             <Sidebar {...sidebarProps} />

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FaCheck, FaTimes } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 // Importa tu archivo de sonido local
 import successSoundFile from '../../../assets/sounds/done.mp3';
 import errorSoundFile from '../../../assets/sounds/error.mp3'; // Opcional: un sonido para el error
+import { sendComando } from '@mi-monorepo/common/services';
 
 // --- Animaciones ---
 const pulseGreenIntense = keyframes`
@@ -156,14 +158,34 @@ export function UpdateLocationModal({ onClose }) {
   const [status, setStatus] = useState('confirming');
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
+  const selectedVehicles = useSelector(state => state.vehicle.selectedVehicles);
+  const token = useSelector(state => state.auth.token);
 
   useEffect(() => {
     let timer;
     if (status === 'updating') {
-      timer = setTimeout(() => {
-        const didSucceed = Math.random() < 0.4;
-        setStatus(didSucceed ? 'success' : 'error');
-      }, 7000);
+      timer = setTimeout(async () => {
+        try {
+          const imei = selectedVehicles[0].imei;
+
+          if(!imei){
+            setStatus('error');
+            return;
+          }
+
+          const response = await sendComando(token, imei, 'posicion');
+          const response_cmd = JSON.parse(response.response);
+
+          if(response_cmd.type == 1){
+            setStatus('success');
+          } else {
+            setStatus('error');
+          }
+        } catch (error) {
+          console.error(error);
+          setStatus('error');
+        }
+      }, 4000);
     }
     // Auto-cierre para el estado de éxito
     if (status === 'success') {

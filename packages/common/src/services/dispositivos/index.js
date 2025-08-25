@@ -17,3 +17,8 @@ export async function sendComando(token, imei, comando) {
 
     return await handleApiResponse(res, 'Error al enviar el comando');
 }
+
+export async function goStreetView(latitude, longitude) {
+    // go to google maps street view with new URL format
+    window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`, '_blank');
+}

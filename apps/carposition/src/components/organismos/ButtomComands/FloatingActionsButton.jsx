@@ -8,6 +8,9 @@ import { LockEngineModal } from '../ContentModals/CmdLockEngine';
 import { UnlockEngineModal } from '../ContentModals/CmdUnlockEngine';
 import { ShareLocationModal } from '../ContentModals/ShareLocationModal'; // Asegúrate de que este componente exista
 import { RouteDay } from '../ContentModals/RouteDay.jsx'; // Asegúrate de que este componente exista
+import { goStreetView } from '@mi-monorepo/common/services';
+import { useSelector } from 'react-redux';
+
 // --- Estilos del componente (sin cambios) ---
 const AnimatedButtonContainer = styled.div`
     position: fixed;
@@ -57,15 +60,16 @@ const AnimatedButton = styled.button`
 
 export function FloatingActionButtons({ isVisible }) {
     const { openModal , closeModal } = useModal();
+    const selectedVehicles = useSelector(state => state.vehicle.selectedVehicles);
 
     // --- 2. ACTUALIZA LA FUNCIÓN handleUpdate ---
     const handleUpdate = () => {
         // Llama a openModal con el nuevo componente
-        openModal(<UpdateLocationModal />, 'Actualizar Ubicación', 'small');
+        openModal(<UpdateLocationModal onClose={closeModal} />, 'Actualizar Ubicación', 'small');
     };
     
     const handleLock = () => {
-        openModal(<LockEngineModal />, 'Bloquear Motor', 'small');
+        openModal(<LockEngineModal onClose={closeModal} />, 'Bloquear Motor', 'small');
     };
 
     const handleUnlock = () => {
@@ -93,6 +97,12 @@ export function FloatingActionButtons({ isVisible }) {
         );
     };
 
+    const handleStreetView = () => {
+        const latitude = selectedVehicles[0].posicion_actual.lat;
+        const longitude = selectedVehicles[0].posicion_actual.lng;
+        goStreetView(latitude, longitude);
+    };
+
     return (
         <AnimatedButtonContainer $isVisible={isVisible}>
             <AnimatedButton onClick={handleUpdate}>
@@ -115,7 +125,7 @@ export function FloatingActionButtons({ isVisible }) {
                 <FaRoute />
                 <span>Recorrido</span>
             </AnimatedButton>
-            <AnimatedButton onClick={() => openModal(<p>Contenido de Street View.</p>, 'Vista de Calle')}>
+            <AnimatedButton onClick={handleStreetView}>
                 <FaStreetView />
                 <span>Street View</span>
             </AnimatedButton>

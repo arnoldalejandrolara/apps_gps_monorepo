@@ -21,7 +21,7 @@ const dummyVehicles = [
     { id: 8, name: 'Unidad #8', driver: 'Maria Lopez', status: 'En taller', updated: 'Hace 3 días' },
 ];
 
-export function VehicleList({ isOpen, onClose }) {
+export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
     const [searchTerm, setSearchTerm] = useState('');
     const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
     const dispatch = useDispatch();
@@ -46,7 +46,7 @@ export function VehicleList({ isOpen, onClose }) {
                 let last5Routes = await getLast5Routes(token, vehicle.imei);
     
                 if(last5Routes.status == 200){
-                    let coordinates = last5Routes.registros.map(registro => [registro.location.y, registro.location.x]).reverse();
+                    let coordinates = last5Routes.registros.map(registro => [registro.location.x, registro.location.y]).reverse();
                     // Actualizamos la ruta primero
                     await dispatch(setVehicleRoute({ id: vehicle.id, route: coordinates }));
                     // Esperamos un momento para asegurar que la actualización se complete

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { MapIcon, GlobeIcon } from 'lucide-react';
+import { MapIcon, GlobeIcon, LayersIcon } from 'lucide-react';
 
 const SelectorContainer = styled.div`
   position: absolute;
@@ -64,6 +64,16 @@ export function MapTypeSelector({ mapType, onMapTypeChange }) {
           <GlobeIcon size={16} />
         </IconWrapper>
         OpenStreetMap
+      </MapTypeButton>
+
+      <MapTypeButton
+        active={mapType === 'mapbox'}
+        onClick={() => onMapTypeChange('mapbox')}
+      >
+        <IconWrapper>
+          <LayersIcon size={16} />
+        </IconWrapper>
+        Mapbox
       </MapTypeButton>
     </SelectorContainer>
   );
