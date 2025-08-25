@@ -1,12 +1,8 @@
 import styled from "styled-components";
 import { Btnsave } from "../moleculas/Btnsave";
 import { v } from "../../utilities/variables";
-<<<<<<< HEAD
 import { loginService } from "@mi-monorepo/common/services";
-=======
 import { InputText } from "../organismos/formularios/InputText";
-import { loginService } from "../../services/AuthService.js";
->>>>>>> af598aa3 (modificaciones info card vehicle)
 import CustomInput from "../organismos/formularios/InputTextCustom";
 import Carousel from "../organismos/Carousel.jsx";
 import { FooterLogin } from "../organismos/FooterLogin";
@@ -15,14 +11,6 @@ import { Device } from "../../utilities/breakpoints";
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-<<<<<<< HEAD
-import bannerImg from "../../assets/img_roadmap.png";
-import logo from "../../assets/logo_atlasgo.png"; // tu icono
-import { FaWhatsapp } from "react-icons/fa";
-import { SiGmail } from "react-icons/si";
-import { useDispatch } from "react-redux";
-import { login } from '@mi-monorepo/common/store/auth';
-=======
 import carrito2 from "../../assets/car_modelo_2025.png";
 import carrito3 from "../../assets/truck_modelo_2025.png";
 import logo from "../../assets/inventarioslogo.png";
@@ -31,9 +19,8 @@ import { MdOutlineInfo } from "react-icons/md";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { useDispatch,useSelector } from "react-redux";
-import { login } from '../../store/slices/authSlice'; // Ajusta la ruta según tu estructura
->>>>>>> af598aa3 (modificaciones info card vehicle)
+import { useDispatch, useSelector } from "react-redux";
+import { login } from '@mi-monorepo/common/store/auth'; // Ajusta la ruta según tu estructura
 import { useMediaQuery } from 'react-responsive';
 import { useLocation } from 'react-router-dom';
 
