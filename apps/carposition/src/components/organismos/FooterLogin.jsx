@@ -1,90 +1,51 @@
 import styled from "styled-components";
-
+import { GiPadlock } from "react-icons/gi";
 export function FooterLogin() {
   return (
     <Container>
       <section className="lock">
+        <GiPadlock />
         <span>
-          Al continuar, acepta los{" "}
-          <a href="/terminos" target="_blank" rel="noopener noreferrer">
-            Términos de servicio
-          </a>{" "}
-          y la{" "}
-          <a href="/privacidad" target="_blank" rel="noopener noreferrer">
-            Política de privacidad
-          </a>
-          <br className="salto-desktop" />
-          de <b>Supabase</b> y recibir correos electrónicos periódicos con
-          <br className="salto-desktop" />
-          actualizaciones.
+          Esta es una página segura de CarPosition. Si tienes dudas sobre la
+          autenticidad de la web, comunícate con
+          nosotros al 311-9898 o a través de nuestros medios digitales.
         </span>
+      </section>
+      <section className="derechos">
+        <span>CarPostion S.A - RUC: 20100047218</span>
+        <div className="separador"></div>
+        <span>Todos los derechos reservados</span>
+        <div className="separador"></div>
+        <span>© 2025 CarPosition.com</span>
       </section>
     </Container>
   );
 }
-
 const Container = styled.div`
-  width: 100vw;
-  box-sizing: border-box;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0 0 12px 0;
-  
+  flex-direction: column;
+  font-size: 11px;
+  color: #91a4b7;
+  gap:5px;
   .lock {
-    width: 100%;
-    max-width: 600px;
+    border-bottom: 1px solid rgba(145, 164, 183,0.3);
+    gap:5px;
+    display:flex;
+    align-items:center;
+  }
+  .derechos {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 18px;
-    span {
-      text-align: center;
-      width: 100%;
-      font-size: 11px;
-      color: #91a4b7;
-      line-height: 1.6;
-      word-break: break-word;
-      a {
-        color: #91a4b7;
-        text-decoration: underline;
-        transition: color 0.2s;
-        &:hover {
-          color: #2f7352;
-        }
-      }
-      b {
-        color: #b4b4b4;
-        font-weight: 600;
-      }
-      .salto-desktop {
-        display: inline;
-      }
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 0 0 10px 0;
-    .lock {
-      max-width: 98vw;
-      padding: 0 6px;
-      span {
-        font-size: 10px;
-        text-align: justify;
-        .salto-desktop {
-          display: none;
-        }
-      }
-    }
-  }
-
-  @media (max-width: 480px) {
-    .lock {
-      max-width: 100vw;
-      padding: 0 2px;
-      span {
-        font-size: 9.5px;
-      }
+    justify-content: space-between;
+   .separador{
+    width:1px;
+    background-color:rgba(145, 164, 183,0.3);
+    margin-top:4px;
+    height:80%;
+    align-items:center;
+    display:flex;
+   }
+    span{
+      margin-top:5px;
     }
   }
 `;

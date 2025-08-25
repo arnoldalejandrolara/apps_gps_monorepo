@@ -38,10 +38,51 @@ import { CuentasEspejoControl } from './components/organismos/ContentModals/Cuen
 // --- 1. IMPORTA EL NUEVO COMPONENTE ---
 import { FloatingActionButtons } from './components/organismos/ButtomComands/FloatingActionsButton.jsx';
 import { VehicleListButton } from './components/organismos/ButtomComands/VehicleListButton.jsx';
+import { VehicleInfoCard } from './components/organismos/VehicleInfoCard.jsx';
+
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
+
+// 👇 2. DATOS DE EJEMPLO CON MÁS INFORMACIÓN
+const dummyVehicles = [
+    { 
+      id: 1, 
+      name: 'Torton Kenworth', 
+      driver: 'Juan Pérez', 
+      status: 'En movimiento', 
+      date: '24/08/2025 20:15',
+      ignition: true,
+      timeOn: '3h 45m',
+      speed: '65 km/h', 
+      address: 'Av. Hidalgo, Centro, Tampico',
+      orientation: 'Noroeste', // 👈 AÑADE ESTE CAMPO
+      fuel1: 85, // Porcentaje
+      fuel2: 92,
+      fuel3: 40,
+      coords: '22.216, -97.857',
+      voltage: 75 // Porcentaje para la barra
+    },
+    { 
+      id: 2, 
+      name: 'Nissan NP300', 
+      driver: 'Ana García', 
+      status: 'Detenido', 
+      date: '24/08/2025 19:58',
+      ignition: false,
+      timeOn: '8h 12m',
+      speed: '0 km/h', 
+      address: 'Blvd. Adolfo López Mateos, Cd. Madero',
+      orientation: 'Sur', // 👈 AÑADE ESTE CAMPO
+      fuel1: 70,
+      fuel2: 70,
+      fuel3: 0, // No tiene tercer tanque
+      coords: '22.245, -97.839',
+      voltage: 60
+    },
+    // ... puedes agregar más vehículos ...
+];
 
 function App() {
     const [themeuse, setTheme] = useState('dark');
@@ -123,7 +164,7 @@ function App() {
             case '/reports': setModalContent(<ReportsComponent />); setModalSize('large'); break;
             case '/pdi': setModalContent(<PuntosInteresControl />); setModalSize('large'); break;
             case '/geocercas': setModalContent(<GeoCercasControl />); setModalSize('large'); break;
-            case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('large'); break;
+            case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('extraMedium'); break;
             default: setModalContent(<p>Contenido para {item.label}</p>); setModalSize('small');
         }
         setIsModalOpen(true);
@@ -134,6 +175,11 @@ function App() {
     const handleVehicleSelect = (vehicleId) => {
         setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
     };
+
+      // 👇 3. ENCUENTRA LOS DATOS DEL VEHÍCULO SELECCIONADO
+      const selectedVehicleData = dummyVehicles.find(
+        (vehicle) => vehicle.id === selectedVehicleId
+    );
 
     return (
         <AuthProvider>
@@ -175,6 +221,13 @@ function App() {
                                         isOpen={vehicleListOpen} 
                                         onClose={() => setVehicleListOpen(false)} 
                                         onVehicleSelect={handleVehicleSelect} 
+                                    />
+
+                                      {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
+                                      <VehicleInfoCard
+                                        isVisible={!!selectedVehicleId}
+                                        vehicle={selectedVehicleData}
+                                        onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta
                                     />
                                     
                                     <FloatingActionButtons isVisible={!!selectedVehicleId} />

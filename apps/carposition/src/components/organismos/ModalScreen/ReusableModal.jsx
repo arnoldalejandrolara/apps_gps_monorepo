@@ -15,6 +15,12 @@ const sizeConfig = {
         height: '80vh',
         maxHeight: '700px',
     },
+    extraMedium: {
+        width: '90vw',
+        maxWidth: '1000px',
+        height: '91vh',
+        maxHeight: '900px',
+    },
     large: {
         width: '95vw',
         maxWidth: '1200px',

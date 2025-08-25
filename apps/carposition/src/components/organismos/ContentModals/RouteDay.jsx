@@ -12,6 +12,31 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0
 const arrowSvgString = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="24" viewBox="0 0 80 24"><polyline points="50 6, 56 12, 50 18" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
 const arrowSvgDataUrl = `data:image/svg+xml;base64,${btoa(arrowSvgString)}`;
 
+const CarSvgIcon = ({ bearing }) => (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 0.2s ease-in-out' }}
+    >
+      <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="rgba(0,0,0,0.5)" />
+        </filter>
+      </defs>
+      <g filter="url(#shadow)">
+        <path
+          d="M16 0 L30 30 L16 22 L2 30 Z"
+          fill="#007bff"
+          stroke="white"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </g>
+    </svg>
+  );
+
+  
 // --- Estilos ---
 const ComponentWrapper = styled.div`
   width: 100%;
@@ -110,6 +135,7 @@ export function RouteDay() {
 
   const [animatedRoute, setAnimatedRoute] = useState(null);
   const [carPosition, setCarPosition] = useState(null);
+  const [carBearing, setCarBearing] = useState(0); 
   const [isMapReady, setIsMapReady] = useState(false);
   const [isFollowing, setIsFollowing] = useState(true);
   
@@ -155,8 +181,14 @@ export function RouteDay() {
 
     let coordinateIndex = 0;
     animationIntervalRef.current = setInterval(() => {
-      if (coordinateIndex < route.length) {
+      if (coordinateIndex < route.length -1) { // -1 para no salirnos del array al buscar el siguiente punto
         const currentPos = route[coordinateIndex];
+        const nextPos = route[coordinateIndex + 1]; // Necesitamos el siguiente punto para calcular la dirección
+        
+        // --- 2. CÁLCULO DEL RUMBO ---
+        const bearing = turf.bearing(turf.point(currentPos), turf.point(nextPos));
+        setCarBearing(bearing);
+        
         setCarPosition(currentPos);
         const currentLine = { type: 'Feature', geometry: { type: 'LineString', coordinates: route.slice(0, coordinateIndex + 1) } };
         setAnimatedRoute(currentLine);
@@ -168,6 +200,8 @@ export function RouteDay() {
         coordinateIndex++;
       } else {
         clearInterval(animationIntervalRef.current);
+        // Opcional: Asegurarse de que el carro termine en la última posición
+        setCarPosition(route[route.length - 1]);
       }
     }, 50);
   };
@@ -229,8 +263,9 @@ export function RouteDay() {
               </Marker>
 
               {carPosition && (
+                 // --- 3. REEMPLAZO DEL MARCADOR ---
                  <Marker longitude={carPosition[0]} latitude={carPosition[1]} anchor="center">
-                   <CarIcon><FaCar size={16}/></CarIcon>
+                   <CarSvgIcon bearing={carBearing} />
                  </Marker>
               )}
             </>
