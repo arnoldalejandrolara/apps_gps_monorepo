@@ -158,7 +158,9 @@ export function UpdateLocationModal({ onClose }) {
   const [status, setStatus] = useState('confirming');
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
-  const selectedVehicles = useSelector(state => state.vehicle.selectedVehicles);
+  const selectedVehicles = useSelector(state => state.vehicle.selectedVehicles, (prev, next) => {
+    return JSON.stringify(prev) === JSON.stringify(next);
+  });
   const token = useSelector(state => state.auth.token);
 
   useEffect(() => {

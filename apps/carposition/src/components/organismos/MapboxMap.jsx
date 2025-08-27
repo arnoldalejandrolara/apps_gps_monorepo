@@ -8,7 +8,9 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiYXJub2xkYW
 
 export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehicles }) {
     const selectedVehiclesIds = useSelector((state) => 
-        state.vehicle?.selectedVehicles?.map(v => v.id) || []
+        state.vehicle?.selectedVehicles?.map(v => v.id) || [], (prev, next) => {
+            return JSON.stringify(prev) === JSON.stringify(next);
+        }
     );
     
     const animationRef = useRef(null);

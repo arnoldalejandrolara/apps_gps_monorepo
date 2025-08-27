@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setVehicles as setVehiclesSlice, setVehicleNewRegister } from "../store/slices/vehicleSlice.js";
-import { addNotification, addNotificationList, addOneNotificationToList } from '../store/slices/notificationSlice.js';
+import { addNotification, addNotificationList, addOneNotificationToList, removeNotificationList } from '../store/slices/notificationSlice.js';
 
 const WebSocketContext = createContext(null);
 

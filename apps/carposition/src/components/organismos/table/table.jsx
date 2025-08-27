@@ -98,102 +98,6 @@ const formatDate = (dateString) => {
   }
 };
 
-const columnsCuentasEspejo = [
-  {
-    header: ({ table }) => (
-      <CheckboxContainer>
-        <input
-          type="checkbox"
-          checked={table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-        />
-      </CheckboxContainer>
-    ),
-    accessorKey: 'checkbox',
-    size: 90,    
-    cell: ({ row }) => (
-      <CheckboxContainer>
-        <input
-          type="checkbox"
-          checked={row.getIsSelected()}
-          onChange={row.getToggleSelectedHandler()}
-        />
-      </CheckboxContainer>
-    ),
-  },
-  {
-    header: 'Nombre',
-    accessorKey: 'nombre',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.nombre}</div>
-        <StyledSubtext>{row.original.email}</StyledSubtext>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Fecha de expiración',
-    accessorKey: 'fecha_expiracion',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.fecha_expiracion ? new Date(row.original.fecha_expiracion).toLocaleDateString() : ''}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Empresa',
-    accessorKey: 'empresa',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.cliente}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Unidades',
-    accessorKey: 'unidades',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.unidades}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Status',
-    accessorKey: 'status',
-    cell: ({ row }) => (
-      <StyledStatusCell status={row.original.libre ? 'Active' : ''}>
-        {row.original.libre ? 'Acceso Libre' : ''}
-      </StyledStatusCell>
-    ),
-  },
-  {
-    header: '',
-    accessorKey: 'options',
-    size: 90,    
-    cell: ({ row }) => {
-      const actions = [
-        {
-          label: 'Editar',
-          icon: <MdModeEditOutline />,
-          onClick: () => handleEdit(row),
-        },
-        {
-          label: 'Eliminar',
-          icon: <MdDelete />,
-          className: 'delete',
-          onClick: () => handleDelete(row),
-        },
-      ];
-      return (
-        <CenteredCell>
-          <OptionsMenu actions={actions} />
-        </CenteredCell>
-      );
-    },
-  },
-];
-
 export function TablaPuntosInteres({
   type,
   data,
@@ -201,6 +105,7 @@ export function TablaPuntosInteres({
   onPaginationChange,
   pagination: controlledPagination,
   pageCount,
+  onEdit,
 }) {
   const navigate = useNavigate();
   const [pagination, setPagination] = useState(controlledPagination || { pageIndex: 0, pageSize: 5 });
@@ -211,6 +116,102 @@ export function TablaPuntosInteres({
       onPaginationChange(newPagination);
     }
   };
+
+  const columnsCuentasEspejo = [
+    {
+      header: ({ table }) => (
+        <CheckboxContainer>
+          <input
+            type="checkbox"
+            checked={table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        </CheckboxContainer>
+      ),
+      accessorKey: 'checkbox',
+      size: 90,    
+      cell: ({ row }) => (
+        <CheckboxContainer>
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        </CheckboxContainer>
+      ),
+    },
+    {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+          <StyledSubtext>{row.original.email}</StyledSubtext>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Fecha de expiración',
+      accessorKey: 'fecha_expiracion',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.fecha_expiracion ? new Date(row.original.fecha_expiracion).toLocaleDateString() : ''}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Empresa',
+      accessorKey: 'empresa',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.cliente}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Unidades',
+      accessorKey: 'unidades',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.unidades}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <StyledStatusCell status={row.original.libre ? 'Active' : ''}>
+          {row.original.libre ? 'Acceso Libre' : ''}
+        </StyledStatusCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+          {
+            label: 'Eliminar',
+            icon: <MdDelete />,
+            className: 'delete',
+            onClick: () => handleDelete(row),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
 
   let columns;
   switch (type) {
