@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import { FormInput } from './FormInput'; // Asegúrate de tener este componente creado
 import { CustomSelect } from './CustomSelect'; // Asegúrate de tener este componente creado
+import { MultiSelect } from './MultiSelect'; // Nuevo componente para selección múltiple
 import { useSelector } from 'react-redux';
-import { createCuentasEspejo } from '@mi-monorepo/common/services';
+import { createCuentasEspejo, updateCuentasEspejo } from '@mi-monorepo/common/services';
 
 // --- ESTILOS ---
 
@@ -356,7 +357,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     nombre: cuentaEspejoData?.nombre || '',
     email: cuentaEspejoData?.email || '',
     telefono: cuentaEspejoData?.telefono || '',
-    unidades: cuentaEspejoData?.unidades || '',
+    unidades: cuentaEspejoData?.unidades || [],
     usaCaducidad: cuentaEspejoData?.usaCaducidad || false,
     fechaCaducidad: cuentaEspejoData?.fechaCaducidad || '',
     accesoLibre: false,
@@ -370,7 +371,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
         nombre: cuentaEspejoData.nombre,
         email: cuentaEspejoData.email,
         telefono: cuentaEspejoData.telefono,
-        unidades: cuentaEspejoData.ids_dispositivos  ,
+        unidades: [],
         usaCaducidad: cuentaEspejoData.fechaCaducidad ? true : false,
         fechaCaducidad: cuentaEspejoData.fechaCaducidad,
         accesoLibre: cuentaEspejoData.libre,
@@ -378,6 +379,29 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       });
     }
   }, [cuentaEspejoData]);
+
+  // Efecto adicional para sincronizar los IDs cuando los vehículos estén disponibles
+  useEffect(() => {
+    if (cuentaEspejoData && vehicles.length > 0) {
+      // Convertir el string de IDs a array y asegurar que coincidan con los vehículos disponibles
+      let dispositivosArray = [];
+      if (cuentaEspejoData.ids_dispositivos) {
+        if (typeof cuentaEspejoData.ids_dispositivos === 'string') {
+          dispositivosArray = cuentaEspejoData.ids_dispositivos.split(',').map(id => id.trim());
+        } else if (Array.isArray(cuentaEspejoData.ids_dispositivos)) {
+          dispositivosArray = cuentaEspejoData.ids_dispositivos;
+        }
+      }
+      
+      // Verificar que todos los IDs existan en los vehículos disponibles
+      const validIds = dispositivosArray.filter(id => 
+        vehicles.some(vehicle => vehicle.id == id)
+      );
+      
+      console.log('IDs válidos encontrados:', validIds);
+      setSelectUnidades(validIds);
+    }
+  }, [vehicles, cuentaEspejoData]);
 
   const handleNext = () => setCurrentStep(prev => prev < 3 ? prev + 1 : prev);
   const handleBack = () => setCurrentStep(prev => prev > 1 ? prev - 1 : prev);
@@ -401,7 +425,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     }));
   }, [vehicles]);
 
-  const [selectUnidad, setSelectUnidad] = useState('');
+  const [selectUnidades, setSelectUnidades] = useState([]);
 
   const copyToClipboard = async (text, type) => {
     try {
@@ -415,24 +439,60 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     }
   };
 
+  // Función helper para convertir array de IDs a string
+  const convertIdsToString = (idsArray) => {
+    if (Array.isArray(idsArray)) {
+      return idsArray.join(',');
+    }
+    return idsArray;
+  };
+
   const handleSubmit = async () => {
-    const response = await createCuentasEspejo(token, {
-      nombre: formData.nombre,
-      email: formData.email,
-      telefono: formData.telefono,
-      dispositivos: [selectUnidad],
-      fecha_expiracion: formData.usaCaducidad ? formData.fechaCaducidad : null,
-      libre: formData.accesoLibre,
-    });
-    
-    if(response.status == 200){
-      setResponseData({
-        pin: response.pin,
-        url: response.url
-      });
-      setCurrentStep(4); // Ir al paso 4 para mostrar el card
-    } else {
-      alert('Error al crear la cuenta espejo');
+    try {
+      let response;
+      
+      if (cuentaEspejoData?.id) {
+        // Actualizar cuenta espejo existente
+        response = await updateCuentasEspejo(token, {
+          id: cuentaEspejoData.id,
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          dispositivos: selectUnidades,
+          fecha_expiracion: formData.usaCaducidad ? formData.fechaCaducidad : null,
+          libre: formData.accesoLibre,
+        });
+      } else {
+        // Crear nueva cuenta espejo
+        response = await createCuentasEspejo(token, {
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          dispositivos: selectUnidades,
+          fecha_expiracion: formData.usaCaducidad ? formData.fechaCaducidad : null,
+          libre: formData.accesoLibre,
+        });
+      }
+      
+      if(response.status == 200){
+        if (cuentaEspejoData?.id) {
+          // Si es actualización, no mostrar el card de acceso
+          alert('¡Cuenta espejo actualizada exitosamente!');
+          onBack();
+        } else {
+          // Si es creación, mostrar el card de acceso
+          setResponseData({
+            pin: response.pin,
+            url: response.url
+          });
+          setCurrentStep(4);
+        }
+      } else {
+        alert(`Error al ${cuentaEspejoData?.id ? 'actualizar' : 'crear'} la cuenta espejo`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert(`Error al ${cuentaEspejoData?.id ? 'actualizar' : 'crear'} la cuenta espejo`);
     }
   }
 
@@ -441,14 +501,14 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       nombre: '',
       email: '',
       telefono: '',
-      unidades: '',
+      unidades: [],
       usaCaducidad: false,
       fechaCaducidad: '',
       accesoLibre: false,
       // --- CAMBIO: Actualizado para el nuevo paso 2 ---
       metodoEnvio: '', 
     });
-    setSelectUnidad('');
+    setSelectUnidades([]);
     setResponseData(null);
     setCopyStates({ pin: false, url: false });
     setCurrentStep(1);
@@ -457,7 +517,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
   return (
     <FormContainer>
       <Header>
-        <h1>Agregar cuenta espejo</h1>
+        <h1>{cuentaEspejoData?.id ? 'Editar cuenta espejo' : 'Agregar cuenta espejo'}</h1>
         <p>Una herramienta fácil y sencilla para compartir con sus clientes el seguimiento de sus activos.</p>
       </Header>
 
@@ -489,12 +549,12 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
                   />
                 </FormGroup>
                 <FormGroup>
-                  <CustomSelect
+                  <MultiSelect
                       showSearch={true}
                       label="Unidades" 
                       options={unidades}
-                      value={selectUnidad}
-                      onChange={setSelectUnidad}
+                      value={selectUnidades}
+                      onChange={setSelectUnidades}
                   />
                 </FormGroup>
               </FormRow>
@@ -559,7 +619,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
                 <SummaryItem><strong>Nombre:</strong> <span>{formData.nombre || 'No especificado'}</span></SummaryItem>
                 <SummaryItem><strong>Email:</strong> <span>{formData.email || 'No especificado'}</span></SummaryItem>
                 <SummaryItem><strong>Teléfono:</strong> <span>{formData.telefono || 'No especificado'}</span></SummaryItem>
-                <SummaryItem><strong>Unidades:</strong> <span>{selectUnidad || 'No especificado'}</span></SummaryItem>
+                <SummaryItem><strong>Unidades:</strong> <span>{selectUnidades.length > 0 ? selectUnidades.map(id => unidades.find(u => u.id == id)?.name).join(', ') : 'No especificado'}</span></SummaryItem>
                 <SummaryItem><strong>Caducidad:</strong> <span>{formData.usaCaducidad ? formData.fechaCaducidad.replace('T', ' ') : 'No aplica'}</span></SummaryItem>
                 <SummaryItem><strong>Método de envío:</strong> <span>{formData.metodoEnvio || 'No seleccionado'}</span></SummaryItem>
               </Summary>
@@ -611,10 +671,13 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       </StepContentWrapper>
 
       <Footer>
-        {currentStep === 1 && <Button onClick={onBack}>REGRESAR</Button>}
+        {currentStep === 1 && <Button onClick={() => {
+          resetForm();
+          onBack();
+        }}>REGRESAR</Button>}
         {currentStep > 1 && currentStep < 4 && <Button onClick={handleBack}>ATRÁS</Button>}
         {currentStep < 3 && <Button $primary onClick={handleNext}>SIGUIENTE</Button>}
-        {currentStep === 3 && <Button $primary onClick={handleSubmit}>FINALIZAR</Button>}
+        {currentStep === 3 && <Button $primary onClick={handleSubmit}>{cuentaEspejoData?.id ? 'ACTUALIZAR' : 'FINALIZAR'}</Button>}
         {currentStep === 4 && <Button $primary onClick={() => {
           resetForm();
           onBack();

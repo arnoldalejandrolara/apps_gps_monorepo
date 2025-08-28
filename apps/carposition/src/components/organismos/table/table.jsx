@@ -12,6 +12,8 @@ import { FaCheckCircle, FaTrash } from "react-icons/fa";
 import { FaInfo } from 'react-icons/fa';
 import { HiPhone } from 'react-icons/hi';
 import { OptionsMenu } from '../../moleculas/OptionsMenu.jsx';
+import { getOrientation } from '../../../utilities/Functions';
+import moment from 'moment';
 
 const SelectedBanner = styled.div`
   display: flex;
@@ -213,6 +215,92 @@ export function TablaPuntosInteres({
     },
   ];
 
+  const columnsHistory = [
+    {
+      header: 'Fecha',
+      accessorKey: 'fecha',
+      cell: ({ row }) => (
+        <StyledCell>
+          <div>{row.original.fecha ? moment(row.original.fecha).format("DD/MM/YYYY HH:mm:ss") : "--"}</div>
+        </StyledCell>
+      ),
+    },
+    {
+      header: 'Unidad',
+      accessorKey: 'unidad',
+      cell: ({ row }) => {
+        const status = row.original.status_motor;
+        let statusColor = "#aaa";
+        if (status === "Encendido") statusColor = "#43a047";
+        else if (status === "Apagado") statusColor = "#e53935";
+        return (
+          <StyledCell>
+            <div>{row.original.unidad_nombre}</div>
+            <div style={{ color: statusColor }}>
+              <strong>Motor:</strong> {status || "Estado desconocido"}
+            </div>
+          </StyledCell>
+        );
+      }
+    },
+    {
+      header: 'Velocidad',
+      accessorKey: 'velocidad',
+      cell: ({ row }) => {
+        const { velocidad, odometro, horometro } = row.original;
+        return (
+          <StyledCell>
+                <div><strong>{velocidad ? velocidad + " km/h" : "--"}</strong></div>
+                <div style={{ fontSize: 12, color: "#666" }}>
+                  <span><strong>Odo:</strong> {odometro ?? "--"}</span>
+                  &nbsp;|&nbsp;
+                  <span><strong>Horo:</strong> {horometro ?? "--"}</span>
+                </div>
+          </StyledCell>
+        );
+      }
+    },
+    {
+      header: 'Alerta',
+      accessorKey: 'alerta',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.alerta}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Coordenadas',
+      accessorKey: 'coordenadas',
+      cell: ({ row }) => (
+        <StyledCell>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span role="img" aria-label="ubicación">📍</span>
+              <strong>Lat:</strong> {row.original.location?.y ?? "N/A"}
+              <strong style={{ marginLeft: 8 }}>Lng:</strong> {row.original.location?.x ?? "N/A"}
+            </div>
+            <div style={{ color: "#90caf9", marginTop: 2 }}>
+              <strong>Dirección:</strong> {row.original.location?.address || "No disponible"}
+            </div>
+            {row.original.orientacion && (
+              <div style={{ color: "#ffb300", marginTop: 2 }}>
+                <strong>Orientación:</strong> {getOrientation(row.original.orientacion)}
+              </div>
+            )}
+          </StyledCell>
+      ),
+    },
+    {
+      header: 'Detenido',
+      accessorKey: 'detenido',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.velocidad == 0 ? 'Detenido' : 'En movimiento'}</div>
+        </StyledTextCell>
+      ),
+    },
+  ];
+
   let columns;
   switch (type) {
     case 'dispositivo':
@@ -220,6 +308,9 @@ export function TablaPuntosInteres({
       break;
     case 'cuentas-espejo':
       columns = columnsCuentasEspejo;
+      break;
+    case 'history':
+      columns = columnsHistory;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);
@@ -352,6 +443,29 @@ export function TablaPuntosInteres({
     </>
   );
 }
+
+const StyledCell = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  div {
+    line-height: 1.4;
+    color:rgb(37, 36, 36);
+  }
+
+  div:first-child {
+    font-size: 13px;
+    font-weight: bold;
+    color: rgb(37, 36, 36);
+  }
+
+  div:last-child {
+    font-size: 12px;
+    color: #aaaaaa;
+  }
+`;
 
 const StyledSubtext = styled.div`
   font-size: 12px;
