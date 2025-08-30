@@ -5,6 +5,9 @@ import { FormInput } from './FormInput';
 // Importaciones correctas
 import Map, { useControl } from 'react-map-gl/mapbox';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
+import { CustomSelect } from './CustomSelect';
+import { createGeocerca } from '@mi-monorepo/common/services';
+import { useSelector } from 'react-redux';
 
 // (Tus styled-components se mantienen exactamente igual, excepto los cambios indicados)
 const FormContainer = styled.div`
@@ -174,13 +177,14 @@ function DrawControl(props) {
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw'; // TU TOKEN REAL
 
-export function GeoCercasForm({ onBack }) {
+export function GeoCercasForm({ onBack, iconos }) {
+  const { token } = useSelector(state => state.auth);
+
   const [formData, setFormData] = useState({
     nombre: '',
-    geometria: '',
-    tipo: '',
+    polygon: [],
+    icono: 1,
     color: '#3388ff',
-    estado: 'activa',
     descripcion: '',
   });
 
@@ -193,18 +197,43 @@ export function GeoCercasForm({ onBack }) {
   const onUpdate = useCallback(e => {
     if (e.features.length > 0) {
       const updatedFeature = e.features[0];
-      setFormData(prev => ({ ...prev, geometria: JSON.stringify(updatedFeature.geometry) }));
+      console.log(updatedFeature);
+      setFormData(prev => ({ ...prev, polygon: updatedFeature.geometry.coordinates.length > 0 ? updatedFeature.geometry.coordinates[0].map(coord => [coord[1], coord[0]]) : [] }));
     }
   }, []);
 
   const onDelete = useCallback(e => {
-    setFormData(prev => ({ ...prev, geometria: '' }));
+    setFormData(prev => ({ ...prev, polygon: [] }));
   }, []);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const handleIconChange = (selectedValue) => {
+    setFormData(prev => ({ ...prev, icono: selectedValue }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(formData);
+    const response = await createGeocerca(token, {
+      nombre: formData.nombre,
+      polygon: formData.polygon,
+      id_icono: formData.icono,
+      hex_color: formData.color.replace('#', ''),
+      comentarios: formData.descripcion
+    });
+    if(response.status === 200) {
+      alert('Geocerca creada correctamente');
+      onBack();
+    } else {
+      console.error(response.error);
+    }
+  };
+
+  const iconosOptions = iconos.map(icono => ({ id: icono.id, name: icono.nombre }));
   
   return (
     <FormContainer>
@@ -227,14 +256,14 @@ export function GeoCercasForm({ onBack }) {
             required
           />
           <FormGroup>
-            <Label htmlFor="tipo">Tipo</Label>
-            <Input 
-              type="text" 
-              id="tipo"
-              name="tipo"
-              value={formData.tipo}
-              onChange={handleChange}
-              placeholder="Ej. Zona de Trabajo, Área Restringida" 
+            <Label htmlFor="tipo">Icono</Label>
+            <CustomSelect 
+              id="icono"
+              name="icono"
+              value={formData.icono}
+              onChange={handleIconChange}
+              placeholder="Selecciona un icono" 
+              options={iconosOptions}
             />
           </FormGroup>
           <InputRow>
@@ -248,13 +277,6 @@ export function GeoCercasForm({ onBack }) {
                 onChange={handleChange}
               />
             </FormGroup>
-            <FormGroup>
-              <Label htmlFor="estado">Estado</Label>
-              <Select name="estado" id="estado" value={formData.estado} onChange={handleChange}>
-                <option value="activa">Activa</option>
-                <option value="inactiva">Inactiva</option>
-              </Select>
-            </FormGroup>
           </InputRow>
           <FormGroup>
             <Label htmlFor="descripcion">Descripción</Label>
@@ -266,6 +288,13 @@ export function GeoCercasForm({ onBack }) {
               placeholder="Añade detalles adicionales sobre la geocerca"
             />
           </FormGroup>
+
+          <ButtonContainer>
+            <SaveButton onClick={handleSubmit}>
+              Guardar
+            </SaveButton>
+          </ButtonContainer>
+
         </FormSection>
         <MapSection>
           <Map
@@ -289,3 +318,24 @@ export function GeoCercasForm({ onBack }) {
     </FormContainer>
   );
 }
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const SaveButton = styled.button`
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #218838;
+  }
+`;

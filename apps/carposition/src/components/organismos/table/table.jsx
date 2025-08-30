@@ -8,7 +8,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { MdModeEditOutline, MdDelete } from 'react-icons/md';
-import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { FaCheckCircle, FaTrash, FaMapMarkerAlt } from "react-icons/fa";
 import { FaInfo } from 'react-icons/fa';
 import { HiPhone } from 'react-icons/hi';
 import { OptionsMenu } from '../../moleculas/OptionsMenu.jsx';
@@ -301,6 +301,89 @@ export function TablaPuntosInteres({
     },
   ];
 
+  const columnsPDI = [
+    {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Categoría',
+      accessorKey: 'categoria',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.categoria}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Icono',
+      accessorKey: 'icono',
+      cell: ({ row }) => (
+        <StyledIconCell>
+          <FaMapMarkerAlt style={{ color: '#' + row.original.icono_hex_color || '#666', fontSize: 18 }} />
+          <span>{row.original.icono}</span>
+        </StyledIconCell>
+      ),
+    },
+    {
+      header: 'Coordenadas',
+      accessorKey: 'coordenadas',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.coordenadas.x}, {row.original.coordenadas.y}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Radio',
+      accessorKey: 'radio',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.radio} m</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Comentarios',
+      accessorKey: 'comentarios',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.comentarios}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+          {
+            label: 'Eliminar',
+            icon: <MdDelete />,
+            className: 'delete',
+            onClick: () => handleDelete(row),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
+
   let columns;
   switch (type) {
     case 'dispositivo':
@@ -311,6 +394,9 @@ export function TablaPuntosInteres({
       break;
     case 'history':
       columns = columnsHistory;
+      break;
+    case 'pdi':
+      columns = columnsPDI;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);
@@ -635,6 +721,15 @@ const StyledStatusCell = styled.div`
   `}
 
   /* Puedes añadir más estilos para otros estados si es necesario */
+`;
+
+const StyledIconCell = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const PaginationWrapper = styled.div`

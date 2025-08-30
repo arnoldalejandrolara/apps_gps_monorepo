@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FaChevronLeft, FaMapMarkerAlt, FaCar, FaBus, FaTruck } from 'react-icons/fa';
 import { FormInput } from './FormInput';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
 import * as turf from '@turf/turf';
 import { CustomSelect } from './CustomSelect'; // Asumo que este es el nombre correcto del componente
+import { createPIRequest, updatePIRequest } from '@mi-monorepo/common/services';
+import { useSelector } from 'react-redux';
 
 // --- ESTILOS ---
 
@@ -153,39 +155,165 @@ const SaveButton = styled.button`
     background-color: #218838;
   }
 `;
+
+const RadiusInfo = styled.div`
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  color: #1976d2;
+  line-height: 1.4;
+  margin-bottom: 10px;
+  
+  span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`;
+
+const ResetRadiusButton = styled.button`
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+`;
+
+const ResizeHandle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
 // --- FIN: ESTILOS PARA EL BOTÓN DE GUARDAR ---
 
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
 
-export function PuntoInteresForm({ onBack }) {
+export function PuntoInteresForm({ onBack, point, categorias, iconos }) {
+  const token = useSelector(state => state.auth.token);
   const [formData, setFormData] = useState({
     nombre: '',
     coordenadas: '',
-    tipo: 'Tipo',
+    latitud: '',
+    longitud: '',
+    categoria: 1,
+    icono: 1,
+    comentarios: '',
+    radio: 50
   });
 
+  useEffect(() => {
+    if (point) {
+      setFormData({
+        nombre: point.nombre,
+        latitud: point.coordenadas.x,
+        longitud: point.coordenadas.y,
+        categoria: point.id_categoria,
+        icono: point.id_icono,
+        comentarios: point.comentarios,
+        radio: point.radio,
+        coordenadas: `${point.coordenadas.x}, ${point.coordenadas.y}`
+      });
+
+      setViewState({
+        longitude: point.coordenadas.y,
+        latitude: point.coordenadas.x,
+        zoom: 11
+      });
+
+      setMarker({ longitude: point.coordenadas.y, latitude: point.coordenadas.x });
+
+      setCircleData(turf.circle([point.coordenadas.y, point.coordenadas.x], point.radio, { steps: 64, units: 'meters' }));
+
+      setCircleRadius(point.radio);
+
+      setIsResizing(false);
+    }
+  }, [point]);
+
   const [viewState, setViewState] = useState({
-    longitude: -97.890107,
-    latitude: 22.36190,
-    zoom: 14
+    longitude: -97.872464,
+    latitude: 22.289529,
+    zoom: 11
   });
+
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      latitud: '',
+      longitud: '',
+      categoria: 1,
+      icono: 1,
+      comentarios: '',
+      radio: 50
+    });
+    setViewState({
+      longitude: -97.872464,
+      latitude: 22.289529,
+      zoom: 11
+    });
+    setMarker(null);
+    setCircleData(null);
+    setIsResizing(false);
+    setCircleRadius(50);
+  };
 
   const [marker, setMarker] = useState(null);
   const [cursorStyle, setCursorStyle] = useState('grab');
   const [circleData, setCircleData] = useState(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const [circleRadius, setCircleRadius] = useState(50); // Radio inicial en metros
 
+
+
+  // Función para actualizar el círculo con nuevo radio
+  const updateCircle = (newRadius) => {
+    if (marker) {
+      const center = [marker.longitude, marker.latitude];
+      const options = { steps: 64, units: 'meters' };
+      const circlePolygon = turf.circle(center, newRadius, options);
+      setCircleData(circlePolygon);
+      setCircleRadius(newRadius);
+      setFormData(prev => ({ ...prev, radio: Math.round(newRadius) }));
+    }
+  };
+
+  // Función para manejar el click en el mapa
   const handleMapClick = (evt) => {
     const { lng, lat } = evt.lngLat;
     setMarker({ longitude: lng, latitude: lat });
-    setFormData(prev => ({ ...prev, coordenadas: `${lat.toFixed(6)}, ${lng.toFixed(6)}` }));
+    setFormData(prev => ({ ...prev, latitud: lat.toFixed(6), longitud: lng.toFixed(6), coordenadas: `${lat.toFixed(6)}, ${lng.toFixed(6)}` }));
 
     const center = [lng, lat];
-    const radius = 20;
     const options = { steps: 64, units: 'meters' };
-    const circlePolygon = turf.circle(center, radius, options);
+    const circlePolygon = turf.circle(center, circleRadius, options);
     
     setCircleData(circlePolygon);
+  };
+
+  // Función para redimensionar el círculo con el mouse
+  const handleCircleResize = (evt) => {
+    if (marker) {
+      const { lng, lat } = evt.lngLat;
+      const center = [marker.longitude, marker.latitude];
+      const mousePos = [lng, lat];
+      const distance = turf.distance(center, mousePos, { units: 'meters' });
+      
+      // Limitar el radio mínimo y máximo (5m - 500km)
+      const newRadius = Math.max(5, Math.min(500000, distance));
+      updateCircle(newRadius);
+    }
   };
 
   const handleMouseEnter = () => setCursorStyle('pointer');
@@ -199,25 +327,59 @@ export function PuntoInteresForm({ onBack }) {
   };
   
   // Asumo que el nombre correcto del componente es CustomSelect
-  const handleTipoChange = (selectedValue) => {
-    setFormData(prev => ({ ...prev, tipo: selectedValue }));
+  const handleCategoriaChange = (selectedValue) => {
+    setFormData(prev => ({ ...prev, categoria: selectedValue }));
   };
 
-  const [selectedIcon, setSelectedIcon] = useState('tsuru');
+  const handleIconChange = (selectedValue) => {
+    setFormData(prev => ({ ...prev, icono: selectedValue }));
+  };
 
-  const vehicleOptions = [
-    { id: 'tsuru', name: 'Unidad 1 - Tsuru', icon: <FaCar /> },
-    { id: 'versa', name: 'Unidad 2 - Versa', icon: <FaCar /> },
-    { id: 'bus', name: 'Unidad 3 - Autobús', icon: <FaBus /> },
-    { id: 'truck', name: 'Unidad 4 - Camioneta', icon: <FaTruck /> }
-  ];
+  const [selectedIcon, setSelectedIcon] = useState(null);
 
-  const tipoOptions = [
-    { id: 'owner', name: 'Owner' },
-    { id: 'admin', name: 'Administrator' },
-    { id: 'dev', name: 'Developer' },
-    { id: 'viewer', name: 'Viewer' }
-  ];
+  const iconosOptions = iconos.map(icon => ({ id: icon.id, name: icon.nombre }));
+
+  const categoriasOptions = categorias.map(categoria => ({ id: categoria.id, name: categoria.nombre }));
+
+  const handleSave = async () => {
+    if(point) {
+      const response = await updatePIRequest(token, point.id, {
+        nombre: formData.nombre,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        id_categoria: formData.categoria,
+        id_icono: formData.icono,
+        comentarios: formData.comentarios,
+        radio: formData.radio
+      });
+
+      if (response.status === 200) {
+        alert('Punto de interés actualizado correctamente');
+        resetForm();
+        onBack();
+      } else {
+        console.error(response.error);
+      }
+    } else {
+      const response = await createPIRequest(token, {
+        nombre: formData.nombre,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        id_categoria: formData.categoria,
+        id_icono: formData.icono,
+        comentarios: formData.comentarios,
+        radio: formData.radio
+      });
+
+      if (response.status === 200) {
+        alert('Punto de interés creado correctamente');
+        resetForm();
+        onBack();
+      } else {
+        console.error(response.error);
+      }
+    }
+  };
 
   return (
     <FormContainer>
@@ -229,7 +391,7 @@ export function PuntoInteresForm({ onBack }) {
       </FormHeader>
       <FormContent>
         <FormSection>
-          <h2>Nuevo Punto de Interés</h2>
+          <h2>{point ? 'Editar Punto de Interés' : 'Nuevo Punto de Interés'}</h2>
           <FormInput
             label="Nombre del Punto de Interés"
             type="text"
@@ -242,9 +404,9 @@ export function PuntoInteresForm({ onBack }) {
           <FormGroup>
             <CustomSelect
               label="Icono"
-              options={vehicleOptions}
-              value={selectedIcon}
-              onChange={setSelectedIcon}
+              options={iconosOptions}
+              value={formData.icono}
+              onChange={handleIconChange}
               showSearch={true}
             />
           </FormGroup>
@@ -253,9 +415,9 @@ export function PuntoInteresForm({ onBack }) {
             <CustomSelect
               showSearch={false}
               label="Tipo"
-              options={tipoOptions}
-              value={formData.tipo}
-              onChange={handleTipoChange}
+              options={categoriasOptions}
+              value={formData.categoria}
+              onChange={handleCategoriaChange}
             />
           </FormGroup>
 
@@ -271,13 +433,23 @@ export function PuntoInteresForm({ onBack }) {
           />
 
           <FormGroup>
+            <Label>Radio del círculo: {Math.round(circleRadius)}m</Label>
+            <RadiusInfo>
+              <span>💡 Arrastra el punto azul en el borde para cambiar el tamaño (5m - 5km)</span>
+            </RadiusInfo>
+            <ResetRadiusButton onClick={() => updateCircle(50)}>
+              Resetear a 50m
+            </ResetRadiusButton>
+          </FormGroup>
+
+          <FormGroup>
             <Label htmlFor="comentarios">Comentarios</Label>
-            <TextArea id="comentarios" placeholder="Escribe comentarios adicionales"></TextArea>
+            <TextArea id="comentarios" placeholder="Escribe comentarios adicionales" name="comentarios" value={formData.comentarios} onChange={handleChange}></TextArea>
           </FormGroup>
 
           {/* --- BOTÓN DE GUARDAR AÑADIDO --- */}
           <ButtonContainer>
-            <SaveButton onClick={() => alert('Guardando punto de interés...')}>
+            <SaveButton onClick={handleSave}>
               Guardar
             </SaveButton>
           </ButtonContainer>
@@ -302,14 +474,46 @@ export function PuntoInteresForm({ onBack }) {
                 <Layer
                   id="circle-fill-layer"
                   type="fill"
-                  paint={{ 'fill-color': '#007bff', 'fill-opacity': 0.2 }}
+                  paint={{ 
+                    'fill-color': isResizing ? '#ff6b35' : '#007bff', 
+                    'fill-opacity': isResizing ? 0.3 : 0.2 
+                  }}
                 />
                 <Layer
                   id="circle-outline-layer"
                   type="line"
-                  paint={{ 'line-color': '#007bff', 'line-width': 2 }}
+                  paint={{ 
+                    'line-color': isResizing ? '#ff6b35' : '#007bff', 
+                    'line-width': isResizing ? 3 : 2,
+                    'line-dasharray': isResizing ? [2, 2] : [1]
+                  }}
                 />
               </Source>
+            )}
+            
+            {/* Marcador para redimensionar el círculo */}
+            {circleData && marker && (
+              <Marker 
+                longitude={marker.longitude + (circleRadius / 111320) * Math.cos(0)} 
+                latitude={marker.latitude + (circleRadius / 111320) * Math.sin(0)}
+                anchor="center"
+                draggable={true}
+                onDragStart={() => setIsResizing(true)}
+                onDrag={handleCircleResize}
+                onDragEnd={() => setIsResizing(false)}
+              >
+                <ResizeHandle>
+                  <div style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    backgroundColor: isResizing ? '#ff6b35' : '#007bff',
+                    border: '2px solid white',
+                    borderRadius: '50%',
+                    cursor: 'ns-resize',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                  }} />
+                </ResizeHandle>
+              </Marker>
             )}
             {marker && (
               <Marker 
