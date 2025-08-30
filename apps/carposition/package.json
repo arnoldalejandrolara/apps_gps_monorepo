@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve:prod": "serve -s dist -l 3005"
   },
   "dependencies": {
     "@deck.gl/core": "^9.1.14",

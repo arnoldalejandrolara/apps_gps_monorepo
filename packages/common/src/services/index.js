@@ -8,3 +8,5 @@ export { getHistorialTable } from './reportes/index.js';
 export { getAlertasList } from './alertas/index.js';
 export { getCuentasEspejoTable, createCuentasEspejo, updateCuentasEspejo } from './cuentasEspejo/index.js';
 export { subscribeToNotificationsRequest } from './notifications/index.js';
+export { getCategoriasPIRequest, getIconosPIRequest, createPIRequest, getPITable, updatePIRequest } from './puntosInteres/index.js';
+export { getIconosGeocercas, createGeocerca } from './geocercas/index.js';

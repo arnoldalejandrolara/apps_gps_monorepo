@@ -22,6 +22,7 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     // const [view, setView] = useState('table'); // Estado para controlar la vista
     const token = useSelector(state => state.auth.token);
     const [data, setData] = useState([]);
+    const [cuentaEspejoData, setCuentaEspejoData] = useState(null);
 
     // const data = React.useMemo(() => {
     //     const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
@@ -64,6 +65,7 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     // Función para manejar el clic en el botón de volver
     const handleBackClick = () => {
         setView('table');
+        setCuentaEspejoData(null);
     };
 
     const handlePaginationChange = (updater) => {
@@ -87,6 +89,12 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
             fetchData(pagination);
         }
     }, [token]);
+
+    const handleEdit = (row) => {
+        console.log(row);
+        setCuentaEspejoData(row);
+        setView('form');
+    };
 
     return (
         <ComponentWrapper>
@@ -135,6 +143,7 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                                         onSortingChange={setSorting}
                                         pageCount={pageCount}
                                         totalRows={totalRows}
+                                        onEdit={handleEdit}
                                     />
                                 </TableWrapper>
                             )
@@ -150,7 +159,7 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                     
                     {/* Vista del formulario */}
                     <AnimatedView $isActive={view === 'form'} $direction="right">
-                        <CuentasEspejoForm onBack={handleBackClick} />
+                        <CuentasEspejoForm onBack={handleBackClick} cuentaEspejoData={cuentaEspejoData} />
                     </AnimatedView>
                 </AnimatedViewContainer>
             </ContentArea>

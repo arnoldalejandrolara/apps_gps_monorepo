@@ -57,5 +57,12 @@ export {
     getCuentasEspejoTable,
     createCuentasEspejo,
     updateCuentasEspejo,
-    subscribeToNotificationsRequest
+    subscribeToNotificationsRequest,
+    getCategoriasPIRequest,
+    getIconosPIRequest,
+    createPIRequest,
+    getPITable,
+    updatePIRequest,
+    getIconosGeocercas,
+    createGeocerca
 } from './services/index.js';

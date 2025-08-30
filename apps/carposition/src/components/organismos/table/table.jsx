@@ -8,10 +8,12 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { MdModeEditOutline, MdDelete } from 'react-icons/md';
-import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { FaCheckCircle, FaTrash, FaMapMarkerAlt } from "react-icons/fa";
 import { FaInfo } from 'react-icons/fa';
 import { HiPhone } from 'react-icons/hi';
 import { OptionsMenu } from '../../moleculas/OptionsMenu.jsx';
+import { getOrientation } from '../../../utilities/Functions';
+import moment from 'moment';
 
 const SelectedBanner = styled.div`
   display: flex;
@@ -98,102 +100,6 @@ const formatDate = (dateString) => {
   }
 };
 
-const columnsCuentasEspejo = [
-  {
-    header: ({ table }) => (
-      <CheckboxContainer>
-        <input
-          type="checkbox"
-          checked={table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-        />
-      </CheckboxContainer>
-    ),
-    accessorKey: 'checkbox',
-    size: 90,    
-    cell: ({ row }) => (
-      <CheckboxContainer>
-        <input
-          type="checkbox"
-          checked={row.getIsSelected()}
-          onChange={row.getToggleSelectedHandler()}
-        />
-      </CheckboxContainer>
-    ),
-  },
-  {
-    header: 'Nombre',
-    accessorKey: 'nombre',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.nombre}</div>
-        <StyledSubtext>{row.original.email}</StyledSubtext>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Fecha de expiración',
-    accessorKey: 'fecha_expiracion',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.fecha_expiracion ? new Date(row.original.fecha_expiracion).toLocaleDateString() : ''}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Empresa',
-    accessorKey: 'empresa',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.cliente}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Unidades',
-    accessorKey: 'unidades',
-    cell: ({ row }) => (
-      <StyledTextCell>
-        <div>{row.original.unidades}</div>
-      </StyledTextCell>
-    ),
-  },
-  {
-    header: 'Status',
-    accessorKey: 'status',
-    cell: ({ row }) => (
-      <StyledStatusCell status={row.original.libre ? 'Active' : ''}>
-        {row.original.libre ? 'Acceso Libre' : ''}
-      </StyledStatusCell>
-    ),
-  },
-  {
-    header: '',
-    accessorKey: 'options',
-    size: 90,    
-    cell: ({ row }) => {
-      const actions = [
-        {
-          label: 'Editar',
-          icon: <MdModeEditOutline />,
-          onClick: () => handleEdit(row),
-        },
-        {
-          label: 'Eliminar',
-          icon: <MdDelete />,
-          className: 'delete',
-          onClick: () => handleDelete(row),
-        },
-      ];
-      return (
-        <CenteredCell>
-          <OptionsMenu actions={actions} />
-        </CenteredCell>
-      );
-    },
-  },
-];
-
 export function TablaPuntosInteres({
   type,
   data,
@@ -201,6 +107,7 @@ export function TablaPuntosInteres({
   onPaginationChange,
   pagination: controlledPagination,
   pageCount,
+  onEdit,
 }) {
   const navigate = useNavigate();
   const [pagination, setPagination] = useState(controlledPagination || { pageIndex: 0, pageSize: 5 });
@@ -212,6 +119,271 @@ export function TablaPuntosInteres({
     }
   };
 
+  const columnsCuentasEspejo = [
+    {
+      header: ({ table }) => (
+        <CheckboxContainer>
+          <input
+            type="checkbox"
+            checked={table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+        </CheckboxContainer>
+      ),
+      accessorKey: 'checkbox',
+      size: 90,    
+      cell: ({ row }) => (
+        <CheckboxContainer>
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        </CheckboxContainer>
+      ),
+    },
+    {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+          <StyledSubtext>{row.original.email}</StyledSubtext>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Fecha de expiración',
+      accessorKey: 'fecha_expiracion',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.fecha_expiracion ? new Date(row.original.fecha_expiracion).toLocaleDateString() : ''}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Empresa',
+      accessorKey: 'empresa',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.cliente}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Unidades',
+      accessorKey: 'unidades',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.unidades}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <StyledStatusCell status={row.original.libre ? 'Active' : ''}>
+          {row.original.libre ? 'Acceso Libre' : ''}
+        </StyledStatusCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+          {
+            label: 'Eliminar',
+            icon: <MdDelete />,
+            className: 'delete',
+            onClick: () => handleDelete(row),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
+
+  const columnsHistory = [
+    {
+      header: 'Fecha',
+      accessorKey: 'fecha',
+      cell: ({ row }) => (
+        <StyledCell>
+          <div>{row.original.fecha ? moment(row.original.fecha).format("DD/MM/YYYY HH:mm:ss") : "--"}</div>
+        </StyledCell>
+      ),
+    },
+    {
+      header: 'Unidad',
+      accessorKey: 'unidad',
+      cell: ({ row }) => {
+        const status = row.original.status_motor;
+        let statusColor = "#aaa";
+        if (status === "Encendido") statusColor = "#43a047";
+        else if (status === "Apagado") statusColor = "#e53935";
+        return (
+          <StyledCell>
+            <div>{row.original.unidad_nombre}</div>
+            <div style={{ color: statusColor }}>
+              <strong>Motor:</strong> {status || "Estado desconocido"}
+            </div>
+          </StyledCell>
+        );
+      }
+    },
+    {
+      header: 'Velocidad',
+      accessorKey: 'velocidad',
+      cell: ({ row }) => {
+        const { velocidad, odometro, horometro } = row.original;
+        return (
+          <StyledCell>
+                <div><strong>{velocidad ? velocidad + " km/h" : "--"}</strong></div>
+                <div style={{ fontSize: 12, color: "#666" }}>
+                  <span><strong>Odo:</strong> {odometro ?? "--"}</span>
+                  &nbsp;|&nbsp;
+                  <span><strong>Horo:</strong> {horometro ?? "--"}</span>
+                </div>
+          </StyledCell>
+        );
+      }
+    },
+    {
+      header: 'Alerta',
+      accessorKey: 'alerta',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.alerta}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Coordenadas',
+      accessorKey: 'coordenadas',
+      cell: ({ row }) => (
+        <StyledCell>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span role="img" aria-label="ubicación">📍</span>
+              <strong>Lat:</strong> {row.original.location?.y ?? "N/A"}
+              <strong style={{ marginLeft: 8 }}>Lng:</strong> {row.original.location?.x ?? "N/A"}
+            </div>
+            <div style={{ color: "#90caf9", marginTop: 2 }}>
+              <strong>Dirección:</strong> {row.original.location?.address || "No disponible"}
+            </div>
+            {row.original.orientacion && (
+              <div style={{ color: "#ffb300", marginTop: 2 }}>
+                <strong>Orientación:</strong> {getOrientation(row.original.orientacion)}
+              </div>
+            )}
+          </StyledCell>
+      ),
+    },
+    {
+      header: 'Detenido',
+      accessorKey: 'detenido',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.velocidad == 0 ? 'Detenido' : 'En movimiento'}</div>
+        </StyledTextCell>
+      ),
+    },
+  ];
+
+  const columnsPDI = [
+    {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Categoría',
+      accessorKey: 'categoria',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.categoria}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Icono',
+      accessorKey: 'icono',
+      cell: ({ row }) => (
+        <StyledIconCell>
+          <FaMapMarkerAlt style={{ color: '#' + row.original.icono_hex_color || '#666', fontSize: 18 }} />
+          <span>{row.original.icono}</span>
+        </StyledIconCell>
+      ),
+    },
+    {
+      header: 'Coordenadas',
+      accessorKey: 'coordenadas',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.coordenadas.x}, {row.original.coordenadas.y}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Radio',
+      accessorKey: 'radio',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.radio} m</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Comentarios',
+      accessorKey: 'comentarios',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.comentarios}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+          {
+            label: 'Eliminar',
+            icon: <MdDelete />,
+            className: 'delete',
+            onClick: () => handleDelete(row),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
+
   let columns;
   switch (type) {
     case 'dispositivo':
@@ -219,6 +391,12 @@ export function TablaPuntosInteres({
       break;
     case 'cuentas-espejo':
       columns = columnsCuentasEspejo;
+      break;
+    case 'history':
+      columns = columnsHistory;
+      break;
+    case 'pdi':
+      columns = columnsPDI;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);
@@ -351,6 +529,29 @@ export function TablaPuntosInteres({
     </>
   );
 }
+
+const StyledCell = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  div {
+    line-height: 1.4;
+    color:rgb(37, 36, 36);
+  }
+
+  div:first-child {
+    font-size: 13px;
+    font-weight: bold;
+    color: rgb(37, 36, 36);
+  }
+
+  div:last-child {
+    font-size: 12px;
+    color: #aaaaaa;
+  }
+`;
 
 const StyledSubtext = styled.div`
   font-size: 12px;
@@ -520,6 +721,15 @@ const StyledStatusCell = styled.div`
   `}
 
   /* Puedes añadir más estilos para otros estados si es necesario */
+`;
+
+const StyledIconCell = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const PaginationWrapper = styled.div`

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import {
     FaCog, FaClock, FaCalendarAlt, FaThermometerHalf, FaTachometerAlt,
     FaGasPump, FaHistory, FaBell, FaMapMarkerAlt, FaCar, FaMotorcycle,
     FaBatteryFull, FaChartLine, FaChartBar, FaFileAlt, FaSearch
 } from 'react-icons/fa';
-
+import { useSelector } from 'react-redux';
 
 // Import the new HistoryReportComponent
 import { HistoryReport } from '../reportes/HistoryReport';
@@ -44,6 +44,16 @@ export function ReportsComponent() {
         report.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const vehicles = useSelector(state => state.vehicle.vehicles);
+
+    const unidades = useMemo(() => {
+        return vehicles.map(vehicle => ({
+            id: vehicle.imei,
+            name: vehicle.info.nombre,
+            value: vehicle.imei
+        }));
+    }, [vehicles]);
+
     return (
         <ReportesContainer>
             <Sidebar>
@@ -76,7 +86,7 @@ export function ReportsComponent() {
                 {/* Conditional rendering based on the selected report */}
                 {selectedReport && selectedReport.name === 'Historial' ? (
                     // Render the new component when "Historial" is selected
-                    <HistoryReport />
+                    <HistoryReport unidades={unidades} />
                 ) : selectedReport ? (
                     // Show a generic placeholder for other selected reports
                     <>

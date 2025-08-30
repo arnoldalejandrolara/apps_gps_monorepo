@@ -10,6 +10,29 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { SearchButtonWithLoading } from '../../atomos/ButtonSearchLoad';
+import { TablaPuntosInteres } from '../table/table.jsx';
+import { useSelector } from 'react-redux';
+import { getHistorialTable } from '@mi-monorepo/common/services';
+
+// Función para obtener la fecha de hoy
+const getTodayDate = () => {
+    const today = new Date();
+    return today;
+};
+
+// Función para obtener el inicio del día de hoy (00:00:00)
+const getStartOfToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+};
+
+// Función para obtener el fin del día de hoy (23:59:59)
+const getEndOfToday = () => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return today;
+};
 
 // --- Datos de ejemplo ---
 const unitOptions = [
@@ -20,16 +43,24 @@ const unitOptions = [
 ];
 
 // --- Componente de Reporte de Historial ---
-export function HistoryReport() {
+export function HistoryReport({ unidades }) {
     const [selectedUnit, setSelectedUnit] = useState('Unidad');
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
+    const [startDate, setStartDate] = useState(getStartOfToday());
+    const [endDate, setEndDate] = useState(getEndOfToday());
     const [showTable, setShowTable] = useState(false);
-    const [loading, setLoading] = useState(false); // Estado de carga del botón
     const [isCanceling, setIsCanceling] = useState(false);
     const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false);
     const [isEndDatePickerOpen, setIsEndDatePickerOpen] = useState(false);
     const [searchTimeout, setSearchTimeout] = useState(null);
+    const token = useSelector(state => state.auth.token);
+
+    const [data, setData] = useState([]);
+
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+    const [pageCount, setPageCount] = useState(0);
+    const [totalRows, setTotalRows] = useState(0);
+    const [sorting, setSorting] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     const handleSearch = () => {
         if (!selectedUnit || !startDate || !endDate) {
@@ -44,16 +75,21 @@ export function HistoryReport() {
             setLoading(false);
             setShowTable(true);
             setSearchTimeout(null); // Limpiamos la referencia
-        }, 10000); 
+        }, 5000); 
 
         setSearchTimeout(timeoutId);
+        fetchData(pagination);
     };
-
-
 
     const handleCancel = () => {
         setLoading(false);
         console.log('Búsqueda cancelada');
+    };
+
+    // Función para resetear las fechas a hoy
+    const resetToToday = () => {
+        setStartDate(getStartOfToday());
+        setEndDate(getEndOfToday());
     };
 
     // const handleCancel = () => {
@@ -86,6 +122,21 @@ export function HistoryReport() {
         setIsStartDatePickerOpen(false);
     };
 
+    const handlePaginationChange = (updater) => {
+        const newPagination =
+            typeof updater === 'function' ? updater(pagination) : updater;
+        setPagination(newPagination);
+        fetchData(newPagination);
+    };
+
+    const fetchData = async (pagination) => {
+        const response = await getHistorialTable(pagination.pageIndex, pagination.pageSize, [], '', '', token, startDate, endDate, selectedUnit);
+        console.log(response);
+        setData(response.historial.data);
+        setTotalRows(response.historial.recordsTotal);
+        setPageCount(Math.ceil(response.historial.recordsTotal / pagination.pageSize));
+    };
+
     return (
         <ReportContainer>
             {/* Seccion de controles */}
@@ -93,7 +144,7 @@ export function HistoryReport() {
                 <UnitSelectWrapper>
                     <CustomSelect
                         label=""
-                        options={unitOptions}
+                        options={unidades}
                         value={selectedUnit}
                         onChange={setSelectedUnit}
                         size='large'
@@ -167,15 +218,18 @@ export function HistoryReport() {
                 </LocalizationProvider>
                 
                 <ButtonContainer>
-                <SearchButtonWithLoading 
-                    loading={loading}
-                    onClick={handleSearch}
-                    onCancel={handleCancel}
-                >
-                    Buscar
-                </SearchButtonWithLoading>
+                    <SearchButtonWithLoading 
+                        loading={loading}
+                        onClick={handleSearch}
+                        onCancel={handleCancel}
+                    >
+                        Buscar
+                    </SearchButtonWithLoading>
+                    <ResetDateButton onClick={resetToToday}>
+                        Hoy
+                    </ResetDateButton>
                     <ExportButton>
-                    <RiFileExcel2Line size={20}/>
+                        <RiFileExcel2Line size={20}/>
                         {/* <span>Exportar</span> */}
                     </ExportButton>
                 </ButtonContainer>
@@ -185,7 +239,14 @@ export function HistoryReport() {
             <ContentContainer>
                 {showTable ? (
                     <TablePlaceholder>
-                        <p>Aquí se mostrará la tabla con los resultados del historial.</p>
+                        <TablaPuntosInteres 
+                            data={data} 
+                            type="history" 
+                            pagination={pagination}
+                            pageCount={pageCount}
+                            onPaginationChange={handlePaginationChange}
+                            isLoading={loading}
+                        />
                     </TablePlaceholder>
                 ) : (
                     <EmptyState>
@@ -280,6 +341,14 @@ const BaseButton = styled.button`
     height: 50px;
 `;
 
+
+const ResetDateButton = styled(BaseButton)`
+    background-color: #6c757d;
+    color: white;
+    &:hover {
+        background-color: #5a6268;
+    }
+`;
 
 const ExportButton = styled(BaseButton)`
     background-color: transparent;

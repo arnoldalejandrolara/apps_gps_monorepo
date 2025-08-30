@@ -5,6 +5,8 @@ import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
 import { GeoCercasForm } from '../formularios/GeoCercasForm.jsx';
+import { useSelector } from 'react-redux';
+import { getIconosGeocercas } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
 export function GeoCercasControl({ initialView = 'table' }) {
@@ -18,6 +20,10 @@ export function GeoCercasControl({ initialView = 'table' }) {
     const [pageCount, setPageCount] = useState(Math.ceil(mockPagosData.length / 10));
     const [totalRows, setTotalRows] = useState(mockPagosData.length);
     // const [view, setView] = useState('table'); // Estado para controlar la vista
+
+    const [iconos, setIconos] = useState([]);
+
+    const { token } = useSelector(state => state.auth);
 
     const data = React.useMemo(() => {
         const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
@@ -62,6 +68,17 @@ export function GeoCercasControl({ initialView = 'table' }) {
         setView('table');
     };
 
+    useEffect(() => {
+        const fetchIconos = async () => {
+            const response = await getIconosGeocercas(token);
+            setIconos(response.iconos);
+        }
+
+        if(token) {
+            fetchIconos();
+        }
+    }, [token]);
+
     return (
         <ComponentWrapper>
             <ContentArea>
@@ -100,7 +117,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
                             ) : (
                                 <TableWrapper>
                                     <TablaPuntosInteres
-                                        type="pdi"
+                                        type="geocercas"
                                         data={data}
                                         isLoading={isLoading}
                                         pagination={pagination}
@@ -124,7 +141,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
                     
                     {/* Vista del formulario */}
                     <AnimatedView $isActive={view === 'form'} $direction="right">
-                        <GeoCercasForm onBack={handleBackClick} />
+                        <GeoCercasForm onBack={handleBackClick} iconos={iconos} />
                     </AnimatedView>
                 </AnimatedViewContainer>
             </ContentArea>

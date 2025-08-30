@@ -32,8 +32,12 @@ export const DetalleCar = ({onBack}) => {
         bearing: 0,
     });
 
-    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles || []);
-    const selectedVehicle = useSelector((state) => state.vehicle?.selectedVehicles[0] || null);
+    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles || [], (prev, next) => {
+        return JSON.stringify(prev) === JSON.stringify(next);
+    });
+    const selectedVehicle = useSelector((state) => state.vehicle?.selectedVehicles[0] || null, (prev, next) => {
+        return JSON.stringify(prev) === JSON.stringify(next);
+    });
 
     useEffect(() => {
       // console.log("🎯 Vehículos seleccionados:", selectedVehicles);

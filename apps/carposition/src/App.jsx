@@ -145,7 +145,9 @@ function App() {
     };
 
     const dispatch = useDispatch();
-    const notifications = useSelector((state) => state.notification.notifications);
+    const notifications = useSelector((state) => state.notification.notifications, (prev, next) => {
+        return JSON.stringify(prev) === JSON.stringify(next);
+    });
 
     useEffect(() => {
         if (notifications.length > 0) {
@@ -223,7 +225,7 @@ function App() {
                                     />
 
                                       {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
-                                      <VehicleInfoCard
+                                    <VehicleInfoCard
                                         isVisible={!!selectedVehicleId}
                                         vehicle={selectedVehicleData}
                                         onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta

@@ -9,6 +9,9 @@ export default defineConfig({
     // 2. AÑADE Y CONFIGURA EL PLUGIN AQUÍ
     VitePWA({ 
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+      },
       manifest: {
         name: 'Car Position',
         short_name: 'CarPos',
@@ -32,4 +35,19 @@ export default defineConfig({
   server: {
     port: 3002,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          mui: ['@mui/material', '@mui/icons-material', '@mui/system'],
+          maps: ['mapbox-gl', '@react-google-maps/api', 'leaflet', 'react-leaflet'],
+          charts: ['recharts'],
+          utils: ['dayjs', 'moment', 'date-fns']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 })

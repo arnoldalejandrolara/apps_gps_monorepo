@@ -5,42 +5,28 @@ import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
 import { PuntoInteresForm } from '../formularios/PuntoInteresForm.jsx';
+import { useSelector } from 'react-redux';
+import { getCategoriasPIRequest, getIconosPIRequest, getPITable } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
 export function PuntosInteresControl({ initialView = 'table' }) {
     const [view, setView] = useState(initialView); // <-- Usa la prop para el estado inicial
 
-    const [points, setPoints] = useState(dummyPointsOfInterest);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isLoading, setIsLoading] = useState(false);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     const [sorting, setSorting] = useState([]);
-    const [pageCount, setPageCount] = useState(Math.ceil(mockPagosData.length / 10));
-    const [totalRows, setTotalRows] = useState(mockPagosData.length);
+    const [pageCount, setPageCount] = useState(0);
+    const [totalRows, setTotalRows] = useState(0);
+
+    const [selectedPoint, setSelectedPoint] = useState(null);
     // const [view, setView] = useState('table'); // Estado para controlar la vista
 
-    const data = React.useMemo(() => {
-        const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
-        const empresas = ['Wuckert Inc', 'Stark Industries', 'Wayne Enterprises', 'Daily Planet', 'Oscorp', 'Cyberdyne Systems', 'Tyrell Corporation', 'Umbrella Corp'];
-        const tipos = ['Content Creator', 'Admin', 'User', 'Moderator'];
-        const estados = ['Active', 'Banned', 'Pending', 'Suspended'];
-    
-        return Array.from({ length: 20 }, (_, i) => {
-            const nombreCompleto = nombres[i % nombres.length];
-            const [primerNombre, apellido] = nombreCompleto.split(' ');
-            const email = `${primerNombre.toLowerCase()}${i}@yahoo.com`;
-    
-            return {
-                id: i + 1,
-                nombre: nombreCompleto,
-                email: email,
-                telefono: `+46 8 123 ${i + 1}`,
-                empresa: empresas[i % empresas.length],
-                tipo_usuario: tipos[i % tipos.length],
-                status: estados[i % estados.length],
-            };
-        });
-    }, []);
+    const token = useSelector(state => state.auth.token);
+    const [categorias, setCategorias] = useState([]);
+    const [iconos, setIconos] = useState([]);
+
+    const [data, setData] = useState([]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -60,6 +46,41 @@ export function PuntosInteresControl({ initialView = 'table' }) {
     // Función para manejar el clic en el botón de volver
     const handleBackClick = () => {
         setView('table');
+        setSelectedPoint(null);
+        fetchData();
+    };
+
+    const handlePaginationChange = (updater) => {
+        const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
+        setPagination(newPagination);
+        fetchData();
+    };
+
+    const fetchData = async () => {
+        const response = await getPITable(token, pagination.pageIndex, pagination.pageSize, sorting, '');
+        setData(response.table.data);
+        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+        setTotalRows(response.table.recordsTotal);
+    };
+
+    useEffect(() => {
+        const fetchCategorias = async () => {
+            const responseCategorias = await getCategoriasPIRequest(token);
+            setCategorias(responseCategorias.categorias);
+
+            const responseIconos = await getIconosPIRequest(token);
+            setIconos(responseIconos.iconos);
+        };
+
+        if(token) {
+            fetchCategorias();
+            fetchData();
+        }
+    }, [token]);
+
+    const handleEditPoint = (point) => {
+        setView('form');
+        setSelectedPoint(point);
     };
 
     return (
@@ -76,55 +97,47 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                             </PrimaryButton>
                         </ButtonGroup>
                     </Header>
-                        {points.length > 0 ? (
-                            isMobile ? (
-                                <PointsList>
-                                    {points.map(point => (
-                                        <PointCard key={point.id}>
-                                            <PointIcon>
-                                                <FaMapMarkerAlt />
-                                            </PointIcon>
-                                            <PointInfo>
-                                                <PointName>{point.name}</PointName>
-                                                <PointLocation>{point.location}</PointLocation>
-                                            </PointInfo>
-                                            <PointCategory category={point.category}>{point.category}</PointCategory>
-                                            <CardActions>
-                                                <IconButton title="Editar Punto"><FaEdit /></IconButton>
-                                                <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
-                                                <IconButton title="Eliminar Punto" onClick={() => handleDeletePoint(point.id)}><FaTrash /></IconButton>
-                                            </CardActions>
-                                        </PointCard>
-                                    ))}
-                                </PointsList>
-                            ) : (
-                                <TableWrapper>
-                                    <TablaPuntosInteres
-                                        type="pdi"
-                                        data={data}
-                                        isLoading={isLoading}
-                                        pagination={pagination}
-                                        onPaginationChange={setPagination}
-                                        sorting={sorting}
-                                        onSortingChange={setSorting}
-                                        pageCount={pageCount}
-                                        totalRows={totalRows}
-                                    />
-                                </TableWrapper>
-                            )
+                        {isMobile ? (
+                            <PointsList>
+                                {data.map(point => (
+                                    <PointCard key={point.id}>
+                                        <PointIcon>
+                                            <FaMapMarkerAlt />
+                                        </PointIcon>
+                                        <PointInfo>
+                                            <PointName>{point.nombre}</PointName>
+                                            <PointLocation>{point.coordenadas.x}, {point.coordenadas.y}</PointLocation>
+                                        </PointInfo>
+                                        <PointCategory category={point.categoria}>{point.categoria}</PointCategory>
+                                        <CardActions>
+                                            <IconButton title="Editar Punto"><FaEdit /></IconButton>
+                                            <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
+                                            <IconButton title="Eliminar Punto" onClick={() => handleDeletePoint(point.id)}><FaTrash /></IconButton>
+                                        </CardActions>
+                                    </PointCard>
+                                ))}
+                            </PointsList>
                         ) : (
-                            <EmptyState>
-                                <EmptyStateCard>
-                                    <CactusIcon />
-                                    <EmptyText>No hay puntos de interés</EmptyText>
-                                </EmptyStateCard>
-                            </EmptyState>
+                            <TableWrapper>
+                                <TablaPuntosInteres
+                                    type="pdi"
+                                    data={data}
+                                    isLoading={isLoading}
+                                    pagination={pagination}
+                                    onPaginationChange={handlePaginationChange}
+                                    sorting={sorting}
+                                    onSortingChange={setSorting}
+                                    pageCount={pageCount}
+                                    totalRows={totalRows}
+                                    onEdit={handleEditPoint}
+                                />
+                            </TableWrapper>
                         )}
                     </AnimatedView>
                     
                     {/* Vista del formulario */}
                     <AnimatedView $isActive={view === 'form'} $direction="right">
-                        <PuntoInteresForm onBack={handleBackClick} />
+                        <PuntoInteresForm onBack={handleBackClick} categorias={categorias} iconos={iconos} point={selectedPoint} />
                     </AnimatedView>
                 </AnimatedViewContainer>
             </ContentArea>
