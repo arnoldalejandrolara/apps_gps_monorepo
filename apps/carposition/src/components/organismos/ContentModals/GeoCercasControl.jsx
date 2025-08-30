@@ -6,7 +6,7 @@ import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
 import { GeoCercasForm } from '../formularios/GeoCercasForm.jsx';
 import { useSelector } from 'react-redux';
-import { getIconosGeocercas } from '@mi-monorepo/common/services';
+import { getIconosGeocercas, getGeocercasTable } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
 export function GeoCercasControl({ initialView = 'table' }) {
@@ -19,34 +19,15 @@ export function GeoCercasControl({ initialView = 'table' }) {
     const [sorting, setSorting] = useState([]);
     const [pageCount, setPageCount] = useState(Math.ceil(mockPagosData.length / 10));
     const [totalRows, setTotalRows] = useState(mockPagosData.length);
+
+    const [selectedGeoCerca, setSelectedGeoCerca] = useState(null);
     // const [view, setView] = useState('table'); // Estado para controlar la vista
 
     const [iconos, setIconos] = useState([]);
 
     const { token } = useSelector(state => state.auth);
 
-    const data = React.useMemo(() => {
-        const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
-        const empresas = ['Wuckert Inc', 'Stark Industries', 'Wayne Enterprises', 'Daily Planet', 'Oscorp', 'Cyberdyne Systems', 'Tyrell Corporation', 'Umbrella Corp'];
-        const tipos = ['Content Creator', 'Admin', 'User', 'Moderator'];
-        const estados = ['Active', 'Banned', 'Pending', 'Suspended'];
-    
-        return Array.from({ length: 20 }, (_, i) => {
-            const nombreCompleto = nombres[i % nombres.length];
-            const [primerNombre, apellido] = nombreCompleto.split(' ');
-            const email = `${primerNombre.toLowerCase()}${i}@yahoo.com`;
-    
-            return {
-                id: i + 1,
-                nombre: nombreCompleto,
-                email: email,
-                telefono: `+46 8 123 ${i + 1}`,
-                empresa: empresas[i % empresas.length],
-                tipo_usuario: tipos[i % tipos.length],
-                status: estados[i % estados.length],
-            };
-        });
-    }, []);
+    const [data, setData] = useState([]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -66,6 +47,15 @@ export function GeoCercasControl({ initialView = 'table' }) {
     // Función para manejar el clic en el botón de volver
     const handleBackClick = () => {
         setView('table');
+        setSelectedGeoCerca(null);
+        fetchData();
+    };
+
+    const fetchData = async () => {
+        const response = await getGeocercasTable(token, pagination.pageIndex, pagination.pageSize, sorting, '');
+        setData(response.table.data);
+        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+        setTotalRows(response.table.recordsTotal);
     };
 
     useEffect(() => {
@@ -76,8 +66,67 @@ export function GeoCercasControl({ initialView = 'table' }) {
 
         if(token) {
             fetchIconos();
+            fetchData();
         }
     }, [token]);
+
+    const handleEditGeoCerca = (point) => {
+        setView('form');
+        console.log(point);
+        
+        // Parsear el polígono si viene como string WKT
+        if (point.polygon && typeof point.polygon === 'string') {
+            const parsedPolygon = parseWKTPolygon(point.polygon);
+            point.polygon = parsedPolygon;
+        }
+        
+        setSelectedGeoCerca(point);
+    };
+
+    // Función para parsear string WKT a array de coordenadas
+    const parseWKTPolygon = (wktString) => {
+        try {
+            //console.log('Parseando coordenadas:', wktString);
+            
+            // Si ya es un array, retornarlo directamente
+            if (Array.isArray(wktString)) {
+                //console.log('Ya es un array:', wktString);
+                return wktString;
+            }
+            
+            // Si es string, intentar parsearlo
+            if (typeof wktString === 'string') {
+                // Buscar todos los pares de coordenadas en el string
+                // Patrón: (-número,número)
+                const coordinateMatches = wktString.match(/\(-?\d+\.?\d*,-?\d+\.?\d*\)/g);
+                
+                if (coordinateMatches) {
+                    //console.log('Coordenadas encontradas:', coordinateMatches);
+                    
+                    const coordinatePairs = coordinateMatches.map(match => {
+                        // Limpiar paréntesis y extraer números
+                        const cleanMatch = match.replace(/[()]/g, '');
+                        const [lng, lat] = cleanMatch.split(',').map(Number);
+                        
+                        //console.log('Par parseado:', [lat, lng]);
+                        return [lat, lng]; // Convertir a formato [lat, lng]
+                    });
+                    
+                    //console.log('Polígono parseado:', coordinatePairs);
+                    return coordinatePairs;
+                } else {
+                    console.error('No se encontraron coordenadas en el formato esperado');
+                    return [];
+                }
+            }
+            
+            console.error('Formato no reconocido:', typeof wktString);
+            return [];
+        } catch (error) {
+            console.error('Error al parsear coordenadas:', error);
+            return [];
+        }
+    };
 
     return (
         <ComponentWrapper>
@@ -126,6 +175,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
                                         onSortingChange={setSorting}
                                         pageCount={pageCount}
                                         totalRows={totalRows}
+                                        onEdit={handleEditGeoCerca}
                                     />
                                 </TableWrapper>
                             )
@@ -141,7 +191,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
                     
                     {/* Vista del formulario */}
                     <AnimatedView $isActive={view === 'form'} $direction="right">
-                        <GeoCercasForm onBack={handleBackClick} iconos={iconos} />
+                        <GeoCercasForm onBack={handleBackClick} iconos={iconos} geoCerca={selectedGeoCerca} />
                     </AnimatedView>
                 </AnimatedViewContainer>
             </ContentArea>
