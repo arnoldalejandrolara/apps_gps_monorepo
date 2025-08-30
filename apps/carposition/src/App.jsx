@@ -43,7 +43,6 @@ import { VehicleInfoCard } from './components/organismos/VehicleInfoCard.jsx';
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
 
 // 👇 2. DATOS DE EJEMPLO CON MÁS INFORMACIÓN
 const dummyVehicles = [

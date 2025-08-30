@@ -35,6 +35,8 @@ export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
 
     const handleCardClick = async (vehicle) => {
         try {
+            console.log("🚗 Vehículo seleccionado:", vehicle);
+            
             if (!vehicle || !vehicle.imei) {
                 console.error("❌ Datos del vehículo inválidos:", vehicle);
                 return;

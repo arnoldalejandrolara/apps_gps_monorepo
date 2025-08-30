@@ -249,6 +249,7 @@ const OptionBoxCheckbox = styled.input`
 export function CuentasEspejoForm({ onBack }) {
   const [currentStep, setCurrentStep] = useState(1);
   const vehicles = useSelector(state => state.vehicle.vehicles);
+  console.log(vehicles , 'VEHICULOS');
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -277,9 +278,10 @@ export function CuentasEspejoForm({ onBack }) {
 
   const unidades = vehicles.map(vehicle => ({
     id: vehicle.id,
-    name: vehicle.info.nombre_corto,
+    name: vehicle.info.nombre,
     value: vehicle.id
   }));
+
 
   const [selectUnidad, setSelectUnidad] = useState('');
 
