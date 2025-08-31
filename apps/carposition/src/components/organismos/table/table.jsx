@@ -8,7 +8,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { MdModeEditOutline, MdDelete } from 'react-icons/md';
-import { FaCheckCircle, FaTrash, FaMapMarkerAlt } from "react-icons/fa";
+import { FaCheckCircle, FaTrash, FaMapMarkerAlt, FaDrawPolygon } from "react-icons/fa";
 import { FaInfo } from 'react-icons/fa';
 import { HiPhone } from 'react-icons/hi';
 import { OptionsMenu } from '../../moleculas/OptionsMenu.jsx';
@@ -384,6 +384,56 @@ export function TablaPuntosInteres({
     },
   ];
 
+  const columnsGeocercas = [
+    {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Icono',
+      accessorKey: 'icono',
+      cell: ({ row }) => (
+        <StyledIconCell>
+          <FaDrawPolygon style={{ color: row.original.hex_color ? `#${row.original.hex_color}` : '#3388ff' }} />
+          <span>{row.original.icono}</span>
+        </StyledIconCell>
+      ),
+    },
+    {
+      header: 'Comentarios',
+      accessorKey: 'comentarios',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.comentarios}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
+
   let columns;
   switch (type) {
     case 'dispositivo':
@@ -397,6 +447,9 @@ export function TablaPuntosInteres({
       break;
     case 'pdi':
       columns = columnsPDI;
+      break;
+    case 'geocercas':
+      columns = columnsGeocercas;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);

@@ -64,5 +64,7 @@ export {
     getPITable,
     updatePIRequest,
     getIconosGeocercas,
-    createGeocerca
+    createGeocerca, 
+    getGeocercasTable,
+    updateGeocerca
 } from './services/index.js';
