@@ -162,7 +162,7 @@ function App() {
             case '/configuration-user': setModalContent(<UserControlComponent />); setModalSize('large'); break;
             case '/device-config': setModalContent(<DeviceConfigComponent />); setModalSize('large'); break;
             case '/notifications-config': setModalContent(<NotifiConfigComponent />); setModalSize('large'); break;
-            case '/reports': setModalContent(<ReportsComponent />); setModalSize('large'); break;
+            case '/reports': setModalContent(<ReportsComponent />); setModalSize('extraLarge'); break;
             case '/pdi': setModalContent(<PuntosInteresControl />); setModalSize('large'); break;
             case '/geocercas': setModalContent(<GeoCercasControl />); setModalSize('large'); break;
             case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('extraMedium'); break;

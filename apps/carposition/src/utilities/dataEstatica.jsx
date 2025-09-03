@@ -313,15 +313,17 @@ export const menuItems = [
       ]
   },
   {
+      id: 'geocercas',
       label: "Geocercas",
       icon: <FaDrawPolygon />,
       subMenu: [
-          { label: "Ver Geocercas", to: "/geofences/view" },
+          { label: "Ver Geocercas", action: "viewGeocercas" },
           { label: "Crear Nueva", to: "/geofences/create" }
       ]
   },
  
   {
+      id: 'pdi',
       label: "PDI",
       icon: <FaMapPin />,
       subMenu: [

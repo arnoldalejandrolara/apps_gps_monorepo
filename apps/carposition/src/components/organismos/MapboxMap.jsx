@@ -6,18 +6,248 @@ import { useSelector } from 'react-redux';
 // Token de Mapbox - deberías configurar VITE_MAPBOX_TOKEN en tu archivo .env
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
 
+// --- NUEVO: Datos de ejemplo para los PDI (ahora con radio) ---
+const fakePdiData = [
+    { id: 'pdi-1', name: 'Oficina Central', longitude: -101.956114, latitude: 22.653024, radius: 500,color: '#007cbf' }, // Radio en metros
+    { id: 'pdi-2', name: 'Bodega Norte', longitude: -101.978130, latitude: 22.669050, radius: 500 ,color: '#007cbf'},
+    { id: 'pdi-3', name: 'Almacén Sur', longitude: -101.941200, latitude: 22.635100, radius: 750,color: '#007cbf' },
+    {id: 'pdi-4', name: 'Casa Arnold', longitude: -97.89011807247293, latitude: 22.362032800122975, radius: 600,color: '#007cbf'},
+    {id: 'pdi-5', name: 'Uat', longitude: -97.86097819243601, latitude:22.279252426216114, radius: 800,color: '#007cbf'},
+];
+
+
+// --- NUEVO: Datos de ejemplo para las Geocercas (Polígonos) ---
+const fakeGeofenceData = [
+    {
+        id: 'geofence-1',
+        name: 'Zona Industrial Prohibida',
+        color: '#E53935', // Rojo
+        // Coordenadas en formato [longitud, latitud]
+        coordinates: [
+            [-97.88, 22.38],
+            [-97.86, 22.38],
+            [-97.86, 22.36],
+            [-97.88, 22.36],
+            [-97.88, 22.38] // El último punto debe ser igual al primero para cerrar el polígono
+        ]
+    },
+    {
+        id: 'geofence-2',
+        name: 'Área de Carga y Descarga',
+        color: '#43A047', // Verde
+        coordinates: [
+            [-97.90, 22.35],
+            [-97.89, 22.36],
+            [-97.88, 22.35],
+            [-97.89, 22.34],
+            [-97.90, 22.35]
+        ]
+    }
+];
+
+
+
+const CustomMapPin = ({ color = '#d93131' }) => ( // Color rojo por defecto
+    <svg 
+        height="40" // Un poco más alto para que se vea bien
+        viewBox="0 0 24 36"
+        style={{
+            cursor: 'pointer',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
+        }}
+    >
+        {/* Vástago/Palo del pin */}
+        <path 
+            fill="#A0A0A0" // Un color gris/plata para el palo
+            stroke="#616161" // Borde un poco más oscuro
+            strokeWidth="0.5"
+            // Dibuja un rectángulo que termina en punta
+            d="M10.5 14 L13.5 14 L13.5 30 L12 36 L10.5 30 Z" 
+        />
+
+        {/* Cabeza redonda del pin */}
+        <circle 
+            cx="12"      // Centrado horizontalmente
+            cy="10"      // Centrado verticalmente en la parte superior
+            r="10"       // Radio del círculo
+            fill={color} // Color personalizable
+            strokeWidth="1"
+        />
+
+        {/* Reflejo/brillo en la cabeza del pin */}
+        <circle 
+            cx="15" 
+            cy="7" 
+            r="2.5" 
+            fill="white" 
+            fillOpacity="0.5" // Ligeramente transparente
+        />
+    </svg>
+);
+
+
+// --> 1. FUNCIÓN PARA GENERAR UN CÍRCULO GEOJSON (RADIAL GEODÉSICO)
+// Basado en https://stackoverflow.com/questions/2783857/draw-a-circle-with-coordinates-on-a-map
+function createGeoJSONCircle(center, radiusInMeters, points = 64) {
+    const coords = {
+        latitude: center[1],
+        longitude: center[0]
+    };
+
+    const km = radiusInMeters / 1000;
+
+    const ret = [];
+    const distanceX = km / (111.320 * Math.cos(coords.latitude * Math.PI / 180));
+    const distanceY = km / 110.574;
+
+    let theta, x, y;
+    for (let i = 0; i < points; i++) {
+        theta = (i / points) * (2 * Math.PI);
+        x = distanceX * Math.cos(theta);
+        y = distanceY * Math.sin(theta);
+
+        ret.push([coords.longitude + x, coords.latitude + y]);
+    }
+    ret.push(ret[0]); // Cierra el polígono
+
+    return {
+        type: 'FeatureCollection',
+        features: [{
+            type: 'Feature',
+            geometry: {
+                type: 'Polygon',
+                coordinates: [ret]
+            }
+        }]
+    };
+}
+
+
+
+// --> 2. COMPONENTE PARA EL MARCADOR PDI CON TOOLTIP
+const PdiMarkerWithTooltip = ({ name, longitude, latitude , color}) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    return (
+        <Marker longitude={longitude} latitude={latitude} anchor="bottom">
+            <div
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                style={{
+                    position: 'relative',
+                    cursor: 'pointer',
+                    fontSize: '24px',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}
+            >
+                <CustomMapPin color={color} />
+                {showTooltip && (
+                    <div
+                        style={{
+                            position: 'absolute',
+                            bottom: '100%', // Posiciona el tooltip encima del emoji
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            color: 'white',
+                            padding: '5px 10px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            whiteSpace: 'nowrap',
+                            pointerEvents: 'none', // Asegura que el tooltip no interfiera con eventos del marcador
+                            marginBottom: '5px' // Pequeño espacio entre el emoji y el tooltip
+                        }}
+                    >
+                        {name}
+                    </div>
+                )}
+            </div>
+        </Marker>
+    );
+};
+
+
 export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehicles }) {
     const selectedVehiclesIds = useSelector((state) => 
         state.vehicle?.selectedVehicles?.map(v => v.id) || [], (prev, next) => {
             return JSON.stringify(prev) === JSON.stringify(next);
         }
     );
+
+    const geofencePolygons = useMemo(() => {
+        return fakeGeofenceData.map(geofence => ({
+            id: `geofence-polygon-${geofence.id}`,
+            color: geofence.color,
+            data: {
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Polygon',
+                        // Mapbox espera las coordenadas dentro de un array adicional
+                        coordinates: [geofence.coordinates] 
+                    }
+                }]
+            }
+        }));
+    }, []);
+
+    const showPdiMarkers = useSelector((state) => state.mapView.showPdiMarkers);
+    const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
+
+    useEffect(() => {
+        console.log('El estado de showPdiMarkers cambió a:', showPdiMarkers);
+    }, [showPdiMarkers]); 
     
     const animationRef = useRef(null);
     const animationProgressRef = useRef(0);
     const [isAnimationPaused, setIsAnimationPaused] = useState(false);
     const [isAnimationComplete, setIsAnimationComplete] = useState(false);
     const [animatedPositions, setAnimatedPositions] = useState({});
+
+    // --- MODIFICADO: Creación de los marcadores para los PDI (ahora usa el componente con tooltip) ---
+    const pdiMarkers = useMemo(() => {
+        return fakePdiData.map(pdi => (
+            <PdiMarkerWithTooltip
+                key={pdi.id}
+                name={pdi.name}
+                longitude={pdi.longitude}
+                latitude={pdi.latitude}
+                color={pdi.color} // <-- Pasa el color aquí
+            />
+        ));
+    }, []); 
+
+    // --> 3. CREACIÓN DE LOS CÍRCULOS (RADIOS) DE LOS PDI EN FORMATO GEOJSON
+    const pdiGeoJSONCircles = useMemo(() => {
+        return fakePdiData.map(pdi => ({
+            id: `pdi-circle-${pdi.id}`,
+            data: createGeoJSONCircle([pdi.longitude, pdi.latitude], pdi.radius),
+        }));
+    }, []);
+
+    // --> 4. ESTILO DE LA CAPA PARA LOS CÍRCULOS (Radios)
+    const circleLayerStyle = {
+        id: 'pdi-circle-layer',
+        type: 'fill',
+        paint: {
+            'fill-color': '#007cbf', // Color azul
+            'fill-opacity': 0.2,    // Opacidad para que sea semitransparente
+            'fill-outline-color': '#005f99' // Borde más oscuro
+        }
+    };
+
+    const circleLayerProps = {
+        type: 'fill',
+        paint: {
+            'fill-color': '#007cbf',
+            'fill-opacity': 0.2,
+            'fill-outline-color': '#005f99'
+        }
+    };
+
+
 
     // Función para interpolar entre dos puntos
     const interpolatePoint = (start, end, progress) => {
@@ -93,19 +323,16 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
             if (vehicle.route && vehicle.route.length > 0) {
                 let route = vehicle.route;
                 
-                // Si solo hay un punto, crear una ruta de ejemplo
                 if (route.length === 1) {
-                    // Las rutas vienen como [latitud, longitud], convertir a [longitud, latitud] para Mapbox
                     const startPoint = route[0];
-                    const startPointMapbox = [startPoint[1], startPoint[0]]; // [lng, lat]
+                    const startPointMapbox = [startPoint[1], startPoint[0]];
                     const endPoint = [
-                        startPointMapbox[0] + 0.01, // Añadir 0.01 grados de longitud
-                        startPointMapbox[1] + 0.01  // Añadir 0.01 grados de latitud
+                        startPointMapbox[0] + 0.01,
+                        startPointMapbox[1] + 0.01
                     ];
                     route = [startPointMapbox, endPoint];
                 } else {
-                    // Convertir todas las coordenadas de la ruta de [lat, lng] a [lng, lat]
-                    route = route.map(point => [point[1], point[0]]); // [lng, lat]
+                    route = route.map(point => [point[1], point[0]]);
                 }
                 
                 const currentPos = getCurrentPosition(route, animationProgressRef.current);
@@ -125,9 +352,8 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
 
         setAnimatedPositions(newPositions);
 
-        // Continuar la animación solo si no está pausada y no ha terminado
         if (!isAnimationPaused && animationProgressRef.current < 1) {
-            animationProgressRef.current += 0.01; // Incremento más lento para animación suave
+            animationProgressRef.current += 0.01;
             if (animationProgressRef.current >= 1) {
                 animationProgressRef.current = 1;
                 setIsAnimationComplete(true);
@@ -146,14 +372,12 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                 let route = vehicle.route;
                 
                 if (route.length === 1) {
-                    // Para rutas de un punto, usar el punto final de la ruta de ejemplo
                     const startPoint = route[0];
-                    const endPoint = [startPoint[1] + 0.01, startPoint[0] + 0.01]; // [lng, lat]
+                    const endPoint = [startPoint[1] + 0.01, startPoint[0] + 0.01];
                     allEndPoints.push(endPoint);
                 } else {
-                    // Para rutas múltiples, usar el último punto convertido
                     const lastPoint = route[route.length - 1];
-                    const endPoint = [lastPoint[1], lastPoint[0]]; // [lng, lat]
+                    const endPoint = [lastPoint[1], lastPoint[0]];
                     allEndPoints.push(endPoint);
                 }
             }
@@ -161,7 +385,6 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
         
         if (allEndPoints.length === 0) return null;
         
-        // Calcular el centro de todos los puntos finales
         const avgLng = allEndPoints.reduce((sum, point) => sum + point[0], 0) / allEndPoints.length;
         const avgLat = allEndPoints.reduce((sum, point) => sum + point[1], 0) / allEndPoints.length;
         
@@ -177,7 +400,6 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
         return selectedVehicles.map(vehicle => {
             const animatedData = animatedPositions[vehicle.id];
             
-            // Usar posición animada si está disponible, sino usar posición estática
             let position;
             let heading = 0;
             
@@ -185,16 +407,12 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                 position = animatedData.position;
                 heading = animatedData.heading;
             } else {
-                // Usar coordenadas del vehículo o valores por defecto
-                // Mapbox usa formato [longitude, latitude]
-                // longitude: -180 a 180, latitude: -90 a 90
                 position = [
-                    vehicle.posicion_actual?.lng || -101.956114, // longitude
-                    vehicle.posicion_actual?.lat || 22.653024    // latitude
+                    vehicle.posicion_actual?.lng || -101.956114,
+                    vehicle.posicion_actual?.lat || 22.653024
                 ];
             }
             
-            // Verificar que las coordenadas son válidas
             if (!position || position.length !== 2 || 
                 typeof position[0] !== 'number' || typeof position[1] !== 'number' ||
                 isNaN(position[0]) || isNaN(position[1])) {
@@ -243,27 +461,23 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                     </div>
                 </Marker>
             );
-        }).filter(Boolean); // Filtrar marcadores nulos
+        }).filter(Boolean);
     }, [selectedVehicles, animatedPositions]);
 
     // Iniciar y detener animación de vehículos
     useEffect(() => {
-        // Detener animación anterior si existe
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
         }
 
-        // Reiniciar estado de animación cuando cambian los vehículos
         animationProgressRef.current = 0;
         setIsAnimationComplete(false);
         setIsAnimationPaused(false);
         setAnimatedPositions({});
 
-        // Iniciar nueva animación si hay vehículos seleccionados
         if (selectedVehicles.length > 0) {
             
-            // Centrar la cámara en el punto final de la animación
             const endPoint = getAnimationEndPoint(selectedVehicles);
             if (endPoint) {
                 onViewStateChange({
@@ -271,8 +485,8 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                         ...viewState,
                         longitude: endPoint[0],
                         latitude: endPoint[1],
-                        zoom: Math.max(viewState.zoom || 10, 12), // Zoom mínimo de 12 para ver mejor
-                        transitionDuration: 2000, // Transición suave de 2 segundos
+                        zoom: Math.max(viewState.zoom || 10, 12),
+                        transitionDuration: 2000,
                         transitionInterpolator: {
                             interpolatePosition: (from, to) => [to[0], to[1]]
                         }
@@ -287,7 +501,6 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
             animationRef.current = requestAnimationFrame(animate);
         }
 
-        // Cleanup al desmontar o cambiar vehículos
         return () => {
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current);
@@ -308,6 +521,67 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                 reuseMaps={true}
             >
                 {vehicleMarkers}
+                
+                {/* --- NUEVO: Renderizado condicional de los marcadores PDI --- */}
+                {showPdiMarkers && pdiMarkers}
+
+                {/* --> 5. RENDERIZADO CONDICIONAL DE LOS CÍRCULOS PDI */}
+                {showPdiMarkers && pdiGeoJSONCircles.map(pdiCircle => (
+                    <Source key={pdiCircle.id} id={pdiCircle.id} type="geojson" data={pdiCircle.data}>
+                        <Layer 
+                            id={`layer-${pdiCircle.id}`} // ID único para la capa
+                            {...circleLayerProps} 
+                        />
+                    </Source>
+                ))}
+
+                {showGeofences && geofencePolygons.map(polygon => (
+                    <Source key={polygon.id} id={polygon.id} type="geojson" data={polygon.data}>
+                        {/* Capa para el relleno del polígono */}
+                        <Layer
+                            id={`layer-fill-${polygon.id}`}
+                            type="fill"
+                            paint={{
+                                'fill-color': polygon.color, // Color dinámico
+                                'fill-opacity': 0.3,
+                            }}
+                        />
+                        {/* Capa para el borde del polígono */}
+                        <Layer
+                            id={`layer-line-${polygon.id}`}
+                            type="line"
+                            paint={{
+                                'line-color': polygon.color,
+                                'line-width': 2,
+                            }}
+                        />
+                    </Source>
+                ))}
+
+  {/* --- NUEVO: Renderizado condicional de los POLÍGONOS de Geocercas --- */}
+  {showGeofences && geofencePolygons.map(polygon => (
+                    <Source key={polygon.id} id={polygon.id} type="geojson" data={polygon.data}>
+                        {/* Capa para el relleno del polígono */}
+                        <Layer
+                            id={`layer-fill-${polygon.id}`}
+                            type="fill"
+                            paint={{
+                                'fill-color': polygon.color, // Color dinámico
+                                'fill-opacity': 0.3,
+                            }}
+                        />
+                        {/* Capa para el borde del polígono */}
+                        <Layer
+                            id={`layer-line-${polygon.id}`}
+                            type="line"
+                            paint={{
+                                'line-color': polygon.color,
+                                'line-width': 2,
+                            }}
+                        />
+                    </Source>
+                ))}
+                
             </Map>
 
             {/* Botón de control de animación */}
