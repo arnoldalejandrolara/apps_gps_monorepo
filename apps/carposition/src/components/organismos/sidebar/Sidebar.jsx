@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import styled, { keyframes } from "styled-components";
+import React, { useState , useRef } from "react";
+import styled, { keyframes , css } from "styled-components";
 import { CiLogout } from "react-icons/ci";
 import { logout } from "@mi-monorepo/common/store/thunks";
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,10 @@ import { useDispatch } from "react-redux";
 import { useModal } from "../../../hooks/useModal";
 import { PuntosInteresControl } from "../ContentModals/PuntosInteresControl";
 import { menuItems , logoutItem } from "../../../utilities/dataEstatica";
+import { useSelector } from 'react-redux';
+import {togglePdiMarkers} from "@mi-monorepo/common/store/mapView";
+import {toggleGeofences} from "@mi-monorepo/common/store/geofenceView";
+
 
 export function Sidebar({onToggleNotifications}) {
     const navigate = useNavigate();
@@ -16,6 +20,12 @@ export function Sidebar({onToggleNotifications}) {
     const { openModal } = useModal();
     const [isAlertsPanelOpen, setAlertsPanelOpen] = useState(false);
     const [alertsPanelTop, setAlertsPanelTop] = useState(0);
+    
+    const showPdiMarkers = useSelector((state) => state.mapView.showPdiMarkers);
+    const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
+
+    const pdiItemRef = useRef(null);
+    const pdiItemIndex = menuItems.findIndex(item => item.id === 'pdi');
 
     const cerrarSesion = () => {
         dispatch(logout());
@@ -23,11 +33,12 @@ export function Sidebar({onToggleNotifications}) {
     };
 
     const handleOpenPdiTable = () => {
-        openModal(
-            <PuntosInteresControl initialView="table" />,
-            'Control de Puntos de Interes', 
-            'large'
-        );
+        // openModal(
+        //     <PuntosInteresControl initialView="table" />,
+        //     'Control de Puntos de Interes', 
+        //     'large'
+        // );
+        alert('Funcionalidad en desarrollo ver pdi en mapa');
     };
     
     const handleOpenPdiForm = () => {
@@ -52,7 +63,8 @@ export function Sidebar({onToggleNotifications}) {
         console.log('Submenu item clicked:', item);
 
         if (item.action === 'openPdiTable') {
-            handleOpenPdiTable();
+            // handleOpenPdiTable();
+            dispatch(togglePdiMarkers());
         } else if (item.action === 'openPdiForm') {
             handleOpenPdiForm();
         } else if (item.action === 'openAlertsPanel') {
@@ -60,7 +72,10 @@ export function Sidebar({onToggleNotifications}) {
             onToggleNotifications();
         } else if (item.action === 'logout') {
             cerrarSesion();
-        } else {
+        }else if(item.action === 'viewGeocercas'){
+            dispatch(toggleGeofences());
+          
+        }else {
             navigate(item.to); 
         }
         setActiveSubMenu(null);
@@ -68,6 +83,7 @@ export function Sidebar({onToggleNotifications}) {
 
     const activeItemIndex = activeSubMenu;
     let itemToShow = null;
+
     if (activeItemIndex !== null) {
         itemToShow = (activeItemIndex === 'logout') ? logoutItem : menuItems[activeItemIndex];
     }
@@ -82,13 +98,20 @@ export function Sidebar({onToggleNotifications}) {
                 </ProfileContainer>
                 <ContentContainer>
                     <div>
-                        {menuItems.map((item, index) => {
-                            const isActive = activeSubMenu === index;
+                    {menuItems.map((item, index) => {
+                            const isHoverActive = activeSubMenu === index;
+                            const isPdiActive = item.id === 'pdi' && showPdiMarkers;
+                            const isGeofenceActive = item.id === 'geocercas' && showGeofences; 
+                            const isReduxActive = isPdiActive || isGeofenceActive;
+
+
                             return (
                                 <SidebarItem
+                                    // --> 5. ASIGNA LA REFERENCIA AL ÍTEM CORRECTO
+                                    ref={item.id === 'pdi' ? pdiItemRef : null}
                                     key={item.label + index}
                                     onMouseEnter={(e) => handleMouseEnter(index, e)}
-                                    className={isActive ? 'active' : ''}
+                                    className={isHoverActive || isReduxActive ? 'active' : ''}
                                 >
                                     <IconSlot>{item.icon}</IconSlot>
                                 </SidebarItem>
@@ -112,11 +135,23 @@ export function Sidebar({onToggleNotifications}) {
                     style={{ top: `${subMenuTop}px` }}
                 >
                     <h4>{itemToShow.label}</h4>
-                    {itemToShow.subMenu.map(subItem => (
-                        <SubMenuItem key={subItem.label} onClick={() => handleSubMenuClick(subItem)}>
-                            {subItem.label}
-                        </SubMenuItem>
-                    ))}
+                    {itemToShow.subMenu.map(subItem => {
+                        // --> 2. CREA UNA CONSTANTE PARA SABER SI ESTE SUB-ITEM ESTÁ ACTIVO
+                        const isPdiSubItemActive = subItem.action === 'openPdiTable' && showPdiMarkers;
+                        const isGeofenceSubItemActive = subItem.action === 'viewGeocercas' && showGeofences;
+                        const isSubItemActive = isPdiSubItemActive || isGeofenceSubItemActive;
+                        
+                        return (
+                            <SubMenuItem 
+                                key={subItem.label} 
+                                onClick={() => handleSubMenuClick(subItem)}
+                                // --> 3. PASA LA CONSTANTE COMO UNA PROP 'isActive'
+                                isActive={isSubItemActive}
+                            >
+                                {subItem.label}
+                            </SubMenuItem>
+                        );
+                    })}
                 </SubMenuContainer>
             )}
         </div>
@@ -226,7 +261,16 @@ const SubMenuItem = styled.div`
     background: #F0F7FF;
     color: #007BFF;
   }
+  
+  // --> 4. AÑADE ESTE BLOQUE DE CÓDIGO
+  // Aplica estos estilos si la prop 'isActive' es true
+  ${props => props.isActive && css`
+    background-color: #E6F2FF;
+    color: #0069D9;
+    font-weight: 600;
+  `}
 `;
+
 
 const ProfileContainer = styled.div`
   display: flex;
