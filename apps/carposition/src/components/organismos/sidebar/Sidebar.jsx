@@ -8,7 +8,7 @@ import { useModal } from "../../../hooks/useModal";
 import { PuntosInteresControl } from "../ContentModals/PuntosInteresControl";
 import { menuItems , logoutItem } from "../../../utilities/dataEstatica";
 import { useSelector } from 'react-redux';
-import {togglePdiMarkers} from "@mi-monorepo/common/store/mapView";
+import {togglePdiMarkers} from "@mi-monorepo/common/store/pdiView";
 import {toggleGeofences} from "@mi-monorepo/common/store/geofenceView";
 
 
@@ -21,7 +21,7 @@ export function Sidebar({onToggleNotifications}) {
     const [isAlertsPanelOpen, setAlertsPanelOpen] = useState(false);
     const [alertsPanelTop, setAlertsPanelTop] = useState(0);
     
-    const showPdiMarkers = useSelector((state) => state.mapView.showPdiMarkers);
+    const showPdiMarkers = useSelector((state) => state.pdiView.showPdiMarkers);
     const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
 
     const pdiItemRef = useRef(null);

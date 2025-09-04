@@ -14,7 +14,9 @@ export {
     setVehicles,
     addSelectedVehicleMobile,
     setVehicleNewRegister,
-    resetVehicles
+    resetVehicles,
+    setPdiData,
+    setGeofenceData
 } from './store/slices/index.js';
 
 export { 

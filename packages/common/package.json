@@ -9,7 +9,7 @@
         "./store/auth": "./src/store/slices/authSlice.js",
         "./store/vehicle": "./src/store/slices/vehicleSlice.js",
         "./store/notification": "./src/store/slices/notificationSlice.js",
-        "./store/mapView": "./src/store/slices/pdiViewSlice.js",
+        "./store/pdiView": "./src/store/slices/pdiViewSlice.js",
         "./store/geofenceView": "./src/store/slices/geoViewSlice.js",
         "./store/geo": "./src/store/slices/pdiViewSlice.js",
         "./store/thunks": "./src/store/thunks/index.js",

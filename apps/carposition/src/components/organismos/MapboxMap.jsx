@@ -175,10 +175,21 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
         }
     );
 
+    const showPdiMarkers = useSelector((state) => state.pdiView.showPdiMarkers);
+    const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
+
+    useEffect(() => {
+        console.log('El estado de showPdiMarkers cambió a:', showPdiMarkers);
+    }, [showPdiMarkers]); 
+
+    const pdiData = useSelector((state) => state.pdiView.pdiData);
+    const geofenceData = useSelector((state) => state.geofenceView.geofenceData);
+
     const geofencePolygons = useMemo(() => {
-        return fakeGeofenceData.map(geofence => ({
+        console.log('geofenceData', geofenceData);
+        return geofenceData.map(geofence => ({
             id: `geofence-polygon-${geofence.id}`,
-            color: geofence.color,
+            color: '#' + geofence.hex_color,
             data: {
                 type: 'FeatureCollection',
                 features: [{
@@ -186,19 +197,12 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                     geometry: {
                         type: 'Polygon',
                         // Mapbox espera las coordenadas dentro de un array adicional
-                        coordinates: [geofence.coordinates] 
+                        coordinates: [geofence.polygon] 
                     }
                 }]
             }
         }));
-    }, []);
-
-    const showPdiMarkers = useSelector((state) => state.mapView.showPdiMarkers);
-    const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
-
-    useEffect(() => {
-        console.log('El estado de showPdiMarkers cambió a:', showPdiMarkers);
-    }, [showPdiMarkers]); 
+    }, [geofenceData]);
     
     const animationRef = useRef(null);
     const animationProgressRef = useRef(0);
@@ -208,24 +212,25 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
 
     // --- MODIFICADO: Creación de los marcadores para los PDI (ahora usa el componente con tooltip) ---
     const pdiMarkers = useMemo(() => {
-        return fakePdiData.map(pdi => (
+        return pdiData.map(pdi => (
             <PdiMarkerWithTooltip
                 key={pdi.id}
-                name={pdi.name}
-                longitude={pdi.longitude}
-                latitude={pdi.latitude}
-                color={pdi.color} // <-- Pasa el color aquí
+                name={pdi.nombre}
+                longitude={pdi.coordenadas.y}
+                latitude={pdi.coordenadas.x}
+                color={'#' + pdi.icono_hex_color} // <-- Pasa el color aquí
             />
         ));
-    }, []); 
+    }, [pdiData]); 
 
     // --> 3. CREACIÓN DE LOS CÍRCULOS (RADIOS) DE LOS PDI EN FORMATO GEOJSON
     const pdiGeoJSONCircles = useMemo(() => {
-        return fakePdiData.map(pdi => ({
+        console.log('pdiData', pdiData);
+        return pdiData.map(pdi => ({
             id: `pdi-circle-${pdi.id}`,
-            data: createGeoJSONCircle([pdi.longitude, pdi.latitude], pdi.radius),
+            data: createGeoJSONCircle([pdi.coordenadas.y, pdi.coordenadas.x], pdi.radio),
         }));
-    }, []);
+    }, [pdiData]);
 
     // --> 4. ESTILO DE LA CAPA PARA LOS CÍRCULOS (Radios)
     const circleLayerStyle = {

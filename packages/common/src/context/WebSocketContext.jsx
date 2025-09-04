@@ -2,6 +2,33 @@ import React, { createContext, useContext, useEffect, useRef, useCallback } from
 import { useSelector, useDispatch } from 'react-redux';
 import { setVehicles as setVehiclesSlice, setVehicleNewRegister } from "../store/slices/vehicleSlice.js";
 import { addNotification, addNotificationList, addOneNotificationToList, removeNotificationList } from '../store/slices/notificationSlice.js';
+import { setPdiData } from '../store/slices/pdiViewSlice.js';
+import { setGeofenceData } from '../store/slices/geoViewSlice.js';
+
+// Función para parsear coordenadas de polígono de formato PostgreSQL a array de arrays
+const parsePolygonCoordinates = (polygonString) => {
+    try {
+        // Remover paréntesis externos y espacios
+        const cleanString = polygonString.replace(/^\(|\)$/g, '').trim();
+        
+        // Dividir por las comas que separan los pares de coordenadas
+        const coordinatePairs = cleanString.split('),(');
+        
+        // Parsear cada par de coordenadas
+        const coordinates = coordinatePairs.map(pair => {
+            // Remover paréntesis y espacios
+            const cleanPair = pair.replace(/^\(|\)$/g, '').trim();
+            // Dividir por coma para obtener lng y lat
+            const [lng, lat] = cleanPair.split(',').map(coord => parseFloat(coord.trim()));
+            return [lng, lat];
+        });
+        
+        return coordinates;
+    } catch (error) {
+        console.error('Error al parsear coordenadas del polígono:', error);
+        return [];
+    }
+};
 
 const WebSocketContext = createContext(null);
 
@@ -142,6 +169,14 @@ export const WebSocketProvider = ({ children }) => {
                             is_new: false
                         }));
                         dispatch(addNotificationList(data.alertas));
+                    } else if (data.type === 'pi') {
+                        dispatch(setPdiData(data.pi));
+                    } else if (data.type === 'geofences') {
+                        // Parsear el polígono de coordenadas de formato PostgreSQL a array de arrays
+                        data.geofences.forEach(geofence => {
+                            geofence.polygon = parsePolygonCoordinates(geofence.polygon);
+                        });
+                        dispatch(setGeofenceData(data.geofences));
                     }
                 } catch (error) {
                     console.error('Error al procesar el mensaje:', error);
