@@ -3,7 +3,8 @@ import styled, { keyframes } from 'styled-components';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
 import { FaRoute, FaMapPin, FaFlagCheckered, FaCar, FaCrosshairs } from 'react-icons/fa';
 import * as turf from '@turf/turf';
-import { route } from '../../../utilities/dataEstatica.jsx';
+import { getRouteToday } from '@mi-monorepo/common/services';
+import { useSelector } from 'react-redux';
 
 // Tu token de Mapbox
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiYXJub2xkYWxlamFuZHJvbGFyYSIsImEiOiJjbWVtZ3ZtOG0wcnJyMmpwbGZ6ajloamYzIn0.y2qjqVBVoFYJSPaDwayFGw';
@@ -125,10 +126,11 @@ const CarIcon = styled.div`
 
 // --- Componente Principal ---
 export function RouteDay() {
+  //center of mexico
   const [viewState, setViewState] = useState({
-    longitude: -97.898,
-    latitude: 22.374,
-    zoom: 14,
+    longitude: -101.956114,
+    latitude: 22.653024,
+    zoom: 5,
     pitch: 45,
     bearing: 0
   });
@@ -142,6 +144,11 @@ export function RouteDay() {
   const animationIntervalRef = useRef(null);
   const isFollowingRef = useRef(true);
   const mapRef = useRef();
+
+  const [route, setRoute] = useState([]);
+
+  const token = useSelector((state) => state.auth.token);
+  const selectedVehicles = useSelector((state) => state.vehicle.selectedVehicles);
 
   useEffect(() => {
     isFollowingRef.current = isFollowing;
@@ -223,6 +230,22 @@ export function RouteDay() {
 
   const startPoint = route[0];
   const endPoint = route[route.length - 1];
+
+  const fetchRoute = async () => {
+    const response = await getRouteToday(token, selectedVehicles[0].imei);
+    if(response.status == 200) {
+      const route = response.route.map(registro => [registro[1], registro[0]]);
+      setRoute(route);
+    } else {
+      console.error("❌ Error al obtener la ruta del último día:", response);
+    }
+  };
+
+  useEffect(() => {
+    if(token) {
+      fetchRoute();
+    }
+  }, [token]);
 
   return (
     <ComponentWrapper>

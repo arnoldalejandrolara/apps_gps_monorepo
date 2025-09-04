@@ -66,5 +66,6 @@ export {
     getIconosGeocercas,
     createGeocerca, 
     getGeocercasTable,
-    updateGeocerca
+    updateGeocerca,
+    getRouteToday
 } from './services/index.js';

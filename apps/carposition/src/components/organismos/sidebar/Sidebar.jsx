@@ -58,6 +58,8 @@ export function Sidebar({onToggleNotifications}) {
         } else if (item.action === 'openAlertsPanel') {
             console.log('Toggle Notifications');
             onToggleNotifications();
+        } else if (item.action === 'logout') {
+            cerrarSesion();
         } else {
             navigate(item.to); 
         }

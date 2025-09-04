@@ -22,3 +22,11 @@ export async function goStreetView(latitude, longitude) {
     // go to google maps street view with new URL format
     window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`, '_blank');
 }
+
+export async function getRouteToday(token, imei) {
+    const res = await fetch(`${getApiUrl()}/dispositivos/${imei}/ultimo-dia`, {
+        headers: getCommonHeaders(token)
+    });
+
+    return await handleApiResponse(res, 'Error al obtener la ruta del último día');
+}
