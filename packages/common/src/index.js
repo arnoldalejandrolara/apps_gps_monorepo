@@ -69,5 +69,9 @@ export {
     createGeocerca, 
     getGeocercasTable,
     updateGeocerca,
-    getRouteToday
+    getRouteToday,
+    getUsersTable,
+    createUser,
+    checkNickname,
+    updateUser
 } from './services/index.js';

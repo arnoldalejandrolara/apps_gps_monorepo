@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { styled } from 'styled-components';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
+import { TablaPuntosInteres } from '../table/table.jsx';
+import { useSelector } from 'react-redux';
+import { getUsersTable } from '@mi-monorepo/common/services';
 
 // Importa el nuevo componente UserForm
 import { UserForm } from '../formularios/UserForm';
@@ -25,6 +28,17 @@ export function UserControlComponent() {
     const [view, setView] = useState('list'); // 'list' o 'form'
     const [editingUser, setEditingUser] = useState(null);
 
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    const [data, setData] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+    const [sorting, setSorting] = useState([]);
+    const [pageCount, setPageCount] = useState(0);
+    const [totalRows, setTotalRows] = useState(0);
+
+    const token = useSelector(state => state.auth.token);
+
     const filteredUsers = users.filter(user =>
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -38,6 +52,12 @@ export function UserControlComponent() {
     const handleReturnToList = () => {
         setEditingUser(null);
         setView('list');
+        fetchData();
+    };
+
+    const handleEditUser = (user) => {
+        setEditingUser(user);
+        setView('form');
     };
 
     const handleSaveUser = (userData) => {
@@ -55,6 +75,27 @@ export function UserControlComponent() {
             setUsers(users.filter(u => u.id !== userId));
         }
     };
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const fetchData = async () => {
+        const response = await getUsersTable(token, pagination.pageIndex, pagination.pageSize, sorting, '', searchTerm, null);
+        console.log(response);
+        setData(response.usuarios.data);
+        setPageCount(Math.ceil(response.usuarios.recordsTotal / pagination.pageSize));
+        setTotalRows(response.usuarios.recordsTotal);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [token]);
     
     return (
         <ComponentWrapper>
@@ -76,23 +117,40 @@ export function UserControlComponent() {
                             Crear Usuario
                         </CreateButton>
                     </Header>
-                    <UserList>
-                        {filteredUsers.map(user => (
-                            <UserCard key={user.id}>
-                                <Avatar>{user.name.charAt(0)}</Avatar>
-                                <UserInfo>
-                                    <UserName>{user.name}</UserName>
-                                    <UserEmail>{user.email}</UserEmail>
-                                </UserInfo>
-                                <UserRole role={user.role}>{user.role}</UserRole>
-                                <CardActions>
-                                    <IconButton title="Editar Usuario" onClick={() => handleShowForm(user)}><FaEdit /></IconButton>
-                                    <IconButton title="Eliminar Usuario" onClick={() => handleDeleteUser(user.id)}><FaTrash /></IconButton>
-                                    <IconButton title="Ver Permisos"><FaShieldAlt /></IconButton>
-                                </CardActions>
-                            </UserCard>
-                        ))}
-                    </UserList>
+                    { isMobile ? (
+                        <UserList>
+                            {filteredUsers.map(user => (
+                                <UserCard key={user.id}>
+                                    <Avatar>{user.name.charAt(0)}</Avatar>
+                                    <UserInfo>
+                                        <UserName>{user.name}</UserName>
+                                        <UserEmail>{user.email}</UserEmail>
+                                    </UserInfo>
+                                    <UserRole role={user.role}>{user.role}</UserRole>
+                                    <CardActions>
+                                        <IconButton title="Editar Usuario" onClick={() => handleShowForm(user)}><FaEdit /></IconButton>
+                                        <IconButton title="Eliminar Usuario" onClick={() => handleDeleteUser(user.id)}><FaTrash /></IconButton>
+                                        <IconButton title="Ver Permisos"><FaShieldAlt /></IconButton>
+                                    </CardActions>
+                                </UserCard>
+                            ))}
+                        </UserList>
+                    ) : (
+                        <TableWrapper>
+                            <TablaPuntosInteres
+                                type="users"
+                                data={data}
+                                isLoading={isLoading}
+                                pagination={pagination}
+                                onPaginationChange={setPagination}
+                                sorting={sorting}
+                                onSortingChange={setSorting}
+                                pageCount={pageCount}
+                                totalRows={totalRows}
+                                onEdit={handleEditUser}
+                            />
+                        </TableWrapper>
+                    )}
                 </AnimatedView>
 
                 {/* Vista de Formulario */}
@@ -114,6 +172,10 @@ export function UserControlComponent() {
     );
 }
 
+const TableWrapper = styled.div`
+    height: 100%;
+    overflow-y: hidden;    
+`;
 
 // --- Estilos Modernos y Responsivos ---
 const ComponentWrapper = styled.div`

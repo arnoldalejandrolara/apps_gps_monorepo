@@ -1,46 +1,184 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { useSelector } from 'react-redux';
 import { CustomSelect } from './CustomSelect'; 
 import { FormInput } from './FormInput'; // Importa el nuevo componente de input
+import { StatusLabel } from './StatusLabel';
+import { createUser, checkNickname, updateUser } from '@mi-monorepo/common/services';
 
 // --- Componente del Formulario ---
 export function UserForm({ user, onSave }) {
+    const token = useSelector(state => state.auth.token);
+    const timeoutRef = useRef(null);
+    
     const [formData, setFormData] = useState({
         name: user?.name || '',
+        nickname: user?.nickname || '',
         email: user?.email || '',
-        role: user?.role || 'Miembro',
+        telefono: user?.telefono || '',
+        role: user?.role || 5,
         password: '',
         confirmPassword: '',
     });
 
+    useEffect(() => {
+        setFormData({
+            name: user?.nombre || '',
+            nickname: user?.nickname || '',
+            email: user?.correo || '',
+            telefono: user?.telefono || '',
+            role: user?.role || 5,
+        });
+        setRolSeleccionado(user?.role || 5);
+    }, [user]);
+
+    const [nicknameStatus, setNicknameStatus] = useState({
+        checking: false,
+        available: null,
+        message: ''
+    });
+
+    const checkNicknameAvailability = async (nickname) => {
+        if (!nickname.trim()) {
+            setNicknameStatus({
+                checking: false,
+                available: null,
+                message: ''
+            });
+            return;
+        }
+
+        setNicknameStatus(prev => ({ ...prev, checking: true }));
+        
+        try {
+            const response = await checkNickname(token, nickname);
+            if (response.status === 200) {
+                const isAvailable = !response.exists;
+                setNicknameStatus({
+                    checking: false,
+                    available: isAvailable,
+                    message: isAvailable ? 'Nickname disponible' : 'Nickname ocupado'
+                });
+            }
+        } catch (error) {
+            setNicknameStatus({
+                checking: false,
+                available: null,
+                message: 'Error al verificar nickname'
+            });
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'nickname') {
+            // Limpiar timeout anterior si existe
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+
+            // Si el campo está vacío, limpiar el estado inmediatamente
+            if (!value.trim()) {
+                setNicknameStatus({
+                    checking: false,
+                    available: null,
+                    message: ''
+                });
+                return;
+            }
+
+            // Configurar nuevo timeout para verificar después de 500ms
+            timeoutRef.current = setTimeout(() => {
+                checkNicknameAvailability(value);
+            }, 500);
+        }
     };
 
-    const handleSubmit = (e) => {
+    // Limpiar timeout cuando el componente se desmonte
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
+        // Validación de contraseñas solo para usuarios nuevos
         if (!user && formData.password !== formData.confirmPassword) {
             alert("Las contraseñas no coinciden. Por favor, inténtalo de nuevo.");
             return;
         }
 
-        const userDataToSave = { ...user, ...formData };
-        delete userDataToSave.password;
-        delete userDataToSave.confirmPassword;
+        try {
+            let response;
 
-        onSave(userDataToSave);
+            if (user?.id) {
+                // Actualizar usuario existente
+                response = await updateUser(token, user.id, {
+                    correo: formData.email,
+                    nickname: formData.nickname,
+                    telefono: formData.telefono,
+                });
+
+                if (response.status === 200) {
+                    alert("Usuario actualizado correctamente");
+                    onSave(response.usuario || user);
+                } else {
+                    alert("Error al actualizar el usuario");
+                }
+            } else {
+                // Crear nuevo usuario
+                response = await createUser(token, {
+                    nombre: formData.name,
+                    correo: formData.email,
+                    nickname: formData.nickname,
+                    telefono: formData.telefono,
+                    id_tipo: formData.role,
+                    password: formData.password,
+                });
+
+                if (response.status === 200) {
+                    alert("Usuario creado correctamente");
+                    onSave(response.usuario);
+                    resetForm();
+                } else {
+                    alert("Error al crear el usuario");
+                }
+            }
+        } catch (error) {
+            console.error('Error en la operación:', error);
+            alert("Error en la operación. Por favor, inténtalo de nuevo.");
+        }
     };
 
     const rolesDeUsuario = [
-        { id: 1, name: 'Owner', value: 'owner' },
-        { id: 2, name: 'Administrator', value: 'admin' },
-        { id: 3, name: 'Developer', value: 'dev' },
-        { id: 4, name: 'Viewer', value: 'viewer' }
+        { id: 5, name: 'Cuenta Secundaria', value: 'secundaria' },
     ];
 
     const [rolSeleccionado, setRolSeleccionado] = useState('Rol');
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            email: '',
+            nickname: '',
+            telefono: '',
+            role: 5,
+            password: '',
+            confirmPassword: '',
+        });
+        setNicknameStatus({
+            checking: false,
+            available: null,
+            message: ''
+        });
+        setRolSeleccionado(5);
+    };
 
     return (
         <Form onSubmit={handleSubmit}>
@@ -60,6 +198,33 @@ export function UserForm({ user, onSave }) {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="ejemplo@correo.com"
+                required
+            />
+
+            <FormInput
+                label="Nickname"
+                type="text"
+                name="nickname"
+                value={formData.nickname}
+                onChange={handleChange}
+                placeholder="Ej. juanperez"
+                required
+                statusComponent={
+                    <StatusLabel 
+                        checking={nicknameStatus.checking}
+                        available={nicknameStatus.available}
+                        message={nicknameStatus.message}
+                    />
+                }
+            />
+
+            <FormInput
+                label="Telefono"
+                type="text"
+                name="telefono"
+                value={formData.telefono}
+                onChange={handleChange}
+                placeholder="Ej. 3123456789"
                 required
             />
             
