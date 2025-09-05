@@ -434,6 +434,73 @@ export function TablaPuntosInteres({
     },
   ];
 
+  const columnsUsers = [
+    {
+      header: 'Nickname',
+      accessorKey: 'nickname',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nickname}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Email',
+      accessorKey: 'email',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.correo}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Teléfono',
+      accessorKey: 'telefono',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.telefono}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Rol',
+      accessorKey: 'rol',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.tipo}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: 'Unidades',
+      accessorKey: 'unidades',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.cant_unidades} unidades</div>
+        </StyledTextCell>
+      ),
+    },
+    {
+      header: '',
+      accessorKey: 'options',
+      size: 90,    
+      cell: ({ row }) => {
+        const actions = [
+          {
+            label: 'Editar',
+            icon: <MdModeEditOutline />,
+            onClick: () => onEdit(row.original),
+          },
+        ];
+        return (
+          <CenteredCell>
+            <OptionsMenu actions={actions} />
+          </CenteredCell>
+        );
+      },
+    },
+  ];
+
   let columns;
   switch (type) {
     case 'dispositivo':
@@ -450,6 +517,9 @@ export function TablaPuntosInteres({
       break;
     case 'geocercas':
       columns = columnsGeocercas;
+      break;
+    case 'users':
+      columns = columnsUsers;
       break;
     default:
       console.error('Tipo de tabla no reconocido:', type);

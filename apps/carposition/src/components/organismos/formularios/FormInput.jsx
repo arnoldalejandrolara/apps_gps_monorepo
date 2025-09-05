@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 // --- El componente de Input Personalizado ---
-export function FormInput({ label, type, name, value, onChange, placeholder, required }) {
+export function FormInput({ label, type, name, value, onChange, placeholder, required, statusComponent }) {
     
     const isValidEmail = (email) => {
         // Expresión regular para validar el formato de un correo electrónico
@@ -32,6 +32,7 @@ export function FormInput({ label, type, name, value, onChange, placeholder, req
             />
             {isInvalid && <ValidationError>Por favor, ingresa un correo electrónico válido.</ValidationError>}
             {isInvalidPassword && <ValidationError>La contraseña debe tener al menos 8 caracteres.</ValidationError>}
+            {statusComponent}
         </FormGroup>
     );
 }

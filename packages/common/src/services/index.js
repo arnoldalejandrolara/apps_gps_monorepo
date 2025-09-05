@@ -10,3 +10,4 @@ export { getCuentasEspejoTable, createCuentasEspejo, updateCuentasEspejo } from 
 export { subscribeToNotificationsRequest } from './notifications/index.js';
 export { getCategoriasPIRequest, getIconosPIRequest, createPIRequest, getPITable, updatePIRequest } from './puntosInteres/index.js';
 export { getIconosGeocercas, createGeocerca, getGeocercasTable, updateGeocerca } from './geocercas/index.js';
+export { getUsersTable, createUser, checkNickname, updateUser } from './usuarios/index.js';
