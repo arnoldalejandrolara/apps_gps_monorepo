@@ -5,7 +5,7 @@ import { CiViewTable } from "react-icons/ci";
 import TablaConFiltros from './TablaConBotones';
 import { Device } from '../../../utilities/breakpoints';
 import { useSelector } from 'react-redux';
-import { getHistorialTable } from '../../../services/ReportesService';
+// import { getHistorialTable } from '../../../services/ReportesService';
 import { DateRangePickerCustom } from '../../moleculas/DateRangePickerCustom.jsx';
 import MobileDateRangePickerCustom from '../../moleculas/MobileDatePickerCustom.jsx';
 import { useMediaQuery } from 'react-responsive';
@@ -24,6 +24,10 @@ export function Reporte() {
   const [selectedImei, setSelectedImei] = useState(null);
   const [loading, setLoading] = useState(false);
 
+
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 25
@@ -128,15 +132,13 @@ export function Reporte() {
     if (selectedImei) {
       fetchData(pagination);
     }
-  }, [selectedImei, token]);
+  }, [selectedImei, token,startDate, endDate]);
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+ 
 
   return (
     <Container>
       <Header isMobile={isMobile}>
-        {isMobile ? (
           <ColumnHeader>
             <SelectContainer>
               <Dropdown>
@@ -162,6 +164,7 @@ export function Reporte() {
                 </DropdownContent>
               </Dropdown>
             </SelectContainer>
+
             <RowDatePickersMobile>
               <MobileDateRangePickerCustom
                 startDate={startDate}
@@ -170,42 +173,9 @@ export function Reporte() {
                 onEndChange={setEndDate}
               />
             </RowDatePickersMobile>
-          </ColumnHeader>
-        ) : (
-          <LeftContainer>
-            <DateRangePickerCustom
-              startDate={startDate}
-              endDate={endDate}
-              onStartChange={setStartDate}
-              onEndChange={setEndDate}
-            />
 
-            <SelectContainer>
-              <Dropdown>
-                <DropdownToggle onClick={toggleDropdown}>
-                  <span>{selectedUnitName || 'Buscar unidad'}</span>
-                  <FaChevronDown />
-                </DropdownToggle>
-                <DropdownContent isOpen={isDropdownOpen}>
-                  <SearchInput
-                    type="text"
-                    placeholder="Buscar unidad..."
-                    value={searchInputValue}
-                    onChange={handleSearchChange}
-                  />
-                  {filteredUnidades.map((unidad, index) => (
-                    <MenuItem
-                      key={unidad.imei}
-                      onClick={() => handleUnidadSelect(unidad)}
-                    >
-                      {unidad.nombre}
-                    </MenuItem>
-                  ))}
-                </DropdownContent>
-              </Dropdown>
-            </SelectContainer>
-          </LeftContainer>
-        )}
+          </ColumnHeader>
+        
       </Header>
 
       <Content>
@@ -228,7 +198,7 @@ export function Reporte() {
             )
           ) : (
             <EmptyState>
-              <CiViewTable size={40} color="#aaa" />
+              <CiViewTable size={40} color="#adb5bd" />
               <EmptyText>Selecciona una unidad para ver la informacion</EmptyText>
             </EmptyState>
           )
@@ -238,7 +208,7 @@ export function Reporte() {
   );
 }
 
-// Animaciones
+// --- Animaciones ---
 const slideDown = keyframes`
   from {
     transform: scaleY(0);
@@ -261,7 +231,7 @@ const slideUp = keyframes`
   }
 `;
 
-// Contenedores y estilos
+// --- Contenedores y estilos con Tema Claro ---
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -270,6 +240,7 @@ const Container = styled.div`
   min-height: 0;
   min-width: 0;
   box-sizing: border-box;
+  background-color: #f8f9fa; /* Color de fondo claro */
 `;
 
 const Header = styled.div`
@@ -278,6 +249,9 @@ const Header = styled.div`
   align-items: center;
   gap: 20px;
   margin-bottom: 2px;
+  padding: 15px; /* Padding para separar del borde */
+  background-color: #ffffff; /* Fondo blanco para el header */
+  border-bottom: 1px solid #dee2e6; /* Borde sutil */
 
   @media ${Device.mobile} {
     flex-direction: row;
@@ -336,16 +310,17 @@ const DropdownToggle = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  height: 50px;
+  height: 40px; /* Altura ajustada */
   font-size: 13px;
-  border: 1px solid #525252;
+  border: 1px solid #ced4da; /* Borde claro */
   border-radius: 8px;
-  background: transparent;
-  color: #fff;
+  background: #ffffff; /* Fondo blanco */
+  color: #212529; /* Texto oscuro */
   cursor: pointer;
+  transition: border-color 0.2s ease;
 
   &:hover {
-    border-color: #ffffff;
+    border-color: #80bdff; /* Borde azul al pasar el mouse */
   }
 
   svg {
@@ -359,14 +334,14 @@ const DropdownContent = styled.div`
   top: 100%;
   left: 0;
   width: 100%;
-  background: #2d2d2d;
-  border: 1px solid #444;
+  background: #ffffff; /* Fondo blanco */
+  border: 1px solid #dee2e6; /* Borde claro */
   border-radius: 8px;
   margin-top: 5px;
-  z-index: 100;
+  z-index: 2100;
   max-height: 300px;
   overflow-y: auto;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil */
   padding: 10px;
   transform-origin: top;
   animation: ${({ isOpen }) => (isOpen ? slideDown : slideUp)} 0.3s ease-in-out;
@@ -377,14 +352,14 @@ const SearchInput = styled.input`
   width: 100%;
   padding: 10px;
   font-size: 14px;
-  border: none;
+  border: 1px solid #ced4da; /* Borde claro */
   border-radius: 8px;
-  background: #1c1c1e;
-  color: #fff;
+  background: #f8f9fa; /* Fondo gris claro */
+  color: #212529; /* Texto oscuro */
   outline: none;
 
   &::placeholder {
-    color: #aaa;
+    color: #adb5bd; /* Placeholder claro */
   }
 `;
 
@@ -392,12 +367,12 @@ const MenuItem = styled.div`
   margin: 6px 0;
   padding: 10px;
   font-size: 14px;
-  color: #fff;
+  color: #212529; /* Texto oscuro */
   border-radius: 8px;
   cursor: pointer;
 
   &:hover {
-    background: #444;
+    background: #f1f3f5; /* Hover claro */
   }
 `;
 
@@ -407,6 +382,7 @@ const Content = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  padding: 15px; /* Padding para separar del header */
 `;
 
 const EmptyState = styled.div`
@@ -416,17 +392,18 @@ const EmptyState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #aaa;
+  color: #6c757d; /* Texto secundario claro */
   opacity: 0.7;
   gap: 10px;
-  background: #212121;
+  background: #ffffff; /* Fondo blanco */
   border-radius: 12px;
+  border: 1px dashed #dee2e6;
 `;
 
 const EmptyText = styled.div`
   font-size: 15px;
   margin-top: 10px;
-  color: #aaa;
+  color: #6c757d; /* Texto secundario claro */
 `;
 
 const LoadingContainer = styled.div`
@@ -439,8 +416,8 @@ const LoadingContainer = styled.div`
 `;
 
 const Spinner = styled.div`
-  border: 4px solid #eee;
-  border-top: 4px solid #2a2a2a;
+  border: 4px solid #f1f3f5; /* Borde de spinner claro */
+  border-top: 4px solid #007bff; /* Color primario para la animación */
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -451,8 +428,6 @@ const Spinner = styled.div`
 `;
 
 const LoadingText = styled.div`
-  color: #aaa;
+  color: #6c757d; /* Texto secundario claro */
   font-size: 16px;
 `;
-
-export default Reporte;

@@ -5,25 +5,33 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+// --- TEMA CLARO PARA MATERIAL-UI ---
 const theme = createTheme({
   palette: {
-    mode: "dark",
+    mode: "light", // 1. Se establece el modo claro
   },
   components: {
     MuiOutlinedInput: {
       styleOverrides: {
+        // 2. Se ajustan los estilos para un fondo blanco y texto oscuro
         root: {
           height: "48px",
           fontSize: "15px !important",
-          backgroundColor: "#222",
+          backgroundColor: "#ffffff", // Fondo blanco
           borderRadius: "12px",
           "& .MuiInputBase-input": {
             height: "100%",
-            color: "#fff",
+            color: "#212529", // Texto oscuro
             fontSize: "15px",
           },
           "& .MuiSvgIcon-root": {
-            color: "#90caf9",
+            color: "#6c757d", // Icono gris
+          },
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: '#ced4da', // Borde gris claro
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: '#80bdff', // Borde azul en hover
           },
         },
       },
@@ -32,7 +40,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           fontSize: "15px",
-          color: "#aaa",
+          color: "#6c757d", // Color de etiqueta gris
         },
       },
     },
@@ -41,8 +49,7 @@ const theme = createTheme({
 
 /**
  * MobileDateRangePickerCustom
- * 
- * Selector de rango de fechas para mobile, muestra los dos pickers en el mismo row y SIN ícono a la izquierda.
+ * * Selector de rango de fechas para mobile, muestra los dos pickers en el mismo row y SIN ícono a la izquierda.
  */
 export function MobileDateRangePickerCustom({
   startDate,
@@ -60,15 +67,17 @@ export function MobileDateRangePickerCustom({
             label={labelStart}
             value={startDate}
             onChange={onStartChange}
-            disablePortal
             slotProps={{
-              // Quitar la cruz: clearable: false
               field: {
                 clearable: false,
               },
               textField: {
                 fullWidth: true,
               },
+               // 👇 SE AÑADE EL Z-INDEX DIRECTAMENTE AQUÍ
+               dialog: {
+                sx: { zIndex: 9999 }
+              }
             }}
             sx={{
               width: "100%",
@@ -84,7 +93,6 @@ export function MobileDateRangePickerCustom({
             label={labelEnd}
             value={endDate}
             onChange={onEndChange}
-            disablePortal
             slotProps={{
               field: {
                 clearable: false,
@@ -92,6 +100,10 @@ export function MobileDateRangePickerCustom({
               textField: {
                 fullWidth: true,
               },
+               // 👇 SE AÑADE EL Z-INDEX DIRECTAMENTE AQUÍ
+               dialog: {
+                sx: { zIndex: 9999 }
+              }
             }}
             sx={{
               width: "100%",
@@ -109,7 +121,6 @@ export function MobileDateRangePickerCustom({
   );
 }
 
-// Ahora los pickers estarán en el mismo row, pero en mobile (max-width: 600px) estarán en columna
 const PickerRow = styled.div`
   width: 100%;
   display: flex;

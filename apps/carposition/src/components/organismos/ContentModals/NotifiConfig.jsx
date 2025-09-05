@@ -165,6 +165,7 @@ export function NotifiConfigComponent() {
                 handleAlertChange={handleAlertChange}
                 handleSoundClick={handleSoundClick}
             />
+            
         </NotificationContainer>
     );
 }
@@ -188,6 +189,9 @@ const UserUnitSection = styled.div`
     padding-bottom: 20px;
     border-bottom: 1px solid #E9ECEF;
     margin-bottom: 15px;
+
+    @media (max-width: 768px) { grid-template-columns: 1fr  }
+
 `;
 
 const SelectColumn = styled.div`
@@ -213,6 +217,9 @@ const SelectLabel = styled.label`
     color: #495057;
     font-weight: 500;
     min-width: 70px;
+
+    @media (max-width: 768px) { display: none; }
+
 `;
 
 
@@ -227,6 +234,7 @@ const InputLabel = styled.label`
     color: #495057;
     font-weight: 500;
     min-width: 70px;
+    @media (max-width: 768px) { display: none; }
 `;
 
 

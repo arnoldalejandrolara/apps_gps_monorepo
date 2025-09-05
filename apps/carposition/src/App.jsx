@@ -32,6 +32,7 @@ import { UserControlComponent } from './components/organismos/ContentModals/User
 import { DeviceConfigComponent } from './components/organismos/ContentModals/DeviceConfig.jsx';
 import { NotifiConfigComponent } from './components/organismos/ContentModals/NotifiConfig.jsx';
 import { ReportsComponent } from './components/organismos/ContentModals/ReportsControl.jsx';
+import  {ReportsMobile}  from './components/organismos/ContentModals/ReportsMobile.jsx';
 import { PuntosInteresControl } from './components/organismos/ContentModals/PuntosInteresControl.jsx';
 import { GeoCercasControl } from './components/organismos/ContentModals/GeoCercasControl.jsx';
 import { CuentasEspejoControl } from './components/organismos/ContentModals/CuentasEspejoControl.jsx';
@@ -39,7 +40,10 @@ import { CuentasEspejoControl } from './components/organismos/ContentModals/Cuen
 import { FloatingActionButtons } from './components/organismos/ButtomComands/FloatingActionsButton.jsx';
 import { VehicleListButton } from './components/organismos/ButtomComands/VehicleListButton.jsx';
 import { VehicleInfoCard } from './components/organismos/VehicleInfoCard.jsx';
-
+import { BottomMenu } from './components/organismos/BottomMenu.jsx';
+import { MobileOptionsMenu } from './components/organismos/MobileOptionsMenu.jsx';
+import {MobileListUnidades} from './components/organismos/MobileListUnidades.jsx';
+import { ActiveContentMobile } from './components/organismos/ActiveContentMobile.jsx';
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
@@ -89,11 +93,15 @@ function App() {
     const themeStyles = theme === 'light' ? Light : Dark;
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
-    const [vehicleListOpen, setVehicleListOpen] = useState(true);
+    const [vehicleListOpen, setVehicleListOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
     const [modalSize, setModalSize] = useState('medium'); 
+    const [isMobile, setIsMobile] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
+    const [activeOverlay, setActiveOverlay] = useState(null);
+
+    const isMobileOrTablet = useMediaQuery({ query: '(max-width: 768px)' });
 
     const [viewState, setViewState] = useState({
         longitude: -99.1332,
@@ -109,6 +117,7 @@ function App() {
             setModalTitle(title);
             setModalSize(size);
             setIsModalOpen(true);
+            setIsMobile(false);
         },
         closeModal: () => {
             setIsModalOpen(false);
@@ -156,13 +165,16 @@ function App() {
         }
     }, [dispatch, notifications]);
 
-    const handleMenuItemClick = (item) => {
+    const handleMenuItemClick = (item , mobile) => {
+        setIsMobile(mobile);
         setModalTitle(item.label);
+
         switch (item.to) {
             case '/configuration-user': setModalContent(<UserControlComponent />); setModalSize('large'); break;
             case '/device-config': setModalContent(<DeviceConfigComponent />); setModalSize('large'); break;
             case '/notifications-config': setModalContent(<NotifiConfigComponent />); setModalSize('large'); break;
             case '/reports': setModalContent(<ReportsComponent />); setModalSize('extraLarge'); break;
+            case '/reports_mobile': setModalContent(<ReportsMobile />); setModalSize('extraLarge'); break;
             case '/pdi': setModalContent(<PuntosInteresControl />); setModalSize('large'); break;
             case '/geocercas': setModalContent(<GeoCercasControl />); setModalSize('large'); break;
             case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('extraMedium'); break;
@@ -193,15 +205,24 @@ function App() {
                                 <Login />
                             ) : (
                                 <AppGrid>
-                                    <HamburgerButton onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>
-                                        <IoMenu />
-                                    </HamburgerButton>
+                                    {/* 👇 2. OCULTA el HamburgerButton si es móvil/tablet */}
+                                    {!isMobileOrTablet && (
+                                        <HamburgerButton onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>
+                                            <IoMenu />
+                                        </HamburgerButton>
+                                    )}
 
-                                    {/* --- 3. RENDERIZA EL NUEVO COMPONENTE --- */}
+                                    {/* 👇 3. MUESTRA el nuevo menú de 3 puntos SOLO si es móvil/tablet */}
+                                    {isMobileOrTablet && <MobileOptionsMenu   onMenuItemClick={handleMenuItemClick} />}
+
+                                    {!isMobileOrTablet && (
                                     <VehicleListButton 
                                         onClick={() => setVehicleListOpen(!vehicleListOpen)}
                                         isOpen={vehicleListOpen}
                                     />
+                                    )}
+
+                                    {isMobileOrTablet && <MobileListUnidades />}
                                     
                                     {leftSidebarOpen && <Backdrop onClick={() => setLeftSidebarOpen(false)} />}
                                     
@@ -215,6 +236,7 @@ function App() {
                                         onClose={() => setIsModalOpen(false)}
                                         title={modalTitle}
                                         size={modalSize} 
+                                        isMobile={isMobile}
                                     >
                                         {modalContent}
                                     </ReusableModal>
@@ -240,14 +262,29 @@ function App() {
                                         <section className="mapaView">
                                             <HomeTemplate />
                                         </section>
-                                        <section className="ContentSidebar">
+
+                                         {/* --- 4. RENDERIZA CONDICIONALMENTE EL MENÚ --- */}
+                                         { isMobileOrTablet ? (
+                                            <BottomMenu 
+                                                onViewChange={setActiveOverlay}
+                                                activeView={activeOverlay}
+                                            />
+                                        ) : (
+                                            <section className="ContentSidebar">
+                                                <Sidebar {...sidebarProps} />
+                                            </section>
+                                        )}
+                                        
+
+                                        {/* <section className="ContentSidebar">
                                             <Sidebar {...sidebarProps} />
-                                        </section>
+                                        </section> */}
                                         <section className='ContentNotifi'>
                                             <Notificaciones state={notifiOpen} setState={() => setNotifiOpen(!notifiOpen)} />
                                         </section>
                                         <PWAPrompt />
                                         <InstallPWA />
+                                        
                                         {alertMessage && (
                                             <AlertContainer key={alertKey}>
                                                 <Stack sx={{ width: '100%' }} spacing={2}>
@@ -257,7 +294,16 @@ function App() {
                                                 </Stack>
                                             </AlertContainer>
                                         )}
+
+                                    {activeOverlay && (
+                                        <OverlayContainer>
+                                            <ActiveContentMobile view={activeOverlay} />
+                                        </OverlayContainer>
+                                    )}
                                     </Container>
+
+                                 
+                                    
                                 </AppGrid>
                             )}
                         </WebSocketProvider>
@@ -268,6 +314,32 @@ function App() {
         </AuthProvider>
     );
 }
+
+// 👇 1. Se cambia la animación para que venga de la derecha
+// const slideInRight2 = keyframes`
+//   from {
+//     transform: translateX(100%); /* Inicia fuera de la pantalla a la derecha */
+//     opacity: 0;
+//   }
+//   to {
+//     transform: translateX(0); /* Termina en su posición final */
+//     opacity: 1;
+//   }
+// `;
+
+const OverlayContainer = styled.div`
+  position: fixed;
+  /* La posición y tamaño no cambian, sigue siendo un contenedor casi completo */
+  bottom: 60px; 
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 60px); 
+  background: #ffffff;
+  z-index: 1050;
+  /* 👇 2. Se aplica la nueva animación */
+  padding: 20px;
+  overflow-y: auto;
+`;
 
 // --- ESTILOS ---
 const Overlay = styled.div`
@@ -306,27 +378,29 @@ const AlertContainer = styled.div`
 
 const Container = styled.main`
     display: grid;
-    grid-template-columns: 1fr 55px;
+    grid-template-columns: 1fr 55px; /* Por defecto, layout para laptop */
     width: 100%;
     height: 100%;
     position: relative;
+    padding-bottom: 0;
     transition: transform 0.3s ease-in-out;
 
-    .mapaView, .ContentSidebar {
-        height: 100%;
-    }
     .mapaView {
+        height: 100%;
         grid-column: 1;
     }
+
     .ContentSidebar {
+        height: 100%;
         grid-column: 2;
+        /* Oculta explícitamente el contenedor de la sidebar en móvil */
     }
 
     .ContentNotifi {
         position: absolute;
         top: 0;
         right: 0;
-        width: 420px;
+        width: ${({ isMobileOrTablet }) => isMobileOrTablet ? '100%' : '420px'};
         height: 100%;
         box-shadow: -10px 0 20px -10px rgba(0,0,0,0.2);
         z-index: 1002; 
@@ -334,11 +408,26 @@ const Container = styled.main`
         transition: transform 0.3s ease-in-out;
   }
 
+    .MobileBottomMenu {
+        display: none;
+    }
+
   &.notifi-active {
     .ContentNotifi {
       transform: translateX(0);
     }
   }
+
+  /* --- Media Query para Móvil/Tablet --- */
+    /* Estos estilos se aplicarán SOLO cuando la pantalla sea de 768px o menos */
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr; /* Cambia a una sola columna */
+        padding-bottom: 60px; /* Añade el espacio para el BottomMenu */
+
+        .ContentNotifi {
+            width: 100%; /* El panel de notificaciones ocupa todo el ancho */
+        }
+    }
 `;
 
 const HamburgerButton = styled.button`

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+
+
 import { styled } from 'styled-components';
 import { FaCar, FaArrowLeft, FaSearch, FaFilter } from 'react-icons/fa';
 
@@ -128,23 +130,24 @@ const AnimatedView = styled.div`
     });
 `;
 
+// --- CÓDIGO CORREGIDO ---
+
 const Header = styled.div`
     display: flex; 
     justify-content: start; 
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap; 
     flex-shrink: 0; 
     gap: 15px;
-    @media (max-width: 768px) {
-        flex-direction: column; 
-        align-items: stretch; 
-    }
+    
+    /* Se elimina la media query para que siempre sea una fila ✅ */
 `;
 
 const SearchWrapper = styled.div` 
     position: relative; 
-    flex-shrink: 0;
+    // --- CAMBIO: Permite que el contenedor del buscador crezca y ocupe el espacio disponible ---
+    flex-grow: 1;
+    // Se elimina flex-shrink: 0 para que pueda encogerse si es necesario
 `;
 
 const SearchIcon = styled(FaSearch)`
@@ -161,23 +164,26 @@ const SearchInput = styled.input`
     border: 1px solid #DEE2E6;
     background-color: #fff; 
     font-size: 13px; 
-    width: 400px; /* Ancho fijo para el input */
+    // --- CAMBIO: Ancho flexible en lugar de fijo ---
+    width: 100%; // Ahora ocupa todo el ancho de su contenedor (SearchWrapper)
     outline: none;
     transition: all 0.2s ease;
+    
     &:focus {
         border-color: #007BFF;
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
     }
-    @media (max-width: 480px) {
-        width: 100%; /* El input vuelve a ocupar todo el ancho en móviles */
-    }
+
+    // La media query para móviles ya no es necesaria aquí, porque width: 100% funciona para todos los tamaños
 `;
+
+// --- CÓDIGO CORREGIDO ---
 
 const FilterButton = styled.button`
     background-color: #6C757D; 
     color: white; 
     border: none; 
-    height: 100%;
+    /* Se elimina height: 100%. La altura ahora la define el padding. ✅ */
     border-radius: 6px;
     padding: 10px 14px; 
     font-size: 14px; 

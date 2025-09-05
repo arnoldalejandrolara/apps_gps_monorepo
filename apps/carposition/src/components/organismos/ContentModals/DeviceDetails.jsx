@@ -126,6 +126,7 @@ export function DeviceDetailsContent({ device }) {
             <Section>
                 <SectionTitle>Configuración de Alarmas</SectionTitle>
                 <AlarmContainer>
+
                     <AlarmItem>
                         <AlarmIconWrapper><FaExclamationTriangle /></AlarmIconWrapper>
                         <AlarmContent>
@@ -233,6 +234,8 @@ const GridContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px 30px; 
+
+     @media (max-width: 768px) { grid-template-columns: 1fr  }
 `;
 
 const InfoGroup = styled.div`
@@ -300,8 +303,8 @@ const AlarmItem = styled.div`
     display: flex;
     align-items: flex-start;
     background-color: #F8F9FA;
-    padding: 10px;
-    border-radius: 6px;
+    padding: 15px; // --- CAMBIO: Un poco más de padding
+    border-radius: 8px; // --- CAMBIO: Bordes un poco más redondeados
     border: 1px solid #E9ECEF;
 `;
 
@@ -323,7 +326,16 @@ const AlarmHeader = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%; // Asegura que ocupe todo el ancho disponible
+
+    // --- AJUSTES PARA MÓVIL ---
+    @media (max-width: 768px) {
+        flex-direction: column; // Apila los elementos verticalmente
+        align-items: flex-start; // Alinea todo a la izquierda
+        gap: 10px; // Añade espacio entre el texto y el interruptor
+    }
 `;
+
 
 const AlarmText = styled.span`
     font-size: 14px;
@@ -335,9 +347,13 @@ const AlarmDescription = styled.p`
     font-size: 12px;
     color: #888;
     margin: 0;
-    margin-bottom: 5px;
-`;
+    margin-bottom: 10px; // --- CAMBIO: Un poco más de margen inferior
 
+    // --- AJUSTES PARA MÓVIL ---
+    @media (max-width: 768px) {
+        margin-top: 5px; // Añade espacio arriba después del header apilado
+    }
+`;
 const CheckboxLabel = styled.label`
     position: relative;
     display: flex;

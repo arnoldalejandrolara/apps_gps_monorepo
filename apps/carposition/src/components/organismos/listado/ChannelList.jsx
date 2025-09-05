@@ -43,6 +43,8 @@ const ChannelContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 15px;
+
+    @media (max-width: 768px) {  grid-template-columns: 1fr; }
 `;
 
 const ChannelCard = styled.div`
