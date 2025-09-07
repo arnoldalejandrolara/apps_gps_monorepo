@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useSelector } from 'react-redux';
 import { CustomSelect } from './CustomSelect'; 
-import { FormInput } from './FormInput'; // Importa el nuevo componente de input
+import { FormInput } from './FormInput';
 import { StatusLabel } from './StatusLabel';
 import { createUser, checkNickname, updateUser } from '@mi-monorepo/common/services';
 
@@ -12,14 +12,16 @@ export function UserForm({ user, onSave }) {
     const timeoutRef = useRef(null);
     
     const [formData, setFormData] = useState({
-        name: user?.name || '',
-        nickname: user?.nickname || '',
-        email: user?.email || '',
-        telefono: user?.telefono || '',
-        role: user?.role || 5,
+        name: '',
+        nickname: '',
+        email: '',
+        telefono: '',
+        role: 5,
         password: '',
         confirmPassword: '',
     });
+
+    const [rolSeleccionado, setRolSeleccionado] = useState(5);
 
     useEffect(() => {
         setFormData({
@@ -44,12 +46,8 @@ export function UserForm({ user, onSave }) {
     });
 
     const checkNicknameAvailability = async (nickname) => {
-        if (!nickname.trim()) {
-            setNicknameStatus({
-                checking: false,
-                available: null,
-                message: ''
-            });
+        if (!nickname.trim() || nickname === user?.nickname) { // No verificar si es el mismo nickname del usuario actual
+            setNicknameStatus({ checking: false, available: null, message: '' });
             return;
         }
 
@@ -69,7 +67,7 @@ export function UserForm({ user, onSave }) {
             setNicknameStatus({
                 checking: false,
                 available: null,
-                message: 'Error al verificar nickname'
+                message: 'Error al verificar'
             });
         }
     };
@@ -79,75 +77,56 @@ export function UserForm({ user, onSave }) {
         setFormData(prev => ({ ...prev, [name]: value }));
 
         if (name === 'nickname') {
-            // Limpiar timeout anterior si existe
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-
-            // Si el campo está vacío, limpiar el estado inmediatamente
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             if (!value.trim()) {
-                setNicknameStatus({
-                    checking: false,
-                    available: null,
-                    message: ''
-                });
+                setNicknameStatus({ checking: false, available: null, message: '' });
                 return;
             }
-
-            // Configurar nuevo timeout para verificar después de 500ms
             timeoutRef.current = setTimeout(() => {
                 checkNicknameAvailability(value);
             }, 500);
         }
     };
 
-    // Limpiar timeout cuando el componente se desmonte
     useEffect(() => {
         return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validación de contraseñas solo para usuarios nuevos
         if (!user && formData.password !== formData.confirmPassword) {
-            alert("Las contraseñas no coinciden. Por favor, inténtalo de nuevo.");
+            alert("Las contraseñas no coinciden.");
             return;
         }
 
         try {
             let response;
-
             if (user?.id) {
-                // Actualizar usuario existente
                 response = await updateUser(token, user.id, {
                     nombre: formData.name,
                     correo: formData.email,
                     nickname: formData.nickname,
                     telefono: formData.telefono,
+                    id_tipo: rolSeleccionado
                 });
-
                 if (response.status === 200) {
                     alert("Usuario actualizado correctamente");
-                    onSave(response.usuario || user);
+                    onSave(response.usuario || { ...user, ...formData });
                 } else {
                     alert("Error al actualizar el usuario");
                 }
             } else {
-                // Crear nuevo usuario
                 response = await createUser(token, {
                     nombre: formData.name,
                     correo: formData.email,
                     nickname: formData.nickname,
                     telefono: formData.telefono,
-                    id_tipo: formData.role,
+                    id_tipo: rolSeleccionado,
                     password: formData.password,
                 });
-
                 if (response.status === 200) {
                     alert("Usuario creado correctamente");
                     onSave(response.usuario);
@@ -158,31 +137,21 @@ export function UserForm({ user, onSave }) {
             }
         } catch (error) {
             console.error('Error en la operación:', error);
-            alert("Error en la operación. Por favor, inténtalo de nuevo.");
+            alert("Ocurrió un error. Por favor, inténtalo de nuevo.");
         }
     };
 
     const rolesDeUsuario = [
         { id: 5, name: 'Cuenta Secundaria', value: 'secundaria' },
+        { id: 4, name: 'Administrador Cliente', value: 'admin_cliente' },
     ];
-
-    const [rolSeleccionado, setRolSeleccionado] = useState('Rol');
 
     const resetForm = () => {
         setFormData({
-            name: '',
-            email: '',
-            nickname: '',
-            telefono: '',
-            role: 5,
-            password: '',
-            confirmPassword: '',
+            name: '', email: '', nickname: '', telefono: '',
+            role: 5, password: '', confirmPassword: '',
         });
-        setNicknameStatus({
-            checking: false,
-            available: null,
-            message: ''
-        });
+        setNicknameStatus({ checking: false, available: null, message: '' });
         setRolSeleccionado(5);
     };
 
@@ -196,6 +165,7 @@ export function UserForm({ user, onSave }) {
                 onChange={handleChange}
                 placeholder="Ej. Juan Pérez"
                 required
+                disabled={!!user} // Deshabilitar si se está editando
             />
             <FormInput
                 label="Correo Electrónico"
@@ -225,12 +195,12 @@ export function UserForm({ user, onSave }) {
             />
 
             <FormInput
-                label="Telefono"
+                label="Teléfono"
                 type="text"
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
-                placeholder="Ej. 3123456789"
+                placeholder="Ej. 8331234567"
                 required
             />
             
@@ -240,7 +210,7 @@ export function UserForm({ user, onSave }) {
                     label="Rol"
                     options={rolesDeUsuario}
                     value={rolSeleccionado}
-                    onChange={setRolSeleccionado}
+                    onChange={(value) => setRolSeleccionado(value)}
                 />
             </FormGroup>
 
@@ -268,7 +238,9 @@ export function UserForm({ user, onSave }) {
             )}
 
             <FormActions>
-                <SaveButton type="submit">Guardar</SaveButton>
+                <SaveButton type="submit">
+                    {user ? 'Guardar Cambios' : 'Crear Usuario'}
+                </SaveButton>
             </FormActions>
         </Form>
     );
@@ -277,22 +249,32 @@ export function UserForm({ user, onSave }) {
 
 // --- Estilos ---
 const Form = styled.form`
-    padding: 20px;
+    padding: 25px;
     background-color: #fff;
     border-radius: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px 25px;
+    overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+
+    // CAMBIO: Media query para hacer el formulario responsivo en móviles
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr; // Cambia a una sola columna
+        gap: 15px; // Reduce el espacio entre campos
+        padding: 15px;
+    }
 `;
 
-const FormGroup = styled.div`margin-bottom: 0;`;
+const FormGroup = styled.div`
+    margin-bottom: 0;
+`;
 
 const SaveButton = styled.button`
     background-color: #28a745; 
     color: white; 
     border: none; 
     border-radius: 6px;
-    padding: 10px 20px; 
+    padding: 12px 25px; // Un poco más de padding
     font-size: 14px; 
     font-weight: 500;
     cursor: pointer; 
@@ -304,5 +286,5 @@ const FormActions = styled.div`
     grid-column: 1 / -1;
     display: flex;
     justify-content: flex-end;
-    margin-top: 10px;
+    margin-top: 15px;
 `;

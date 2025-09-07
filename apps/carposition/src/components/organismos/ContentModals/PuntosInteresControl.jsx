@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { styled, keyframes } from 'styled-components';
-import { FaPlus, FaMapMarkerAlt, FaEdit, FaTrash, FaRegEye } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaMapMarkerAlt, FaEdit, FaTrash, FaRegEye } from 'react-icons/fa';
 import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
-import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
 import { PuntoInteresForm } from '../formularios/PuntoInteresForm.jsx';
 import { useSelector } from 'react-redux';
 import { getCategoriasPIRequest, getIconosPIRequest, getPITable } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
 export function PuntosInteresControl({ initialView = 'table' }) {
-    const [view, setView] = useState(initialView); // <-- Usa la prop para el estado inicial
+    const [view, setView] = useState(initialView);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,6 @@ export function PuntosInteresControl({ initialView = 'table' }) {
     const [totalRows, setTotalRows] = useState(0);
 
     const [selectedPoint, setSelectedPoint] = useState(null);
-    // const [view, setView] = useState('table'); // Estado para controlar la vista
 
     const token = useSelector(state => state.auth.token);
     const [categorias, setCategorias] = useState([]);
@@ -32,51 +31,56 @@ export function PuntosInteresControl({ initialView = 'table' }) {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768);
         };
-
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const handleDeletePoint = (pointId) => {
         if (window.confirm("¿Estás seguro de que quieres eliminar este punto de interés?")) {
-            setPoints(points.filter(p => p.id !== pointId));
+            // Lógica para eliminar...
         }
     };
     
-    // Función para manejar el clic en el botón de volver
     const handleBackClick = () => {
         setView('table');
         setSelectedPoint(null);
         fetchData();
     };
-
-    const handlePaginationChange = (updater) => {
-        const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
-        setPagination(newPagination);
-        fetchData();
-    };
-
+    
     const fetchData = async () => {
-        const response = await getPITable(token, pagination.pageIndex, pagination.pageSize, sorting, '');
-        setData(response.table.data);
-        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
-        setTotalRows(response.table.recordsTotal);
-    };
-
-    useEffect(() => {
-        const fetchCategorias = async () => {
-            const responseCategorias = await getCategoriasPIRequest(token);
-            setCategorias(responseCategorias.categorias);
-
-            const responseIconos = await getIconosPIRequest(token);
-            setIconos(responseIconos.iconos);
-        };
-
-        if(token) {
-            fetchCategorias();
-            fetchData();
+        if (!token) return;
+        setIsLoading(true);
+        try {
+            // CAMBIO: Se pasa el 'searchTerm' a la llamada de la API
+            const response = await getPITable(token, pagination.pageIndex, pagination.pageSize, sorting, searchTerm);
+            setData(response.table.data || []);
+            setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+            setTotalRows(response.table.recordsTotal);
+        } catch (error) {
+            console.error("Error al obtener Puntos de Interés:", error);
+            setData([]);
+        } finally {
+            setIsLoading(false);
         }
+    };
+    
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            if (token) {
+                const responseCategorias = await getCategoriasPIRequest(token);
+                setCategorias(responseCategorias.categorias);
+
+                const responseIconos = await getIconosPIRequest(token);
+                setIconos(responseIconos.iconos);
+            }
+        };
+        fetchInitialData();
     }, [token]);
+
+    // CAMBIO: useEffect ahora depende del término de búsqueda también
+    useEffect(() => {
+        fetchData();
+    }, [token, pagination, sorting, searchTerm]);
 
     const handleEditPoint = (point) => {
         setView('form');
@@ -89,14 +93,24 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                 <AnimatedViewContainer>
                     {/* Vista de la tabla */}
                     <AnimatedView $isActive={view === 'table'} $direction="left">
-                    <Header>
-                        <ButtonGroup>
-                            <PrimaryButton onClick={() => setView('form')}>
+                        {/* CORRECCIÓN: Se elimina el Header anidado y se limpia la estructura */}
+                        <Header>
+                            <SearchWrapper>
+                                <SearchIcon />
+                                <SearchInput 
+                                    type="text" 
+                                    placeholder="Buscar punto de interés..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </SearchWrapper>
+                            <CreateButton onClick={() => setView('form')}>
                                 <FaPlus style={{ marginRight: '8px' }} />
-                                Nuevo
-                            </PrimaryButton>
-                        </ButtonGroup>
-                    </Header>
+                                {/* CAMBIO: Texto del botón corregido */}
+                                Nuevo Punto
+                            </CreateButton>
+                        </Header>
+
                         {isMobile ? (
                             <PointsList>
                                 {data.map(point => (
@@ -104,13 +118,15 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                                         <PointIcon>
                                             <FaMapMarkerAlt />
                                         </PointIcon>
-                                        <PointInfo>
-                                            <PointName>{point.nombre}</PointName>
-                                            <PointLocation>{point.coordenadas.x}, {point.coordenadas.y}</PointLocation>
-                                        </PointInfo>
-                                        <PointCategory category={point.categoria}>{point.categoria}</PointCategory>
+                                        <PointDetails>
+                                            <PointInfo>
+                                                <PointName>{point.nombre}</PointName>
+                                                <PointLocation>{point.coordenadas.x}, {point.coordenadas.y}</PointLocation>
+                                            </PointInfo>
+                                            <PointCategory category={point.categoria}>{point.categoria}</PointCategory>
+                                        </PointDetails>
                                         <CardActions>
-                                            <IconButton title="Editar Punto"><FaEdit /></IconButton>
+                                            <IconButton title="Editar Punto" onClick={() => handleEditPoint(point)}><FaEdit /></IconButton>
                                             <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
                                             <IconButton title="Eliminar Punto" onClick={() => handleDeletePoint(point.id)}><FaTrash /></IconButton>
                                         </CardActions>
@@ -124,7 +140,7 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                                     data={data}
                                     isLoading={isLoading}
                                     pagination={pagination}
-                                    onPaginationChange={handlePaginationChange}
+                                    onPaginationChange={setPagination} // Se pasa setPagination directamente
                                     sorting={sorting}
                                     onSortingChange={setSorting}
                                     pageCount={pageCount}
@@ -145,7 +161,7 @@ export function PuntosInteresControl({ initialView = 'table' }) {
     );
 }
 
-// --- Estilos de AnimatedView ---
+// --- Estilos ---
 const AnimatedView = styled.div`
     position: absolute;
     top: 0;
@@ -154,7 +170,8 @@ const AnimatedView = styled.div`
     height: 100%;
     display: flex;
     flex-direction: column;
-    transition: transform 0.4s ease-in-out;
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+    background-color: #F8F9FA;
     transform: translateX(${({ $isActive, $direction }) => 
         $isActive ? '0%' : ($direction === 'left' ? '-100%' : '100%')
     });
@@ -168,23 +185,19 @@ const AnimatedViewContainer = styled.div`
     overflow: hidden;
 `;
 
-
-
 const TableWrapper = styled.div`
     height: 100%;
     overflow-y: hidden;    
 `;
 
-// --- Estilos ---
 const ComponentWrapper = styled.div`
-    padding: 0px; 
-    background-color: #fffff; 
+    padding: 25px; 
+    background-color: #F8F9FA; 
     border-radius: 8px;
     height: 100%; 
     display: flex; 
     flex-direction: column;
     position: relative;
-    /* overflow: hidden; */ // ← REMOVER ESTA LÍNEA
     @media (max-width: 768px) { padding: 15px; }
 `;
 
@@ -193,29 +206,54 @@ const ContentArea = styled.div`
     flex-grow: 1;
     width: 100%;
     height: 100%;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    background-color: #fffff;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 `;
 
 const Header = styled.div`
-    display: flex; 
-    justify-content: flex-end; /* Alineado a la derecha */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px; 
-    flex-wrap: wrap; 
-    flex-shrink: 0; 
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 15px; /* Añade un gap para manejar el espaciado */
+
     @media (max-width: 768px) {
-        flex-direction: column; 
-        align-items: stretch; 
-        gap: 15px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+`;
+const SearchWrapper = styled.div`
+    position: relative;
+    /* Permite que el contenedor crezca si es necesario */
+    flex-grow: 1;
+    min-width: 280px;
+`;
+const SearchIcon = styled(FaSearch)`
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #ADB5BD;
+`;
+const SearchInput = styled.input`
+    padding: 10px 15px 10px 40px;
+    border-radius: 6px;
+    border: 1px solid #DEE2E6;
+    background-color: #fff;
+    font-size: 13px;
+    width: 100%; /* Ocupa todo el ancho de su contenedor */
+    outline: none;
+    transition: all 0.2s ease;
+    &:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
     }
 `;
 
-const Button = styled.button`
+const CreateButton = styled.button`
+    background-color: #007BFF;
+    color: white;
+    border: none;
     border-radius: 6px;
     padding: 10px 20px;
     font-size: 13px;
@@ -224,67 +262,62 @@ const Button = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-`;
-
-const ButtonGroup = styled.div`
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-`;
-
-
-const PrimaryButton = styled(Button)`
-    background-color: #28A745;
-    border: 1px solid #28A745;
-    color: white;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0; /* Evita que el botón se encoja */
     &:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
+        background-color: #0056b3;
     }
 `;
 
 const PointsList = styled.div`
-    flex-grow: 1; 
-    overflow-y: auto; 
-    height: 100%; 
+    flex-grow: 1; overflow-y: auto; height: 100%; padding-right: 5px;
+`;
+
+const PointDetails = styled.div`
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
 `;
 
 const PointCard = styled.div`
-    display: flex; 
-    align-items: center; 
-    background: #FFFFFF; 
+    display: grid;
+    grid-template-areas:
+        "icon info"
+        "actions actions";
+    grid-template-columns: auto 1fr;
+    gap: 0 15px;
+    align-items: center;
+    background: #FFFFFF;
     padding: 12px;
-    border-radius: 8px; 
-    border: 1px solid #E9ECEF; 
+    border-radius: 8px;
+    border: 1px solid #E9ECEF;
     margin-bottom: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
-    @media (max-width: 480px) { flex-wrap: wrap; padding: 12px; }
 `;
 
 const PointIcon = styled.div`
-    width: 40px; 
-    height: 40px; 
+    grid-area: icon;
+    width: 48px; 
+    height: 48px; 
     border-radius: 50%; 
     background-color: #007BFF;
     color: white; 
     display: flex; 
     align-items: center; 
     justify-content: center;
-    font-size: 18px; 
-    margin-right: 15px; 
+    font-size: 20px; 
     flex-shrink: 0;
 `;
 
 const PointInfo = styled.div`
-    flex-grow: 1; 
     min-width: 0;
-    @media (max-width: 480px) { flex-basis: 100%; margin-bottom: 10px; }
 `;
 
 const PointName = styled.span`
-    font-size: 14px; 
-    font-weight: 500; 
+    font-size: 15px; 
+    font-weight: 600; 
     color: #343A40; 
     display: block;
 `;
@@ -296,7 +329,6 @@ const PointLocation = styled.span`
     overflow: hidden; 
     text-overflow: ellipsis; 
     display: block;
-    @media (max-width: 480px) { display: none; }
 `;
 
 const PointCategory = styled.span`
@@ -304,16 +336,21 @@ const PointCategory = styled.span`
     font-weight: 500; 
     padding: 4px 10px; 
     border-radius: 12px;
-    margin-right: 20px; 
-    flex-shrink: 0;
     color: #343A40;
     background-color: #E9ECEF;
+    margin-top: 6px;
+    align-self: flex-start;
 `;
 
 const CardActions = styled.div` 
+    grid-area: actions;
     display: flex; 
+    justify-content: space-around;
     align-items: center; 
-    gap: 10px; 
+    width: 100%;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid #e9ecef;
 `;
 
 const IconButton = styled.button`
@@ -325,38 +362,4 @@ const IconButton = styled.button`
     padding: 5px; 
     transition: color 0.2s ease;
     &:hover { color: #007BFF; }
-`;
-
-// --- Estilos para el Estado Vacío ---
-const EmptyState = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-    flex-grow: 1;
-`;
-
-const EmptyStateCard = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 600px;
-    
-    border: 1px solid #E9ECEF;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-`;
-
-const CactusIcon = styled(MdOutlineGrass)`
-    font-size: 48px;
-    color: #343A40;
-    margin-right: 15px;
-`;
-
-const EmptyText = styled.span`
-    font-size: 16px;
-    color: #6C757D;
-    font-weight: 500;
 `;
