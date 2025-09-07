@@ -3,6 +3,9 @@ import styled, { keyframes } from 'styled-components';
 import { IoFilterCircleOutline } from "react-icons/io5";
 import { formatLocalDate } from '../../../utilities/Functions';
 import engineIcon from "../../../assets/Engine.svg"; // Asegúrate que la ruta a tu ícono es correcta
+import { useSelector } from 'react-redux';
+
+
 // --- 1. DATOS FALSOS (MOCK DATA) ---
 const createMockAlerts = (count) => {
   return Array.from({ length: count }, (_, i) => ({
@@ -125,6 +128,7 @@ export const NotificacionesMobile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const containerRef = useRef(null);
+  const notifications = useSelector((state) => state.notification.notifications_list);
   
   const loadMoreAlerts = useCallback(() => {
     if (isLoading) return;
@@ -132,7 +136,7 @@ export const NotificacionesMobile = () => {
 
     // Simula una llamada a la API
     setTimeout(() => {
-      const newAlerts = allMockAlerts.slice(
+      const newAlerts = notifications.slice(
         page * ALERTS_PER_PAGE,
         (page + 1) * ALERTS_PER_PAGE
       );
