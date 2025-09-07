@@ -30,6 +30,11 @@ export function UserForm({ user, onSave }) {
             role: user?.role || 5,
         });
         setRolSeleccionado(user?.role || 5);
+        setNicknameStatus({
+            checking: false,
+            available: null,
+            message: ''
+        });
     }, [user]);
 
     const [nicknameStatus, setNicknameStatus] = useState({
@@ -120,6 +125,7 @@ export function UserForm({ user, onSave }) {
             if (user?.id) {
                 // Actualizar usuario existente
                 response = await updateUser(token, user.id, {
+                    nombre: formData.name,
                     correo: formData.email,
                     nickname: formData.nickname,
                     telefono: formData.telefono,
