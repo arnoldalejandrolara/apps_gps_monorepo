@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { MdModeEditOutline, MdDelete } from 'react-icons/md';
+import { MdModeEditOutline, MdDelete ,MdSecurity} from 'react-icons/md';
 import { FaCheckCircle, FaTrash, FaMapMarkerAlt, FaDrawPolygon } from "react-icons/fa";
 import { FaInfo } from 'react-icons/fa';
 import { HiPhone } from 'react-icons/hi';
@@ -108,6 +108,7 @@ export function TablaPuntosInteres({
   pagination: controlledPagination,
   pageCount,
   onEdit,
+  onPermisos
 }) {
   const navigate = useNavigate();
   const [pagination, setPagination] = useState(controlledPagination || { pageIndex: 0, pageSize: 5 });
@@ -490,6 +491,11 @@ export function TablaPuntosInteres({
             label: 'Editar',
             icon: <MdModeEditOutline />,
             onClick: () => onEdit(row.original),
+          },
+          {
+            label: 'Permisos',
+            icon: <MdSecurity />,
+            onClick: () => onPermisos(row.original),
           },
         ];
         return (

@@ -5,28 +5,15 @@ import { TablaPuntosInteres } from '../table/table.jsx';
 import { useSelector } from 'react-redux';
 import { getUsersTable } from '@mi-monorepo/common/services';
 
-// Importa el nuevo componente UserForm
 import { UserForm } from '../formularios/UserForm';
-
-// --- Datos de Ejemplo ---
-const dummyUsers = [
-    { id: 1, name: 'Ana García', email: 'ana.garcia@example.com', role: 'Admin', status: 'Activo' },
-    { id: 2, name: 'Juan Pérez', email: 'juan.perez@example.com', role: 'Miembro', status: 'Activo' },
-    { id: 3, name: 'Luis Martínez', email: 'luis.martinez@example.com', role: 'Miembro', status: 'Inactivo' },
-    { id: 4, name: 'Sofía López', email: 'sofia.lopez@example.com', role: 'Visitante', status: 'Activo' },
-    { id: 5, name: 'Carlos Rodríguez', email: 'carlos.r@example.com', role: 'Miembro', status: 'Activo' },
-    { id: 6, name: 'Laura Fernández', email: 'laura.f@example.com', role: 'Miembro', status: 'Activo' },
-    { id: 7, name: 'Miguel Sánchez', email: 'miguel.s@example.com', role: 'Visitante', status: 'Inactivo' },
-    { id: 8, name: 'Elena Gómez', email: 'elena.g@example.com', role: 'Miembro', status: 'Activo' },
-    { id: 9, name: 'David Torres', email: 'david.t@example.com', role: 'Admin', status: 'Activo' },
-];
+import { PermisosUser } from '../formularios/PermisosUser';
 
 // --- Componente Principal ---
 export function UserControlComponent() {
-    const [users, setUsers] = useState(dummyUsers);
     const [searchTerm, setSearchTerm] = useState('');
-    const [view, setView] = useState('list'); // 'list' o 'form'
+    const [view, setView] = useState('list'); // 'list', 'form', 'formPermisos'
     const [editingUser, setEditingUser] = useState(null);
+    const [permisosUser, setPermisosUser] = useState(null);
 
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -39,11 +26,6 @@ export function UserControlComponent() {
 
     const token = useSelector(state => state.auth.token);
 
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     const handleShowForm = (user = null) => {
         setEditingUser(user);
         setView('form');
@@ -51,6 +33,7 @@ export function UserControlComponent() {
 
     const handleReturnToList = () => {
         setEditingUser(null);
+        setPermisosUser(null);
         setView('list');
         fetchData();
     };
@@ -60,19 +43,18 @@ export function UserControlComponent() {
         setView('form');
     };
 
+    const handlePermisos = (user) => {
+        setPermisosUser(user);
+        setView('formPermisos');
+    };
+
     const handleSaveUser = (userData) => {
-        if (userData.id) {
-            setUsers(users.map(u => u.id === userData.id ? userData : u));
-        } else {
-            const newUser = { ...userData, id: Date.now(), status: 'Activo' };
-            setUsers([...users, newUser]);
-        }
         handleReturnToList();
     };
 
     const handleDeleteUser = (userId) => {
         if (window.confirm("¿Estás seguro de que quieres eliminar a este usuario?")) {
-            setUsers(users.filter(u => u.id !== userId));
+            // Lógica para eliminar...
         }
     };
 
@@ -86,16 +68,24 @@ export function UserControlComponent() {
     }, []);
 
     const fetchData = async () => {
-        const response = await getUsersTable(token, pagination.pageIndex, pagination.pageSize, sorting, '', searchTerm, null);
-        console.log(response);
-        setData(response.usuarios.data);
-        setPageCount(Math.ceil(response.usuarios.recordsTotal / pagination.pageSize));
-        setTotalRows(response.usuarios.recordsTotal);
+        if (!token) return;
+        setIsLoading(true);
+        try {
+            const response = await getUsersTable(token, pagination.pageIndex, pagination.pageSize, sorting, '', searchTerm, null);
+            setData(response.usuarios.data || []);
+            setPageCount(Math.ceil(response.usuarios.recordsTotal / pagination.pageSize));
+            setTotalRows(response.usuarios.recordsTotal);
+        } catch (error) {
+            console.error("Error al obtener datos de usuarios:", error);
+            setData([]); // Asegurarse de que data sea un array en caso de error
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
         fetchData();
-    }, [token]);
+    }, [token, pagination, sorting, searchTerm]);
     
     return (
         <ComponentWrapper>
@@ -117,20 +107,25 @@ export function UserControlComponent() {
                             Crear Usuario
                         </CreateButton>
                     </Header>
+                    
                     { isMobile ? (
                         <UserList>
-                            {filteredUsers.map(user => (
+                            {data.map(user => (
                                 <UserCard key={user.id}>
-                                    <Avatar>{user.name.charAt(0)}</Avatar>
-                                    <UserInfo>
-                                        <UserName>{user.name}</UserName>
-                                        <UserEmail>{user.email}</UserEmail>
-                                    </UserInfo>
-                                    <UserRole role={user.role}>{user.role}</UserRole>
+                                    <Avatar>{(user.nombre || user.nickname)?.charAt(0) ?? '?'}</Avatar>
+                                    
+                                    <UserDetails>
+                                        <UserInfo>
+                                            <UserName>{user.nombre || user.nickname}</UserName>
+                                            <UserEmail>{user.correo}</UserEmail>
+                                        </UserInfo>
+                                        <UserRole role={user.tipo}>{user.tipo.replace(/_/g, " ")}</UserRole>
+                                    </UserDetails>
+
                                     <CardActions>
-                                        <IconButton title="Editar Usuario" onClick={() => handleShowForm(user)}><FaEdit /></IconButton>
+                                        <IconButton title="Editar Usuario" onClick={() => handleEditUser(user)}><FaEdit /></IconButton>
+                                        <IconButton title="Ver Permisos" onClick={() => handlePermisos(user)}><FaShieldAlt /></IconButton>
                                         <IconButton title="Eliminar Usuario" onClick={() => handleDeleteUser(user.id)}><FaTrash /></IconButton>
-                                        <IconButton title="Ver Permisos"><FaShieldAlt /></IconButton>
                                     </CardActions>
                                 </UserCard>
                             ))}
@@ -148,6 +143,7 @@ export function UserControlComponent() {
                                 pageCount={pageCount}
                                 totalRows={totalRows}
                                 onEdit={handleEditUser}
+                                onPermisos={handlePermisos}
                             />
                         </TableWrapper>
                     )}
@@ -161,23 +157,33 @@ export function UserControlComponent() {
                             Regresar
                         </BackButton>
                     </FormHeader>
-                    {/* Renderiza el componente importado */}
                     <UserForm 
                         user={editingUser} 
                         onSave={handleSaveUser}
                     />
                 </AnimatedView>
+
+                {/* Vista de Permisos */}
+                <AnimatedView $isActive={view === 'formPermisos'} $direction="right">
+                    <FormHeader>
+                        <BackButton onClick={handleReturnToList}>
+                            <FaArrowLeft style={{ marginRight: '8px' }} />
+                            Regresar
+                        </BackButton>
+                    </FormHeader>
+                   <PermisosUser user={permisosUser} />
+                </AnimatedView>
+
             </ContentArea>
         </ComponentWrapper>
     );
 }
 
+// --- Estilos ---
 const TableWrapper = styled.div`
     height: 100%;
     overflow-y: hidden;    
 `;
-
-// --- Estilos Modernos y Responsivos ---
 const ComponentWrapper = styled.div`
     padding: 25px; 
     background-color: #F8F9FA; 
@@ -186,7 +192,6 @@ const ComponentWrapper = styled.div`
     display: flex; 
     flex-direction: column;
     position: relative;
-    overflow: hidden;
     @media (max-width: 768px) { padding: 15px; }
 `;
 const ContentArea = styled.div`
@@ -204,6 +209,7 @@ const AnimatedView = styled.div`
     display: flex;
     flex-direction: column;
     transition: transform 0.4s ease-in-out;
+    background-color: #F8F9FA;
     transform: translateX(${({ $isActive, $direction }) => 
         $isActive ? '0%' : ($direction === 'left' ? '-100vw' : '100vw')
     });
@@ -238,42 +244,102 @@ const CreateButton = styled.button`
     &:hover { background-color: #0056b3; }
 `;
 const UserList = styled.div`
-    flex-grow: 1; overflow-y: auto; height: 100%; 
+    flex-grow: 1; overflow-y: auto; height: 100%; padding-right: 5px;
+`;
+const UserDetails = styled.div`
+    grid-area: details;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
 `;
 const UserCard = styled.div`
-    display: flex; align-items: center; background: #FFFFFF; padding: 12px;
-    border-radius: 8px; border: 1px solid #E9ECEF; margin-bottom: 10px;
+    display: grid;
+    grid-template-areas:
+        "avatar details"
+        "actions actions";
+    grid-template-columns: auto 1fr;
+    gap: 0 15px;
+    background: #FFFFFF;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #E9ECEF;
+    margin-bottom: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
-    @media (max-width: 480px) { flex-wrap: wrap; padding: 12px; }
+
+    /* CAMBIO: Esta línea alinea verticalmente el avatar y el bloque de detalles. */
+    align-items: center;
 `;
+
 const Avatar = styled.div`
-    width: 40px; height: 40px; border-radius: 50%; background-color: #007BFF;
-    color: white; display: flex; align-items: center; justify-content: center;
-    font-weight: bold; font-size: 18px; margin-right: 15px; flex-shrink: 0;
+    grid-area: avatar;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #007BFF;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 20px;
+    text-transform: uppercase;
 `;
 const UserInfo = styled.div`
-    flex-grow: 1; min-width: 0;
-    @media (max-width: 480px) { flex-basis: 100%; margin-bottom: 10px; }
+    min-width: 0;
 `;
 const UserName = styled.span`
-    font-size: 14px; font-weight: 500; color: #343A40; display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #343A40;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 const UserEmail = styled.span`
-    font-size: 13px; color: #6C757D; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; display: block;
-    @media (max-width: 480px) { display: none; }
+    font-size: 13px;
+    color: #6C757D;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 `;
 const UserRole = styled.span`
-    font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 12px;
-    margin-right: 20px; flex-shrink: 0;
-    color: ${props => props.role === 'Admin' ? '#DC3545' : props.role === 'Miembro' ? '#28A745' : '#6C757D'};
-    background-color: ${props => props.role === 'Admin' ? '#F8D7DA' : props.role === 'Miembro' ? '#D4EDDA' : '#E9ECEF'};
+    justify-self: start;
+    align-self: start;
+    margin-top: 4px; /* Pequeño espacio superior */
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: capitalize;
+
+    color: ${props => props.role === 'administrador_cliente' ? '#DC3545' : props.role === 'cuenta_secundaria_cliente' ? '#28A745' : '#6C757D'};
+    background-color: ${props => props.role === 'administrador_cliente' ? '#F8D7DA' : props.role === 'cuenta_secundaria_cliente' ? '#D4EDDA' : '#E9ECEF'};
 `;
-const CardActions = styled.div` display: flex; align-items: center; gap: 10px; `;
+const CardActions = styled.div`
+    grid-area: actions;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid #E9ECEF;
+`;
 const IconButton = styled.button`
-    background: transparent; border: none; color: #ADB5BD; font-size: 18px;
-    cursor: pointer; padding: 5px; transition: color 0.2s ease;
-    &:hover { color: #007BFF; }
+    background: transparent;
+    border: none;
+    color: #ADB5BD;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: #007BFF;
+    }
 `;
 const FormHeader = styled.div`
     display: flex; align-items: center; justify-content: space-between;
