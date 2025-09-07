@@ -24,19 +24,19 @@ export function UserForm({ user, onSave }) {
     const [rolSeleccionado, setRolSeleccionado] = useState(5);
 
     useEffect(() => {
-        if (user) {
-            setFormData({
-                name: user.nombre || '',
-                nickname: user.nickname || '',
-                email: user.correo || '',
-                telefono: user.telefono || '',
-                role: user.id_tipo || 5,
-            });
-            setRolSeleccionado(user.id_tipo || 5);
-        } else {
-            // Si no hay usuario (modo creación), resetea el formulario
-            resetForm();
-        }
+        setFormData({
+            name: user?.nombre || '',
+            nickname: user?.nickname || '',
+            email: user?.correo || '',
+            telefono: user?.telefono || '',
+            role: user?.role || 5,
+        });
+        setRolSeleccionado(user?.role || 5);
+        setNicknameStatus({
+            checking: false,
+            available: null,
+            message: ''
+        });
     }, [user]);
 
     const [nicknameStatus, setNicknameStatus] = useState({

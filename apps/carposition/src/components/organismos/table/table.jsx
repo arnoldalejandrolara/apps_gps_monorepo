@@ -437,6 +437,15 @@ export function TablaPuntosInteres({
 
   const columnsUsers = [
     {
+      header: 'Nombre',
+      accessorKey: 'nombre',
+      cell: ({ row }) => (
+        <StyledTextCell>
+          <div>{row.original.nombre}</div>
+        </StyledTextCell>
+      ),
+    },
+    {
       header: 'Nickname',
       accessorKey: 'nickname',
       cell: ({ row }) => (
