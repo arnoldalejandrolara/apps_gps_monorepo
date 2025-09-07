@@ -42,8 +42,7 @@ export function LoginTemplate() {
       const data_user = await loginService(correo, pass);
       console.log(data_user , "data user");
       dispatch(login({ user: data_user.user, token: data_user.user.token }));
-
-     
+      navigate("/");
     } catch (error) {
       setLoginError("Usuario o contraseña incorrectos");
     }
