@@ -273,7 +273,7 @@ export function PuntoInteresForm({ onBack, point, categorias, iconos }) {
 // ... (El resto de estilos no necesitan cambios)
 const FormContainer = styled.div` height: 100%; display: flex; flex-direction: column; border-radius: 8px; background-color: #f8f9fa; `;
 const FormHeader = styled.div` display: flex; align-items: center; padding: 15px 20px; background-color: #fff; border-bottom: 1px solid #e9ecef; `;
-const FormContent = styled.div` flex-grow: 1; padding: 20px; display: flex; gap: 20px; overflow: hidden; @media (max-width: 768px) { flex-direction: column; padding: 15px; } `;
+const FormContent = styled.div` flex-grow: 1; padding: 20px; display: flex; gap: 20px; overflow: auto; @media (max-width: 768px) { flex-direction: column; padding: 15px; } `;
 const BackButton = styled.button` background: none; border: none; color: #495057; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; transition: color 0.2s; &:hover { color: #007bff; } `;
 const FormSection = styled.div` flex: 1 0 350px; max-width: 350px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 10px; h2 { font-size: 18px; font-weight: 600; color: #343a40; } @media (max-width: 768px) { flex-basis: auto; max-width: 100%; overflow-y: visible; padding-right: 0; } `;
 const MapSection = styled.div` flex: 1 1 auto; border-radius: 8px; overflow: hidden; @media (max-width: 768px) { min-height: 300px; } `;
