@@ -5,6 +5,10 @@ import styled, { keyframes } from 'styled-components';
 import { IoEllipsisHorizontal, IoClose, IoSearch } from 'react-icons/io5';
 import { VehicleCard } from '../organismos/CardVehicle';
 import Car from "../../assets/Car.svg"; // Asegúrate que la ruta al SVG sea correcta
+import { useSelector } from 'react-redux';
+import { getLast5Routes } from '@mi-monorepo/common/services';
+import { setVehicleRoute, addSelectedVehicle } from '@mi-monorepo/common/store/vehicle';
+import { useDispatch } from 'react-redux';
 
 // --- DATOS FALSOS (MOCK DATA) PARA RELLENAR LA LISTA ---
 const mockVehicles = [
@@ -92,14 +96,19 @@ const mockVehicles = [
     const [filteredData, setFilteredData] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [dragState, setDragState] = useState({ startY: 0, deltaY: 0, isDragging: false });
+
+    const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
+    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles || []);
+    const token = useSelector((state) => state.auth?.token || "");
+    const dispatch = useDispatch();
     
     // Simula la carga de datos
     useEffect(() => {
       if (isOpen) {
         setIsLoading(true);
         setTimeout(() => {
-          setAllVehicles(mockVehicles);
-          setFilteredData(mockVehicles);
+          setAllVehicles(vehicles);
+          setFilteredData(vehicles);
           setIsLoading(false);
         }, 1500);
       }
@@ -115,9 +124,42 @@ const mockVehicles = [
     }, [searchTerm, allVehicles]);
   
     const togglePanel = () => { setIsOpen(!isOpen); };
-    const handleCardClick = (vehicle) => {
+    const handleCardClick = async (vehicle) => {
       if (onCardClick) { onCardClick(vehicle); }
-      togglePanel();
+      
+      try {
+          if (!vehicle || !vehicle.imei) {
+              console.error("❌ Datos del vehículo inválidos:", vehicle);
+              return;
+          }
+
+          // Primero actualizamos la ruta si es necesario
+          if(vehicle.route.length <= 1){
+              //console.log("🔍 Obteniendo últimas 5 rutas");
+              let last5Routes = await getLast5Routes(token, vehicle.imei);
+
+              if(last5Routes.status == 200){
+                  let coordinates = last5Routes.registros.map(registro => [registro.location.x, registro.location.y]).reverse();
+                  // Actualizamos la ruta primero
+                  await dispatch(setVehicleRoute({ id: vehicle.id, route: coordinates }));
+                  // Esperamos un momento para asegurar que la actualización se complete
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                  // Actualizamos el vehículo con la nueva ruta
+                  vehicle = {
+                      ...vehicle,
+                      route: coordinates
+                  };
+              } else {
+                  console.error("❌ Error al obtener las últimas 5 rutas:", last5Routes);
+              }
+          }
+
+          // Después de asegurarnos de que la ruta está actualizada, seleccionamos el vehículo
+          dispatch(addSelectedVehicle(vehicle));
+          togglePanel();   
+      } catch (error) {
+          console.error("❌ Error al procesar el vehículo:", error);
+      }
     };
     const handleTouchStart = (e) => { setDragState({ ...dragState, startY: e.touches[0].clientY, isDragging: true }); };
     const handleTouchMove = (e) => {
