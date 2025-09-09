@@ -10,17 +10,6 @@ import { getLast5Routes } from '@mi-monorepo/common/services';
 import { setVehicleRoute, addSelectedVehicle } from '@mi-monorepo/common/store/vehicle';
 import { useDispatch } from 'react-redux';
 
-const dummyVehicles = [
-    { id: 1, name: 'Unidad #1', driver: 'Juan Pérez', status: 'En movimiento', updated: 'Hace 1 min' },
-    { id: 2, name: 'Unidad #2', driver: 'Ana García', status: 'Detenido', updated: 'Hace 5 min' },
-    { id: 3, name: 'Unidad #3', driver: 'Luis Martínez', status: 'Sin conexión', updated: 'Hace 1 hora' },
-    { id: 4, name: 'Unidad #4', driver: 'Sofía López', status: 'En movimiento', updated: 'Ahora mismo' },
-    { id: 5, name: 'Unidad #5', driver: 'Carlos Ruiz', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 6, name: 'Unidad #6', driver: 'Laura Gómez', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 7, name: 'Unidad #7', driver: 'Pedro Sanchez', status: 'En taller', updated: 'Hace 3 días' },
-    { id: 8, name: 'Unidad #8', driver: 'Maria Lopez', status: 'En taller', updated: 'Hace 3 días' },
-];
-
 export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
     const [searchTerm, setSearchTerm] = useState('');
     const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
@@ -65,7 +54,7 @@ export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
 
             setActiveVehicleId(activeVehicleId === vehicle.id ? null : vehicle.id);
             // Notifica al componente App sobre el cambio de selección
-            onVehicleSelect(vehicle.id);
+            onVehicleSelect(vehicle);
     
             // Después de asegurarnos de que la ruta está actualizada, seleccionamos el vehículo
             dispatch(addSelectedVehicle(vehicle));

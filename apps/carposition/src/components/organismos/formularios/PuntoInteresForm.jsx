@@ -157,9 +157,11 @@ export function PuntoInteresForm({ onBack, point, categorias, iconos }) {
           onDragEnd={() => setIsResizing(false)}
         >
           {/* CORRECCIÓN: Se unifica el manejador de redimensión */}
+          
           <ResizeHandle>
             <div style={{ width: '16px', height: '16px', backgroundColor: isResizing ? '#ff6b35' : '#007bff', border: '2px solid white', borderRadius: '50%', cursor: 'ew-resize', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
           </ResizeHandle>
+
         </Marker>
       )}
       {marker && (

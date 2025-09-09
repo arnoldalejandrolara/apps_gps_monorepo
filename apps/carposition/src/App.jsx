@@ -185,8 +185,10 @@ function App() {
 
     const [selectedVehicleId, setSelectedVehicleId] = useState(null);
 
-    const handleVehicleSelect = (vehicleId) => {
-        setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
+    const handleVehicleSelect = (vehicle) => {
+        console.log('Vehículo seleccionado con ID:', vehicle);
+        // setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
+        setSelectedVehicleId(vehicle);
     };
 
       // 👇 3. ENCUENTRA LOS DATOS DEL VEHÍCULO SELECCIONADO
@@ -240,18 +242,14 @@ function App() {
                                     >
                                         {modalContent}
                                     </ReusableModal>
+
                                     <VehicleList 
                                         isOpen={vehicleListOpen} 
                                         onClose={() => setVehicleListOpen(false)} 
                                         onVehicleSelect={handleVehicleSelect} 
                                     />
 
-                                      {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
-                                    <VehicleInfoCard
-                                        isVisible={!!selectedVehicleId}
-                                        vehicle={selectedVehicleData}
-                                        onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta
-                                    />
+                        
                                     
                                     <FloatingActionButtons isVisible={!!selectedVehicleId} />
 
@@ -259,8 +257,17 @@ function App() {
                                         
                                         {notifiOpen && <Overlay onClick={() => setNotifiOpen(false)} />}
 
+                                   
                                         <section className="mapaView">
                                             <HomeTemplate />
+
+                                            {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
+                                            <VehicleInfoCard
+                                                isVisible={!!selectedVehicleId}
+                                                vehicle={selectedVehicleId}
+                                                onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta
+                                            />
+
                                         </section>
 
                                          {/* --- 4. RENDERIZA CONDICIONALMENTE EL MENÚ --- */}
