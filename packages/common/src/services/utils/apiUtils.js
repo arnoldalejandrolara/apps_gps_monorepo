@@ -41,6 +41,9 @@ export async function handleApiResponse(response, errorMessage = 'Error en la pe
 
         throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
     } else if (data.status !== 200) {
+        if(data.message){
+            throw new Error(data.message);
+        }
         throw new Error(errorMessage);
     }
 

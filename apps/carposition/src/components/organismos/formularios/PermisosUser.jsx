@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { FaPlus, FaCheck, FaPaperPlane, FaChevronDown, FaTimes, FaCar, FaSearch } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
+import { getDispositivosAsignadosByUser, updateDispositivosAsignadosByUser, asignarPermisos } from '@mi-monorepo/common/services';
+import { useSelector } from 'react-redux';
 
 // --- Datos de ejemplo ---
 const initialUnitsData = [
@@ -90,12 +92,48 @@ function UnitsModal({ units, onToggleUnit, onSelectAll, onClose }) {
 
 // --- Componente Principal de Permisos (Modificado) ---
 export function PermisosUser({ user, onSave }) {
-    const [units, setUnits] = useState(initialUnitsData);
-    const [permissions, setPermissions] = useState({ ver_alertas: true, usuarios: true });
+    const [units, setUnits] = useState([]);
+    const [originalUnits, setOriginalUnits] = useState([]); // Track original state
+    const [permissions, setPermissions] = useState({ ver_alertas: true, usuarios: true, dispositivos: false, geocercas: false, puntos_interes: false, rutas: false, cuenta_espejo: false, grupos: false, solicitar_posicion: false, bloqueo_motor: false, acceso_historial: false });
     const [openSections, setOpenSections] = useState({ administrar: true });
     
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const token = useSelector(state => state.auth.token);
+
+    const fetchDispositivosAsignados = async () => {
+        const response = await getDispositivosAsignadosByUser(token, user.id);
+        const dispositivos = response.dispositivos.map(dispositivo => ({
+            id: dispositivo.id,
+            name: dispositivo.nombre,
+            isSelected: dispositivo.asignado
+        }));
+        setUnits(dispositivos || []);
+        setOriginalUnits(dispositivos || []); // Store original state
+
+        //console.log(dispositivos, "dispositivos");
+    };
+
+    useEffect(() => {
+        if (token && user) {
+            fetchDispositivosAsignados();
+
+            setPermissions({
+                ver_alertas: user.permisos_web.ver_alertas,
+                usuarios: user.permisos_web.usuarios,
+                dispositivos: user.permisos_web.dispositivos,
+                geocercas: user.permisos_web.geocercas,
+                puntos_interes: user.permisos_web.puntos_interes,
+                rutas: user.permisos_web.rutas,
+                cuenta_espejo: user.permisos_web.cuenta_espejo,
+                grupos: user.permisos_web.grupos,
+                solicitar_posicion: user.permisos_web.solicitar_posicion,
+                bloqueo_motor: user.permisos_web.bloqueo_motor,
+                acceso_historial: user.permisos_web.acceso_historial
+            });
+        }
+    }, [token, user]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -116,10 +154,41 @@ export function PermisosUser({ user, onSave }) {
         setPermissions(newPermissions);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const selectedUnits = units.filter(unit => unit.isSelected);
         console.log("Datos a enviar:", { userId: user?.id, units: selectedUnits, permissions });
-        alert("Permisos guardados (revisa la consola para ver los datos)");
+
+        // Always update permissions
+        const response = await asignarPermisos(token, user.id, {
+            permisos: permissions
+        });
+
+        // Check if device assignments have changed
+        const hasDeviceChanges = units.some(unit => {
+            const originalUnit = originalUnits.find(orig => orig.id === unit.id);
+            return originalUnit && originalUnit.isSelected !== unit.isSelected;
+        });
+
+        let response2 = { status: 200 }; // Default success for no changes
+
+        if (hasDeviceChanges) {
+            const selectedDispositivos = selectedUnits.map(unit => {
+                return {
+                    id: unit.id,
+                    asignado: true
+                }
+            });
+
+            response2 = await updateDispositivosAsignadosByUser(token, user.id, {
+                dispositivos: selectedDispositivos
+            });
+        }
+
+        if(response.status == 200 && response2.status == 200){
+            alert("Permisos y dispositivos guardados correctamente");
+        } else {
+            alert("Error al guardar los permisos y dispositivos");
+        }
     };
 
     // --- LÓGICA PARA BOTONES Y CONTADORES ---

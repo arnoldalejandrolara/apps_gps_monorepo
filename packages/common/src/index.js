@@ -73,5 +73,8 @@ export {
     getUsersTable,
     createUser,
     checkNickname,
-    updateUser
+    updateUser,
+    getDispositivosAsignadosByUser,
+    updateDispositivosAsignadosByUser,
+    asignarPermisos
 } from './services/index.js';

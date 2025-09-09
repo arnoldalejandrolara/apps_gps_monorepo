@@ -47,3 +47,28 @@ export async function updateUser(token, id, data) {
     });
     return await handleApiResponse(res, 'Error al actualizar el usuario');
 }
+
+export async function getDispositivosAsignadosByUser(token, id) {
+    const res = await fetch(`${getApiUrl()}/usuarios/dispositivos/${id}`, {
+        headers: getCommonHeaders(token)
+    });
+    return await handleApiResponse(res, 'Error al obtener los dispositivos asignados al usuario');
+}
+
+export async function updateDispositivosAsignadosByUser(token, id, data) {
+    const res = await fetch(`${getApiUrl()}/usuarios/${id}/dispositivos`, {
+        method: 'PUT',
+        headers: getCommonHeaders(token),
+        body: JSON.stringify(data)
+    });
+    return await handleApiResponse(res, 'Error al actualizar los dispositivos asignados al usuario');
+}
+
+export async function asignarPermisos(token, id, data) {
+    const res = await fetch(`${getApiUrl()}/usuarios/${id}/permisos`, {
+        method: 'PUT',
+        headers: getCommonHeaders(token),
+        body: JSON.stringify(data)
+    });
+    return await handleApiResponse(res, 'Error al asignar los permisos al usuario');
+}
