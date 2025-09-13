@@ -76,5 +76,6 @@ export {
     updateUser,
     getDispositivosAsignadosByUser,
     updateDispositivosAsignadosByUser,
-    asignarPermisos
+    asignarPermisos,
+    validateTokenFromUrl
 } from './services/index.js';

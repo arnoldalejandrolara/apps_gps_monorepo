@@ -1,6 +1,7 @@
 import { AuthProvider } from '@mi-monorepo/common/context';
 import { createContext, useState, useEffect } from 'react';
 import { Login } from './pages/Login';
+import { Loading } from './pages/Loading';
 import { Sidebar } from './components/organismos/sidebar/Sidebar';
 import { AppRouter } from '@mi-monorepo/common/routers';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -44,6 +45,7 @@ import { BottomMenu } from './components/organismos/BottomMenu.jsx';
 import { MobileOptionsMenu } from './components/organismos/MobileOptionsMenu.jsx';
 import {MobileListUnidades} from './components/organismos/MobileListUnidades.jsx';
 import { ActiveContentMobile } from './components/organismos/ActiveContentMobile.jsx';
+import { useTokenFromUrl } from './hooks/useTokenFromUrl.jsx';
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
@@ -130,6 +132,9 @@ function App() {
     const { pathname } = useLocation();
     const navigate = useNavigate();
 
+    // Hook para capturar token de URL
+    useTokenFromUrl();
+
     useEffect(() => {
         setNavigate(navigate);
     }, [navigate]);
@@ -203,6 +208,8 @@ function App() {
                         <WebSocketProvider>
                             {pathname === '/login' ? (
                                 <Login />
+                            ) : pathname === '/loading' ? (
+                                <Loading />
                             ) : (
                                 <AppGrid>
                                     {/* 👇 2. OCULTA el HamburgerButton si es móvil/tablet */}
