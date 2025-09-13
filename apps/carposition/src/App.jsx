@@ -194,6 +194,15 @@ function App() {
         setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
     };
 
+    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles);
+
+    useEffect(() => {
+        console.log(selectedVehicleId, "selectedVehicleId");
+        if (selectedVehicles.length > 0) {
+            setSelectedVehicleId(selectedVehicles[0].id);
+        }
+    }, [selectedVehicles]);
+
       // 👇 3. ENCUENTRA LOS DATOS DEL VEHÍCULO SELECCIONADO
       const selectedVehicleData = dummyVehicles.find(
         (vehicle) => vehicle.id === selectedVehicleId

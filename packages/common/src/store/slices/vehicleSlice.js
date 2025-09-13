@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
     selectedVehicles: [],
+    initialImei: null,
     vehicles: [],
     isLoading: false,
     error: null
@@ -89,6 +90,9 @@ export const vehicleSlice = createSlice({
         resetVehicles: (state) => {
             state.vehicles = [];
             state.selectedVehicles = [];
+        },
+        setInitialImei: (state, action) => {
+            state.initialImei = action.payload;
         }
     }
 });
@@ -101,7 +105,8 @@ export const {
     addSelectedVehicleMobile,
     setVehicleRoute,
     setVehicleNewRegister,
-    resetVehicles
+    resetVehicles,
+    setInitialImei
 } = vehicleSlice.actions;
 
 export default vehicleSlice.reducer;

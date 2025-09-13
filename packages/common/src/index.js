@@ -16,7 +16,8 @@ export {
     setVehicleNewRegister,
     resetVehicles,
     setPdiData,
-    setGeofenceData
+    setGeofenceData,
+    setInitialImei
 } from './store/slices/index.js';
 
 export { 

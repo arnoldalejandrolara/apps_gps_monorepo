@@ -17,6 +17,8 @@ import { MapboxMap } from "../organismos/MapboxMap.jsx";
 import { MapTypeSelector } from "../atomos/MapTypeSelector.jsx";
 import "../../styled-components/sweetAlert.css";
 import { useCommandDialog } from "../../utilities/useCommandDialog.jsx";
+import { setSelectedVehicles, setInitialImei, setVehicleRoute } from "@mi-monorepo/common/store/vehicle";
+import { getLast5Routes } from "@mi-monorepo/common/services";
 
 // Ventana flotante SIEMPRE visible en la esquina inferior izquierda
 function VehicleWindowInfo({ vehicle }) {
@@ -53,6 +55,7 @@ export function HomeTemplate() {
     const dispatch = useDispatch();
 
     const token = useSelector((state) => state.auth?.token);
+    const initialImei = useSelector((state) => state.vehicle?.initialImei);
 
     const [viewState, setViewState] = useState({
         longitude: -101.956114,
@@ -128,6 +131,41 @@ export function HomeTemplate() {
             }
         };
     }, [selectedVehicles]);
+
+    const getRouteVehicle = async (vehicle) => {
+        if(vehicle.route.length <= 1){
+            //console.log("🔍 Obteniendo últimas 5 rutas");
+            let last5Routes = await getLast5Routes(token, vehicle.imei);
+
+            if(last5Routes.status == 200){
+                let coordinates = last5Routes.registros.map(registro => [registro.location.x, registro.location.y]).reverse();
+                // Actualizamos la ruta primero
+                dispatch(setVehicleRoute({ id: vehicle.id, route: coordinates }));
+                // Esperamos un momento para asegurar que la actualización se complete
+                await new Promise(resolve => setTimeout(resolve, 200));
+                // Actualizamos el vehículo con la nueva ruta
+                const newVehicle = {
+                    ...vehicle,
+                    route: coordinates
+                };
+
+                dispatch(setSelectedVehicles([newVehicle]));
+            } else {
+                console.error("❌ Error al obtener las últimas 5 rutas:", last5Routes);
+            }
+        }
+    }
+
+    useEffect(() => {
+        console.log(initialImei, "initialImei");
+        if (initialImei && vehicles.length > 0) {
+            const vehicle = vehicles.find(vehicle => vehicle.imei === initialImei);
+            if (vehicle) {
+                getRouteVehicle(vehicle);
+                dispatch(setInitialImei(null));
+            }
+        }
+    }, [initialImei, vehicles]);
 
     const trips = useMemo(() => {
         if (!selectedVehicles.length) return [];

@@ -8,6 +8,7 @@ export {
     addSelectedVehicleMobile,
     setVehicleRoute,
     setVehicleNewRegister,
-    resetVehicles
+    resetVehicles,
+    setInitialImei
 } from './vehicleSlice.js';
 export { addNotification, addNotificationList, addOneNotificationToList, resetNotifications } from './notificationSlice.js';

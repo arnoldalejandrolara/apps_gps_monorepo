@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { login } from '@mi-monorepo/common/store/auth';
 import { logout } from '@mi-monorepo/common/store/thunks';
 import { validateTokenFromUrl } from '@mi-monorepo/common/services';
+import { setInitialImei } from '@mi-monorepo/common/store/vehicle';
 
 /**
  * Hook personalizado para capturar y procesar tokens desde la URL
@@ -31,7 +32,9 @@ export function useTokenFromUrl() {
                 setTimeout(() => { 
                     if (userData && userData.user) {
                         // Hacer login automático con los datos del usuario
+                        console.log(userData, "userData");
                         dispatch(login({ user: userData.user, token: userData.user.access_token }));
+                        dispatch(setInitialImei(userData.imei));
                         //navigate('/');
                         console.log('Login automático exitoso con token de URL');
                         setTokenProcessed(true);
