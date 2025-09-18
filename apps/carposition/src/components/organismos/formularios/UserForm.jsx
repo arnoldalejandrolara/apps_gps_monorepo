@@ -116,7 +116,7 @@ export function UserForm({ user, onSave }) {
                     alert("Usuario actualizado correctamente");
                     onSave(response.usuario || { ...user, ...formData });
                 } else {
-                    alert("Error al actualizar el usuario");
+                    alert(response.message);
                 }
             } else {
                 response = await createUser(token, {
@@ -137,7 +137,7 @@ export function UserForm({ user, onSave }) {
             }
         } catch (error) {
             console.error('Error en la operación:', error);
-            alert("Ocurrió un error. Por favor, inténtalo de nuevo.");
+            alert(error.message);
         }
     };
 

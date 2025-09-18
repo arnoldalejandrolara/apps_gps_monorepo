@@ -1,6 +1,7 @@
 import { AuthProvider } from '@mi-monorepo/common/context';
 import { createContext, useState, useEffect } from 'react';
 import { Login } from './pages/Login';
+import { Loading } from './pages/Loading';
 import { Sidebar } from './components/organismos/sidebar/Sidebar';
 import { AppRouter } from '@mi-monorepo/common/routers';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -44,6 +45,7 @@ import { BottomMenu } from './components/organismos/BottomMenu.jsx';
 import { MobileOptionsMenu } from './components/organismos/MobileOptionsMenu.jsx';
 import {MobileListUnidades} from './components/organismos/MobileListUnidades.jsx';
 import { ActiveContentMobile } from './components/organismos/ActiveContentMobile.jsx';
+import { useTokenFromUrl } from './hooks/useTokenFromUrl.jsx';
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
@@ -130,6 +132,9 @@ function App() {
     const { pathname } = useLocation();
     const navigate = useNavigate();
 
+    // Hook para capturar token de URL
+    useTokenFromUrl();
+
     useEffect(() => {
         setNavigate(navigate);
     }, [navigate]);
@@ -191,6 +196,15 @@ function App() {
         setSelectedVehicleId(vehicle);
     };
 
+    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles);
+
+    useEffect(() => {
+        console.log(selectedVehicleId, "selectedVehicleId");
+        if (selectedVehicles.length > 0) {
+            setSelectedVehicleId(selectedVehicles[0].id);
+        }
+    }, [selectedVehicles]);
+
       // 👇 3. ENCUENTRA LOS DATOS DEL VEHÍCULO SELECCIONADO
       const selectedVehicleData = dummyVehicles.find(
         (vehicle) => vehicle.id === selectedVehicleId
@@ -205,6 +219,8 @@ function App() {
                         <WebSocketProvider>
                             {pathname === '/login' ? (
                                 <Login />
+                            ) : pathname === '/loading' ? (
+                                <Loading />
                             ) : (
                                 <AppGrid>
                                     {/* 👇 2. OCULTA el HamburgerButton si es móvil/tablet */}

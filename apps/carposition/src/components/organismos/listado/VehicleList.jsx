@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes, FaSearch, FaFilter } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux';
 export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
     const [searchTerm, setSearchTerm] = useState('');
     const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
+    const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles || []);
     const dispatch = useDispatch();
     const token = useSelector((state) => state.auth?.token);
     const [activeVehicleId, setActiveVehicleId] = useState(null);
@@ -52,7 +53,7 @@ export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
                 }
             }
 
-            setActiveVehicleId(activeVehicleId === vehicle.id ? null : vehicle.id);
+            //setActiveVehicleId(activeVehicleId === vehicle.id ? null : vehicle.id);
             // Notifica al componente App sobre el cambio de selección
             onVehicleSelect(vehicle);
     
@@ -63,6 +64,13 @@ export function VehicleList({ isOpen, onClose, onVehicleSelect }) {
             console.error("❌ Error al procesar el vehículo:", error);
         }
     };
+
+    useEffect(() => {
+        console.log(filteredVehicles, "filteredVehicles");
+        if (selectedVehicles.length > 0) {
+            setActiveVehicleId(selectedVehicles[0].id);
+        }
+    }, [selectedVehicles]);
 
     return (
         <VehicleListContainer $isOpen={isOpen}>

@@ -85,7 +85,22 @@ export function UserControlComponent() {
 
     useEffect(() => {
         fetchData();
-    }, [token, pagination, sorting, searchTerm]);
+    }, [token, pagination, sorting]);
+    
+    // Debounce search: fetch only after user stops typing
+    useEffect(() => {
+        if (!token) return;
+        const handler = setTimeout(() => {
+            setPagination(prev => {
+                if (prev.pageIndex === 0) {
+                    fetchData();
+                    return prev;
+                }
+                return { ...prev, pageIndex: 0 };
+            });
+        }, 450);
+        return () => clearTimeout(handler);
+    }, [searchTerm, token]);
     
     return (
         <ComponentWrapper>
@@ -96,7 +111,11 @@ export function UserControlComponent() {
                         <SearchWrapper>
                             <SearchIcon />
                             <SearchInput 
-                                type="text" 
+                                type="search"
+                                name="usersSearch"
+                                autoComplete="off"
+                                enterKeyHint="search"
+                                inputMode="search"
                                 placeholder="Buscar usuario..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}

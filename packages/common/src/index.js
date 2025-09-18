@@ -16,7 +16,8 @@ export {
     setVehicleNewRegister,
     resetVehicles,
     setPdiData,
-    setGeofenceData
+    setGeofenceData,
+    setInitialImei
 } from './store/slices/index.js';
 
 export { 
@@ -73,5 +74,9 @@ export {
     getUsersTable,
     createUser,
     checkNickname,
-    updateUser
+    updateUser,
+    getDispositivosAsignadosByUser,
+    updateDispositivosAsignadosByUser,
+    asignarPermisos,
+    validateTokenFromUrl
 } from './services/index.js';
