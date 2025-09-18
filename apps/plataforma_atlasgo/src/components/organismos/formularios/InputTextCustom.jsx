@@ -12,17 +12,20 @@ const LabelContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 8px; /* Un poco más de espacio */
 `;
 
 const Label = styled.label`
-  color: #B4B4B4;
-  font-size: 13px;
+  /* CAMBIO: Color de texto oscuro para el label */
+  color: #495057;
+  font-size: 14px;
+  font-weight: 500;
   text-align: left;
 `;
 
 const ForgotPasswordLink = styled.a`
-  color: #898989;
+  /* CAMBIO: Color de enlace estándar para tema claro */
+  color: #007bff;
   font-size: 12px;
   text-decoration: none;
   &:hover {
@@ -38,34 +41,41 @@ const InputWrapper = styled.div`
 
 const StyledInput = styled.input`
   width: 100%;
-  height: 38px;
+  height: 42px; /* Un poco más alto para mejor tacto */
   padding: 10px 40px 10px 12px;
-  border: 1px solid #373737;
+  /* CAMBIO: Estilos de borde, fondo y texto para tema claro */
+  border: 1px solid #ced4da;
   border-radius: 8px;
   outline: none;
   font-size: 14px;
-  background: #1D1D1D;
-  color: #fff;
-  transition: border-color 0.2s;
+  background: #ffffff;
+  color: #212529;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
   &::placeholder {
-    color: #373737;
+    /* CAMBIO: Color de placeholder para tema claro */
+    color: #6c757d;
     font-size: 13px;
-    letter-spacing: 1px;
+    letter-spacing: normal; /* Espaciado normal */
   }
+
   &:focus {
-    border-color: #555;
-    background: #232323;
+    /* CAMBIO: Efecto de foco para tema claro */
+    border-color: #80bdff;
+    background: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
   }
 `;
 
 const PasswordIconWrapper = styled.div`
   position: absolute;
-  right: 10px;
-  color: #bbb;
+  right: 12px;
+  /* CAMBIO: Color de icono para tema claro */
+  color: #6c757d;
   cursor: pointer;
   display: flex;
   align-items: center;
-  font-size: 20px;
+  font-size: 22px;
 `;
 
 function CustomInput({ label, label_inside, type, icon, register, name, errors }) {
@@ -74,7 +84,7 @@ function CustomInput({ label, label_inside, type, icon, register, name, errors }
   // Definir placeholder según el tipo
   let placeholderValue = label_inside;
   if (name === 'correo' || label.toLowerCase().includes('usuario')) {
-    placeholderValue = "user@example.com";
+    placeholderValue = "usuario@ejemplo.com";
   }
   if (type === 'password') {
     placeholderValue = "••••••••";
@@ -100,7 +110,7 @@ function CustomInput({ label, label_inside, type, icon, register, name, errors }
           </PasswordIconWrapper>
         )}
       </InputWrapper>
-      {errors[name]?.type === 'required' && <p style={{fontSize : '13px' , color : 'red'}}>Campo requerido</p>}
+      {errors[name]?.type === 'required' && <p style={{fontSize : '13px' , color : '#e74c3c', textAlign: 'left', marginTop: '4px'}}>Campo requerido</p>}
     </CustomInputContainer>
   );
 }

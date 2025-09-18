@@ -7,6 +7,8 @@ import { GoInbox } from "react-icons/go";
 import { FiDownload } from "react-icons/fi";
 import FloatingModal from "./organismos/ModelScreenConfig/FloatingModal";
 import Tooltip from '@mui/material/Tooltip';
+import { AiOutlinePushpin } from "react-icons/ai";
+import { IoShapesOutline } from "react-icons/io5";
 
 export function Navbar() {
   const username = "Arnold";
@@ -15,6 +17,9 @@ export function Navbar() {
 
   const [helpModal, setHelpModal] = useState({ open: false, position: null });
   const [inboxModal, setInboxModal] = useState({ open: false, position: null });
+
+  const [geofencesActive, setGeofencesActive] = useState(false);
+  const [pdiActive, setPdiActive] = useState(false);
 
   const helpBtnRef = useRef(null);
   const inboxBtnRef = useRef(null);
@@ -63,6 +68,17 @@ export function Navbar() {
     alert("Descargando...");
   };
 
+   // 3. AÑADIR FUNCIONES PARA LOS NUEVOS BOTONES
+   const toggleGeofences = () => {
+    setGeofencesActive(!geofencesActive);
+    // Aquí iría la lógica para mostrar/ocultar geocercas en el mapa
+  };
+
+  const togglePdi = () => {
+    setPdiActive(!pdiActive);
+    // Aquí iría la lógica para mostrar/ocultar PDI en el mapa
+  };
+
   return (
     <>
       <NavbarContainer>
@@ -80,7 +96,28 @@ export function Navbar() {
               {userRole === "admin" ? "Administrador" : "Usuario"}
             </span>
           </div>
+
           <div className="actions">
+
+          <div className="actions-group map-tools-group">
+              <Tooltip title="Geocercas" arrow placement="bottom">
+                <div
+                  className={`action-btn ${geofencesActive ? "selected" : ""}`}
+                  onClick={toggleGeofences}
+                >
+                  <IoShapesOutline className="icon" />
+                </div>
+              </Tooltip>
+              <Tooltip title="Puntos de Interés" arrow placement="bottom">
+                <div
+                  className={`action-btn ${pdiActive ? "selected" : ""}`}
+                  onClick={togglePdi}
+                >
+                  <AiOutlinePushpin className="icon" />
+                </div>
+              </Tooltip>
+            </div>
+
             <div className="actions-group">
               <Tooltip title="Ayuda" arrow placement="bottom">
                 <div
@@ -142,6 +179,7 @@ export function Navbar() {
 const iconColor = "#b4b4b4";
 const hoverBg = "#323232";
 const selectedBg = "#2a2a5a";
+const selectedPillBg = "#2070ff";
 
 const NavbarContainer = styled.nav`
   width: 100%;
@@ -224,7 +262,7 @@ const NavbarContainer = styled.nav`
   .actions {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 10px;
   }
 
   .actions-group {
@@ -233,6 +271,26 @@ const NavbarContainer = styled.nav`
     border: 1px solid #373737;
     border-radius: 16px;
     overflow: hidden;
+  }
+
+  .map-tools-group {
+    border: none; /* Quitamos el borde contenedor */
+    gap: 8px; /* Espacio entre los botones individuales */
+    overflow: visible;
+  }
+
+  .map-tools-group .action-btn {
+    border: 1px solid #373737; /* Cada botón tiene su propio borde */
+    border-radius: 16px; /* Y su propio borde redondeado */
+
+    &.selected {
+      background: ${selectedPillBg}; /* Color de fondo sólido al seleccionar */
+      border-color: ${selectedPillBg}; /* El borde toma el mismo color */
+
+      .icon {
+        color: #fff; /* El ícono se vuelve blanco para mayor contraste */
+      }
+    }
   }
 
   .action-btn {

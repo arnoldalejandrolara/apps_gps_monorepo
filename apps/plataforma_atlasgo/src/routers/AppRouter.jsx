@@ -35,18 +35,18 @@ export function AppRouter() {
       <Route 
         path="/home-mobile" 
         element={
-          <PrivateRoute>
+          // <PrivateRoute>
             <HomeMobile  />
-          </PrivateRoute>
+          // </PrivateRoute>
         } 
       />
 
       <Route 
         path="/dashboard" 
         element={
-          <PrivateRoute>
+          // <PrivateRoute>
             <Dashboard />
-          </PrivateRoute>
+          // </PrivateRoute>
         } 
       />
 {/* 
@@ -62,9 +62,9 @@ export function AppRouter() {
       <Route 
         path="/cuentas-espejo" 
         element={
-          <PrivateRoute>
+          // <PrivateRoute>
             <CuentasEspejo />
-          </PrivateRoute>
+          // </PrivateRoute>
         } 
       />
 

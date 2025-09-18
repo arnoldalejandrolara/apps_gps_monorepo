@@ -7,7 +7,9 @@ import { Provider } from 'react-redux'
 import { store } from './store/index'
 import { FullScreenProvider } from './hooks/useFullScreen.jsx'
 import { MapaWebProvider } from './context/MapViewContext';
-import { configureApi } from '@mi-monorepo/api';
+
+import { configureApi } from '@mi-monorepo/common/services';
+
 
 configureApi(import.meta.env.VITE_API_URL);
 

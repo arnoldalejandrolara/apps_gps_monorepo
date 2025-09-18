@@ -15,7 +15,6 @@ import { UbicacionProvider } from './context/UbicacionContexto';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import { WebSocketProvider } from './context/WebSocketContext';
-import { APIProvider } from '@vis.gl/react-google-maps';
 import { useSelector, useDispatch } from 'react-redux';
 import { removeNotification } from './store/slices/notificationSlice';
 import { useMapaWeb } from './context/MapViewContext';
@@ -24,6 +23,8 @@ import { HomeTemplate } from './components/templates/HomeTemplate.jsx';
 import { PWAPrompt } from './components/PWAPrompt';
 import { InstallPWA } from './components/InstallPWA';
 import { setNavigate } from './services/navigationService';
+import { ReusableModal } from './components/organismos/ModalScreen/ReusableModal';
+export const ModalContext = createContext();
 
 export const ThemeContext = createContext(null);
 
@@ -31,14 +32,43 @@ function App() {
     const [themeuse, setTheme] = useState('dark');
     const theme = themeuse === 'light' ? 'light' : 'dark';
     const themeStyles = theme === 'light' ? Light : Dark;
-    const isMobile = useMediaQuery({ maxWidth: 768 });
+    const isMobileOrTablet = useMediaQuery({ query: '(max-width: 768px)' });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [listCarOpen, setListCarOpen] = useState(false);
+    const [modalContent, setModalContent] = useState(null);
+    const [modalSize, setModalSize] = useState('medium'); 
+    const [isMobile, setIsMobile] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalTitle, setModalTitle] = useState('');
+
+    const modalValue = {
+        openModal: (content, title, size = 'medium') => {
+            setModalContent(content);
+            setModalTitle(title);
+            setModalSize(size);
+            setIsModalOpen(true);
+            setIsMobile(false);
+        },
+        closeModal: () => {
+            setIsModalOpen(false);
+            setModalContent(null);
+            setModalTitle('');
+            setModalSize('medium');
+        },
+    };
 
     const { pathname } = useLocation();
     const navigate = useNavigate();
 
     const { showMapMobile, setShowMapMobile, showMapaWebLayer, setShowMapaWebLayer } = useMapaWeb();
+
+    // --- CAMBIO APLICADO AQUÍ ---
+    // Este hook asegura que el mapa se muestre por defecto en la vista de escritorio.
+    useEffect(() => {
+        if (!isMobile) {
+            setShowMapaWebLayer(true);
+        }
+    }, [isMobile, setShowMapaWebLayer]);
 
     useEffect(() => {
         setNavigate(navigate);
@@ -69,35 +99,45 @@ function App() {
         } else {
             if (showMapMobile) setShowMapMobile(false);
         }
-    }, [isMobile]);
+    }, [isMobile, showMapaWebLayer, showMapMobile, setShowMapaWebLayer, setShowMapMobile]);
 
     useEffect(() => {
         if (notifications.length > 0) {
             triggerNotification(notifications[0].title + ' - ' + notifications[0].message);
             dispatch(removeNotification(notifications[0].id));
         }
-    }, [notifications]);
+    }, [notifications, dispatch]);
 
     return (
         <AuthProvider>
-            <ThemeContext.Provider value={{ theme, setTheme }}>
-                <ThemeProvider theme={themeStyles}>
-                    <UbicacionProvider>
-                        <WebSocketProvider>
-                            {pathname === '/login' ? (
-                                <Login />
-                            ) : (
-                                <APIProvider apiKey="AIzaSyBgNmR7s6iIP55wskrCK-735AxUNm1KpU0">
+            <ModalContext.Provider value={modalValue}>
+                <ThemeContext.Provider value={{ theme, setTheme }}>
+                    <ThemeProvider theme={themeStyles}>
+                        <UbicacionProvider>
+                            <WebSocketProvider>
+                                {pathname === '/login' ? (
+                                    <Login />
+                                ) : (
+                                    // El APIProvider de Google Maps se elimina ya que HomeTemplate ahora usa Mapbox
                                     <AppGrid>
                                         <Navbar />
 
                                         <Container sidebaropen={sidebarOpen}>
-
                                             <section className="ContentSidebar">
                                                 <Sidebar {...sidebarProps} />
                                             </section>
 
-                                            <section
+                                            <ReusableModal
+                                                isOpen={isModalOpen}
+                                                onClose={() => setIsModalOpen(false)}
+                                                title={modalTitle}
+                                                size={modalSize} 
+                                                isMobile={isMobile}
+                                            >
+                                                {modalContent}
+                                            </ReusableModal>
+                                            {/* La sección de rutas ya no es necesaria si el mapa es la vista principal */}
+                                            {/* <section
                                                 className="ContentRoutes"
                                                 style={{
                                                     display: (!showMapMobile && !showMapaWebLayer) ? 'block' : 'none',
@@ -105,7 +145,7 @@ function App() {
                                                 }}
                                             >
                                                 <AppRouter />
-                                            </section>
+                                            </section> */}
 
                                             <section
                                                 className="mapaView"
@@ -144,7 +184,6 @@ function App() {
                                                 <BottomMenu />
                                             </section>
                                             
-                                            {/* PWA Components */}
                                             <PWAPrompt />
                                             <InstallPWA />
                                             {alertMessage && (
@@ -163,48 +202,34 @@ function App() {
                                                 </AlertContainer>
                                             )}
                                         </Container>
-
                                     </AppGrid>
-                                </APIProvider>
-                            )}
-                        </WebSocketProvider>
-                    </UbicacionProvider>
-                </ThemeProvider>
-            </ThemeContext.Provider>
+                                )}
+                            </WebSocketProvider>
+                        </UbicacionProvider>
+                    </ThemeProvider>
+                </ThemeContext.Provider>
+            </ModalContext.Provider>
         </AuthProvider>
     );
 }
 
-// Animaciones para la alerta
+// Styled components (sin cambios)
 const slideOutLeft = keyframes`
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; }
 `;
 
 const slideInRight = keyframes`
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 `;
 
-// Grid general, 2 filas: Navbar y el resto
 const AppGrid = styled.div`
     width: 100vw;
     height: 100vh;
     min-height: 100vh;
     display: grid;
-    grid-template-rows: 47px 1fr;  /* 56px es la altura del navbar */
+    grid-template-rows: 47px 1fr;
     background: ${({ theme }) => theme.bgtotal};
 `;
 
@@ -230,15 +255,13 @@ const Container = styled.main`
     .ContentSidebar {
         display: flex;
         flex-direction: column;
-        height: 100%; /* Asegura que el sidebar ocupe toda la altura disponible */
+        height: 100%;
         min-height: 0;
         flex: 1 1 auto;
         background: red;
     }
 
-
-    .MobileBottomMenu,
-    .ListCar {
+    .MobileBottomMenu, .ListCar {
         display: none;
     }
 
@@ -250,23 +273,12 @@ const Container = styled.main`
 
     @media ${Device.tablet} {
         grid-template-columns: ${(props) => props.sidebaropen ? '220px' : '47px'} 1fr;
-
-        .ContentSidebar {
-            display: flex;
-        }
-
-        .ListCar {
-            display: initial;
-        }
-
-        .ContentMenuambur {
-            display: none;
-        }
+        .ContentSidebar { display: flex; }
+        .ListCar { display: initial; }
+        .ContentMenuambur { display: none; }
     }
-
-    .ContentRoutes,
-    .mapaView,
-    .MobileMapView {
+   
+    .ContentRoutes, .mapaView, .MobileMapView {
         grid-column: 2;
         width: 100%;
         height: 100%;
@@ -288,19 +300,15 @@ const Container = styled.main`
             background: ${({ theme }) => theme.bgtotal};
         }
 
-        .ContentRoutes,
-        .MobileMapView,
-        .mapaView {
-            grid-row: 2;
+        .ContentRoutes, .MobileMapView, .mapaView {
+            grid-row: 1; /* Abarca la primera fila */
             grid-column: 1;
-            min-height: 100vh;
-            padding-bottom: 60px;
+            height: calc(100vh - 47px - 60px); /* Ajusta altura para navbar y bottom menu */
+            padding-bottom: 0; /* No necesita padding extra */
             overflow-y: auto;
         }
 
-        .ContentMenuambur,
-        .ContentSidebar,
-        .ListCar {
+        .ContentMenuambur, .ContentSidebar, .ListCar {
             display: none;
         }
     }

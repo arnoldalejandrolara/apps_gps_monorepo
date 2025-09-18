@@ -12,16 +12,10 @@ const topMenuItems = [
 ];
 
 const mainMenuItems = [
-    // { icon: <FaRoute />, label: 'Rutas', to: '/routes' },
     { icon: <FaChartBar />, label: 'Reportes', to: '/reports' },
     { icon: <FaMapPin />, label: 'Puntos de Interes', to: '/pdi' },
     { icon: <FaDrawPolygon />, label: 'Geocercas', to: '/geocercas' },
     { icon: <FaUsers />, label: 'Cuentas Espejo', to: '/mirror-accounts' },
-    // { icon: <FaCalendarAlt />, label: 'Eventos', to: '/events' },
-    // { icon: <FaTachometerAlt />, label: 'Dashboard', to: '/dashboard' },
-    // { icon: <FaGasPump />, label: 'Dashboard Combustible', to: '/fuel-dashboard' },
-    // { icon: <FaMapSigns />, label: 'Viajes', to: '/trips' },
-    // { icon: <FaLayerGroup />, label: 'Grupos', to: '/groups' },
 ];
 
 export function LeftSidebar({ isOpen, onClose, onMenuItemClick }) {
