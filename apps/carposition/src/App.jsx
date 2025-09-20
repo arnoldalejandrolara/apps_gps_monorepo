@@ -6,7 +6,6 @@ import { Sidebar } from './components/organismos/sidebar/Sidebar';
 import { AppRouter } from '@mi-monorepo/common/routers';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
-import Map from 'react-map-gl/mapbox';
 
 import { Light, Dark } from './utilities/themes';
 import styled, { ThemeProvider, keyframes } from 'styled-components';
@@ -26,68 +25,19 @@ import { PWAPrompt } from './components/PWAPrompt';
 import { InstallPWA } from './components/InstallPWA';
 import { setNavigate } from '@mi-monorepo/common/services';
 import { IoMenu,IoClose } from "react-icons/io5";
-import Car from "./assets/Car.svg";
 import { LeftSidebar } from './components/organismos/sidebar/LeftSidebar.jsx';
 import { ReusableModal } from './components/organismos/ModalScreen/ReusableModal.jsx';
-import { UserControlComponent } from './components/organismos/ContentModals/UserControl.jsx';
-import { DeviceConfigComponent } from './components/organismos/ContentModals/DeviceConfig.jsx';
-import { NotifiConfigComponent } from './components/organismos/ContentModals/NotifiConfig.jsx';
-import { ReportsComponent } from './components/organismos/ContentModals/ReportsControl.jsx';
-import  {ReportsMobile}  from './components/organismos/ContentModals/ReportsMobile.jsx';
-import { PuntosInteresControl } from './components/organismos/ContentModals/PuntosInteresControl.jsx';
-import { GeoCercasControl } from './components/organismos/ContentModals/GeoCercasControl.jsx';
-import { CuentasEspejoControl } from './components/organismos/ContentModals/CuentasEspejoControl.jsx';
-// --- 1. IMPORTA EL NUEVO COMPONENTE ---
 import { FloatingActionButtons } from './components/organismos/ButtomComands/FloatingActionsButton.jsx';
 import { VehicleListButton } from './components/organismos/ButtomComands/VehicleListButton.jsx';
 import { VehicleInfoCard } from './components/organismos/VehicleInfoCard.jsx';
 import { BottomMenu } from './components/organismos/BottomMenu.jsx';
 import { MobileOptionsMenu } from './components/organismos/MobileOptionsMenu.jsx';
 import {MobileListUnidades} from './components/organismos/MobileListUnidades.jsx';
+import { MobileDetails } from './components/organismos/MobileDetails.jsx';  
 import { ActiveContentMobile } from './components/organismos/ActiveContentMobile.jsx';
 import { useTokenFromUrl } from './hooks/useTokenFromUrl.jsx';
 export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
-
-
-// 👇 2. DATOS DE EJEMPLO CON MÁS INFORMACIÓN
-const dummyVehicles = [
-    { 
-      id: 1, 
-      name: 'Torton Kenworth', 
-      driver: 'Juan Pérez', 
-      status: 'En movimiento', 
-      date: '24/08/2025 20:15',
-      ignition: true,
-      timeOn: '3h 45m',
-      speed: '65 km/h', 
-      address: 'Av. Hidalgo, Centro, Tampico',
-      orientation: 'Noroeste', // 👈 AÑADE ESTE CAMPO
-      fuel1: 85, // Porcentaje
-      fuel2: 92,
-      fuel3: 40,
-      coords: '22.216, -97.857',
-      voltage: 75 // Porcentaje para la barra
-    },
-    { 
-      id: 2, 
-      name: 'Nissan NP300', 
-      driver: 'Ana García', 
-      status: 'Detenido', 
-      date: '24/08/2025 19:58',
-      ignition: false,
-      timeOn: '8h 12m',
-      speed: '0 km/h', 
-      address: 'Blvd. Adolfo López Mateos, Cd. Madero',
-      orientation: 'Sur', // 👈 AÑADE ESTE CAMPO
-      fuel1: 70,
-      fuel2: 70,
-      fuel3: 0, // No tiene tercer tanque
-      coords: '22.245, -97.839',
-      voltage: 60
-    },
-    // ... puedes agregar más vehículos ...
-];
 
 function App() {
     const [themeuse, setTheme] = useState('dark');
@@ -96,6 +46,7 @@ function App() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
     const [vehicleListOpen, setVehicleListOpen] = useState(false);
+    const [vehicleListMobileOpen, setVehicleListMobileOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
     const [modalSize, setModalSize] = useState('medium'); 
     const [isMobile, setIsMobile] = useState(false);
@@ -103,23 +54,16 @@ function App() {
     const [modalTitle, setModalTitle] = useState('');
     const [activeOverlay, setActiveOverlay] = useState(null);
 
+
     const isMobileOrTablet = useMediaQuery({ query: '(max-width: 768px)' });
 
-    const [viewState, setViewState] = useState({
-        longitude: -99.1332,
-        latitude: 19.4326,
-        zoom: 10,
-        pitch: 30,
-        bearing: -17.6
-    });
-
     const modalValue = {
-        openModal: (content, title, size = 'medium') => {
+        openModal: (content, title, size = 'medium',isMobileDevice = false) => {
             setModalContent(content);
             setModalTitle(title);
             setModalSize(size);
             setIsModalOpen(true);
-            setIsMobile(false);
+            setIsMobile(isMobileDevice); 
         },
         closeModal: () => {
             setIsModalOpen(false);
@@ -170,30 +114,19 @@ function App() {
         }
     }, [dispatch, notifications]);
 
-    const handleMenuItemClick = (item , mobile) => {
-        setIsMobile(mobile);
-        setModalTitle(item.label);
-
-        switch (item.to) {
-            case '/configuration-user': setModalContent(<UserControlComponent />); setModalSize('large'); break;
-            case '/device-config': setModalContent(<DeviceConfigComponent />); setModalSize('large'); break;
-            case '/notifications-config': setModalContent(<NotifiConfigComponent />); setModalSize('large'); break;
-            case '/reports': setModalContent(<ReportsComponent />); setModalSize('extraLarge'); break;
-            case '/reports_mobile': setModalContent(<ReportsMobile />); setModalSize('extraLarge'); break;
-            case '/pdi': setModalContent(<PuntosInteresControl />); setModalSize('large'); break;
-            case '/geocercas': setModalContent(<GeoCercasControl />); setModalSize('large'); break;
-            case '/mirror-accounts': setModalContent(<CuentasEspejoControl />); setModalSize('extraMedium'); break;
-            default: setModalContent(<p>Contenido para {item.label}</p>); setModalSize('small');
-        }
-        setIsModalOpen(true);
-    };
-
     const [selectedVehicleId, setSelectedVehicleId] = useState(null);
 
-    const handleVehicleSelect = (vehicle) => {
-        console.log('Vehículo seleccionado con ID:', vehicle);
-        // setSelectedVehicleId(selectedVehicleId === vehicleId ? null : vehicleId);
+      // --- CAMBIO 2: La función ahora también cierra la lista móvil ---
+      const handleVehicleSelect = (vehicle) => {
         setSelectedVehicleId(vehicle);
+        if (isMobileOrTablet) {
+            setVehicleListMobileOpen(false); // Cierra la lista al seleccionar en móvil
+        }
+    };
+
+    // --- CAMBIO 3: Se crea una función para cerrar el panel de detalles en móvil ---
+    const handleCloseMobileDetails = () => {
+        setSelectedVehicleId(null);
     };
 
     const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles);
@@ -204,11 +137,6 @@ function App() {
             setSelectedVehicleId(selectedVehicles[0].id);
         }
     }, [selectedVehicles]);
-
-      // 👇 3. ENCUENTRA LOS DATOS DEL VEHÍCULO SELECCIONADO
-      const selectedVehicleData = dummyVehicles.find(
-        (vehicle) => vehicle.id === selectedVehicleId
-    );
 
     return (
         <AuthProvider>
@@ -231,7 +159,7 @@ function App() {
                                     )}
 
                                     {/* 👇 3. MUESTRA el nuevo menú de 3 puntos SOLO si es móvil/tablet */}
-                                    {isMobileOrTablet && <MobileOptionsMenu   onMenuItemClick={handleMenuItemClick} />}
+                                    {isMobileOrTablet && <MobileOptionsMenu />}
 
                                     {!isMobileOrTablet && (
                                     <VehicleListButton 
@@ -240,15 +168,32 @@ function App() {
                                     />
                                     )}
 
-                                    {isMobileOrTablet && <MobileListUnidades />}
+                                   {/* --- CAMBIO 4: Conectamos MobileDetails al estado correcto --- */}
+                                   {isMobileOrTablet && (
+                                        <MobileDetails 
+                                            isOpen={!!selectedVehicleId} // Se muestra si hay un vehículo seleccionado
+                                            onClose={handleCloseMobileDetails} // Le pasamos la función para cerrarse
+                                        />
+                                    )}
                                     
+                                    {/* --- CAMBIO 5: Se corrige el estado que controla MobileListUnidades --- */}
+                                    {isMobileOrTablet && 
+                                        <MobileListUnidades 
+                                            isOpen={vehicleListMobileOpen} 
+                                            onClose={() => setVehicleListMobileOpen(false)} 
+                                            onVehicleSelect={handleVehicleSelect} 
+                                            onOpen={() => setVehicleListMobileOpen(true)}
+                                        />
+                                    }
+ 
                                     {leftSidebarOpen && <Backdrop onClick={() => setLeftSidebarOpen(false)} />}
                                     
                                     <LeftSidebar
                                         isOpen={leftSidebarOpen}
                                         onClose={() => setLeftSidebarOpen(false)}
-                                        onMenuItemClick={handleMenuItemClick}
+                                        
                                     />
+
                                     <ReusableModal
                                         isOpen={isModalOpen}
                                         onClose={() => setIsModalOpen(false)}
@@ -264,10 +209,8 @@ function App() {
                                         onClose={() => setVehicleListOpen(false)} 
                                         onVehicleSelect={handleVehicleSelect} 
                                     />
-
-                        
                                     
-                                    <FloatingActionButtons isVisible={!!selectedVehicleId} />
+                                    <FloatingActionButtons isVisible={!!selectedVehicleId && !isMobileOrTablet} />
 
                                     <Container className={`${sidebarOpen ? "sidebar-active" : ""} ${notifiOpen ? "notifi-active" : ""}`}>
                                         
@@ -279,11 +222,11 @@ function App() {
 
                                             {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
                                             <VehicleInfoCard
-                                                isVisible={!!selectedVehicleId}
+                                                isVisible={!!selectedVehicleId && !isMobileOrTablet}
                                                 vehicle={selectedVehicleId}
                                                 onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta
                                             />
-
+ 
                                         </section>
 
                                          {/* --- 4. RENDERIZA CONDICIONALMENTE EL MENÚ --- */}
@@ -299,9 +242,6 @@ function App() {
                                         )}
                                         
 
-                                        {/* <section className="ContentSidebar">
-                                            <Sidebar {...sidebarProps} />
-                                        </section> */}
                                         <section className='ContentNotifi'>
                                             <Notificaciones state={notifiOpen} setState={() => setNotifiOpen(!notifiOpen)} />
                                         </section>
@@ -337,18 +277,6 @@ function App() {
         </AuthProvider>
     );
 }
-
-// 👇 1. Se cambia la animación para que venga de la derecha
-// const slideInRight2 = keyframes`
-//   from {
-//     transform: translateX(100%); /* Inicia fuera de la pantalla a la derecha */
-//     opacity: 0;
-//   }
-//   to {
-//     transform: translateX(0); /* Termina en su posición final */
-//     opacity: 1;
-//   }
-// `;
 
 const OverlayContainer = styled.div`
   position: fixed;
@@ -471,7 +399,6 @@ const HamburgerButton = styled.button`
     font-size: 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 `;
-
 
 const Backdrop = styled.div`
     position: fixed;

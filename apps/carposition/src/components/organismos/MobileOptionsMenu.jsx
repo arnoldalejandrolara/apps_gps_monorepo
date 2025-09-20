@@ -8,8 +8,14 @@ import { useSelector } from 'react-redux';
 import { useDispatch } from "react-redux";
 import {togglePdiMarkers} from "@mi-monorepo/common/store/pdiView";
 import {toggleGeofences} from "@mi-monorepo/common/store/geofenceView";
-
-// ... (las animaciones no cambian) ...
+import { useModal } from '../../hooks/useModal';
+import { UserControlComponent } from './ContentModals/UserControl';
+import {DeviceConfigComponent} from "./ContentModals/DeviceConfig";
+import {NotifiConfigComponent} from "./ContentModals/NotifiConfig";
+import {ReportsMobile} from "./ContentModals/ReportsMobile";
+import {PuntosInteresControl} from "./ContentModals/PuntosInteresControl";
+import {GeoCercasControl} from "./ContentModals/GeoCercasControl";
+import {CuentasEspejoControl} from "./ContentModals/CuentasEspejoControl";
 const slideUp = keyframes`
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -23,10 +29,9 @@ const OptionsButton = styled.button`
   position: fixed; top: 15px; right: 15px; z-index: 900; background: #ffffff; color: #333333; border: 1px solid #dddddd; border-radius: 8px; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 `;
 const Backdrop = styled.div`
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 1005; animation: ${fadeIn} 0.3s ease-out;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 1010; animation: ${fadeIn} 0.3s ease-out;
 `;
 
-// --- 2. NUEVOS ESTILOS: BARRA DE ARRASTRE Y TOGGLE SWITCH ---
 const GrabBar = styled.div`
   width: 40px;
   height: 5px;
@@ -99,8 +104,9 @@ const ToggleSwitch = styled.label`
   input:checked + span:before { transform: translateX(20px); }
 `;
 
-export const MobileOptionsMenu = ({ onMenuItemClick }) => {
+export const MobileOptionsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { openModal } = useModal();
   const dispatch = useDispatch();
 
   const showPdiMarkers = useSelector((state) => state.pdiView.showPdiMarkers);
@@ -122,8 +128,20 @@ export const MobileOptionsMenu = ({ onMenuItemClick }) => {
   ];
 
   const togglePanel = () => { setIsOpen(!isOpen); };
+
   const handleItemClick = (item) => {
-    if (onMenuItemClick) { onMenuItemClick(item , true); }
+    
+    switch (item.to) {
+      case '/configuration-user': openModal(<UserControlComponent />,'Control de Usuarios','large',true); break;
+      case '/device-config': openModal(<DeviceConfigComponent />,'Configuracion de Dispositivos' , 'large', true); break;
+      case '/notifications-config': openModal(<NotifiConfigComponent />,'Configuracion de Notificaciones' , 'large', true); break;
+      case '/reports_mobile': openModal(<ReportsMobile /> , 'Reportes','extraLarge' ,true); break;
+      case '/pdi': openModal(<PuntosInteresControl />,'Puntos de Interes', 'large',true); break;
+      case '/geocercas': openModal(<GeoCercasControl />, 'Geocercas', 'large',true); break;
+      case '/mirror-accounts': openModal(<CuentasEspejoControl />,'Cuentas Espejo' , 'extraMedium', true); break;
+      default: openModal(<p>Contenido para {item.label}</p>); 'small';
+  }
+
     togglePanel();
   };
 

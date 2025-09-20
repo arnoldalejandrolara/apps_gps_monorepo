@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { styled, keyframes } from 'styled-components';
-import { FaPlus, FaMapMarkerAlt, FaEdit, FaTrash, FaRegEye } from 'react-icons/fa';
+import { FaPlus, FaMapMarkerAlt, FaEdit, FaTrash, FaRegEye , FaSearch} from 'react-icons/fa';
 import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
@@ -11,6 +11,7 @@ import { getIconosGeocercas, getGeocercasTable } from '@mi-monorepo/common/servi
 // --- Componente Principal ---
 export function GeoCercasControl({ initialView = 'table' }) {
     const [view, setView] = useState(initialView); // <-- Usa la prop para el estado inicial
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [points, setPoints] = useState(dummyPointsOfInterest);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -72,7 +73,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
 
     const handleEditGeoCerca = (point) => {
         setView('form');
-        console.log(point);
+        // console.log(point);
         
         // Parsear el polígono si viene como string WKT
         if (point.polygon && typeof point.polygon === 'string') {
@@ -82,6 +83,7 @@ export function GeoCercasControl({ initialView = 'table' }) {
         
         setSelectedGeoCerca(point);
     };
+
 
     // Función para parsear string WKT a array de coordenadas
     const parseWKTPolygon = (wktString) => {
@@ -134,14 +136,32 @@ export function GeoCercasControl({ initialView = 'table' }) {
                 <AnimatedViewContainer>
                     {/* Vista de la tabla */}
                     <AnimatedView $isActive={view === 'table'} $direction="left">
-                    <Header>
+                    {/* <Header>
                         <ButtonGroup>
                             <PrimaryButton onClick={() => setView('form')}>
                                 <FaPlus style={{ marginRight: '8px' }} />
                                 Nuevo
                             </PrimaryButton>
                         </ButtonGroup>
-                    </Header>
+                    </Header> */}
+
+                        <Header>
+                            <SearchWrapper>
+                                <SearchIcon />
+                                <SearchInput 
+                                    type="text" 
+                                    placeholder="Buscar punto de interés..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </SearchWrapper>
+                            <CreateButton onClick={() => setView('form')}>
+                                <FaPlus style={{ marginRight: '8px' }} />
+                                {/* CAMBIO: Texto del botón corregido */}
+                                Nuevo Punto
+                            </CreateButton>
+                        </Header>
+
                         {points.length > 0 ? (
                             isMobile ? (
                                 <PointsList>
@@ -150,13 +170,17 @@ export function GeoCercasControl({ initialView = 'table' }) {
                                             <PointIcon>
                                                 <FaMapMarkerAlt />
                                             </PointIcon>
-                                            <PointInfo>
-                                                <PointName>{point.name}</PointName>
-                                                <PointLocation>{point.location}</PointLocation>
-                                            </PointInfo>
-                                            <PointCategory category={point.category}>{point.category}</PointCategory>
+
+                                            <PointDetails>
+                                                <PointInfo>
+                                                    <PointName>{point.name}</PointName>
+                                                    <PointLocation>{point.location}</PointLocation>
+                                                    <PointCategory category={point.category}>{point.category}</PointCategory>
+                                                </PointInfo>
+                                            </PointDetails>
+                                           
                                             <CardActions>
-                                                <IconButton title="Editar Punto"><FaEdit /></IconButton>
+                                                <IconButton title="Editar Punto" onClick={() => handleEditGeoCerca(point)}><FaEdit /></IconButton>
                                                 <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
                                                 <IconButton title="Eliminar Punto" onClick={() => handleDeletePoint(point.id)}><FaTrash /></IconButton>
                                             </CardActions>
@@ -255,21 +279,53 @@ const ContentArea = styled.div`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 `;
 
+
 const Header = styled.div`
-    display: flex; 
-    justify-content: flex-end; /* Alineado a la derecha */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px; 
-    flex-wrap: wrap; 
-    flex-shrink: 0; 
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 15px; /* Añade un gap para manejar el espaciado */
+
     @media (max-width: 768px) {
-        flex-direction: column; 
-        align-items: stretch; 
-        gap: 15px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+`;
+const SearchWrapper = styled.div`
+    position: relative;
+    /* Permite que el contenedor crezca si es necesario */
+    flex-grow: 1;
+    min-width: 280px;
+`;
+const SearchIcon = styled(FaSearch)`
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #ADB5BD;
+`;
+const SearchInput = styled.input`
+    padding: 10px 15px 10px 40px;
+    border-radius: 6px;
+    border: 1px solid #DEE2E6;
+    background-color: #fff;
+    font-size: 13px;
+    width: 100%; /* Ocupa todo el ancho de su contenedor */
+    outline: none;
+    transition: all 0.2s ease;
+    &:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
     }
 `;
 
-const Button = styled.button`
+const CreateButton = styled.button`
+    background-color: #007BFF;
+    color: white;
+    border: none;
     border-radius: 6px;
     padding: 10px 20px;
     font-size: 13px;
@@ -278,25 +334,29 @@ const Button = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-`;
-
-const ButtonGroup = styled.div`
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-`;
-
-
-const PrimaryButton = styled(Button)`
-    background-color: #28A745;
-    border: 1px solid #28A745;
-    color: white;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0; /* Evita que el botón se encoja */
     &:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
+        background-color: #0056b3;
     }
 `;
+
+// const ButtonGroup = styled.div`
+//     display: flex;
+//     gap: 10px;
+//     flex-wrap: wrap;
+// `;
+
+
+// const PrimaryButton = styled(Button)`
+//     background-color: #28A745;
+//     border: 1px solid #28A745;
+//     color: white;
+//     &:hover {
+//         background-color: #218838;
+//         border-color: #1e7e34;
+//     }
+// `;
 
 const PointsList = styled.div`
     flex-grow: 1; 
@@ -304,16 +364,28 @@ const PointsList = styled.div`
     height: 100%; 
 `;
 
+const PointDetails = styled.div`
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+`;
+
 const PointCard = styled.div`
-    display: flex; 
-    align-items: center; 
-    background: #FFFFFF; 
-    padding: 12px;
-    border-radius: 8px; 
-    border: 1px solid #E9ECEF; 
+    display: grid;
+    grid-template-areas:
+        "icon info"
+        "actions actions";
+    grid-template-columns: auto 1fr;
+    gap: 0 15px;
+    align-items: center;
+    background: #FFFFFF;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid #E9ECEF;
     margin-bottom: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
-    @media (max-width: 480px) { flex-wrap: wrap; padding: 12px; }
 `;
 
 const PointIcon = styled.div`
@@ -364,11 +436,18 @@ const PointCategory = styled.span`
     background-color: #E9ECEF;
 `;
 
+
 const CardActions = styled.div` 
+    grid-area: actions;
     display: flex; 
+    justify-content: space-around;
     align-items: center; 
-    gap: 10px; 
+    width: 100%;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid #e9ecef;
 `;
+
 
 const IconButton = styled.button`
     background: transparent; 

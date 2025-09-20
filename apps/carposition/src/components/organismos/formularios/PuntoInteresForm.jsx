@@ -84,6 +84,27 @@ export function PuntoInteresForm({ onBack, point, categorias, iconos }) {
     }
   }, [point]);
 
+  const resetForm = () => {
+    setFormData({
+      nombre: '',
+      latitud: '',
+      longitud: '',
+      categoria: 1,
+      icono: 1,
+      comentarios: '',
+      radio: 50
+    });
+    setViewState({
+      longitude: -97.872464,
+      latitude: 22.289529,
+      zoom: 11
+    });
+    setMarker(null);
+    setCircleData(null);
+    setIsResizing(false);
+    setCircleRadius(50);
+  };
+
   const [viewState, setViewState] = useState({ longitude: -97.872464, latitude: 22.289529, zoom: 11 });
   const [marker, setMarker] = useState(null);
   const [cursorStyle, setCursorStyle] = useState('grab'); // Estado para el cursor del mapa de escritorio
@@ -134,7 +155,44 @@ export function PuntoInteresForm({ onBack, point, categorias, iconos }) {
   const categoriasOptions = categorias.map(categoria => ({ id: categoria.id, name: categoria.nombre }));
 
   const handleSave = async () => {
-    // ... (lógica de guardado sin cambios)
+
+    if(point) {
+      const response = await updatePIRequest(token, point.id, {
+        nombre: formData.nombre,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        id_categoria: formData.categoria,
+        id_icono: formData.icono,
+        comentarios: formData.comentarios,
+        radio: formData.radio
+      });
+
+      if (response.status === 200) {
+        alert('Punto de interés actualizado correctamente');
+        resetForm();
+        onBack();
+      } else {
+        console.error(response.error);
+      }
+    } else {
+      const response = await createPIRequest(token, {
+        nombre: formData.nombre,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        id_categoria: formData.categoria,
+        id_icono: formData.icono,
+        comentarios: formData.comentarios,
+        radio: formData.radio
+      });
+
+      if (response.status === 200) {
+        alert('Punto de interés creado correctamente');
+        resetForm();
+        onBack();
+      } else {
+        console.error(response.error);
+      }
+    }
   };
 
   // CAMBIO: Se define el contenido del mapa en una variable para reutilizarlo
@@ -294,7 +352,7 @@ const ResetRadiusButton = styled.button` background-color: #6c757d; color: white
 const ResizeHandle = styled.div` display: flex; align-items: center; justify-content: center; z-index: 1000; `;
 const PlaceOnMapButton = styled.button` display: flex; align-items: center; justify-content: center; padding: 10px; border: 1px dashed #007bff; border-radius: 6px; background-color: #e7f3ff; color: #007bff; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; &:hover { background-color: #d0e7ff; } `;
 const fadeIn = keyframes` from { opacity: 0; } to { opacity: 1; } `;
-const ModalBackdrop = styled.div` position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; animation: ${fadeIn} 0.3s; `;
+const ModalBackdrop = styled.div` position: fixed; top: 0; left: 0; width: 100vw; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; animation: ${fadeIn} 0.3s; `;
 const ModalContent = styled.div` position: relative; width: 100%; height: 100%; background-color: #fff; display: flex; flex-direction: column; overflow: hidden; z-index: 9999; `;
 const ModalHeader = styled.div` display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #e9ecef; flex-shrink: 0; h4 { margin: 0; font-size: 16px; font-weight: 600; } `;
 const CloseButton = styled.button` background: none; border: none; font-size: 24px; cursor: pointer; color: #6c757d; &:hover { color: #343a40; } `;

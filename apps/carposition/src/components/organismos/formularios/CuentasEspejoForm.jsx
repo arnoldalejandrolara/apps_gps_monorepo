@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
-import { FormInput } from './FormInput'; // Asegúrate de tener este componente creado
-import { CustomSelect } from './CustomSelect'; // Asegúrate de tener este componente creado
-import { MultiSelect } from './MultiSelect'; // Nuevo componente para selección múltiple
+import { FormInput } from './FormInput';
+import { CustomSelect } from './CustomSelect';
+import { MultiSelect } from './MultiSelect';
 import { useSelector } from 'react-redux';
 import { createCuentasEspejo, updateCuentasEspejo } from '@mi-monorepo/common/services';
+import { MobileInputDateTime } from '../../moleculas/MobileInputDateTime';
+import { useMediaQuery } from 'react-responsive';
+
 
 // --- ESTILOS ---
 
@@ -14,7 +17,13 @@ const FormContainer = styled.div`
   width: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   color: #1a1a1a;
-  overflow: hidden; 
+  overflow: hidden;
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  @media (max-width: 768px) {
+    padding: 20px 15px;
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const Header = styled.div`
@@ -30,6 +39,17 @@ const Header = styled.div`
     color: #6c757d;
     margin: 0;
   }
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 16px;
+    }
+    p {
+      font-size: 13px;
+    }
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const StepperContainer = styled.div`
@@ -80,6 +100,13 @@ const StepLabel = styled.div`
   font-size: 13px;
   font-weight: 500;
   color: ${({ $isActive }) => ($isActive ? '#007bff' : '#6c757d')};
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  // Se ocultan las etiquetas en móvil para evitar que se amontonen
+  @media (max-width: 768px) {
+    display: none;
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const StepContentWrapper = styled.div`
@@ -106,6 +133,14 @@ const FormRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  // Cambia a una sola columna en pantallas pequeñas
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 10px; // Se reduce el espacio entre elementos
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const Label = styled.label`
@@ -268,6 +303,15 @@ const SummaryItem = styled.div`
   strong {
     color: #495057;
   }
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  // Permite que el contenido largo se ajuste mejor en pantallas pequeñas
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const Footer = styled.div`
@@ -277,6 +321,14 @@ const Footer = styled.div`
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid #e9ecef;
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  // Apila los botones verticalmente
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
 const Button = styled.button`
@@ -302,9 +354,16 @@ const Button = styled.button`
       background-color: #dee2e6;
     }
   `}
+
+  // --- INICIO: ESTILOS MÓVILES ---
+  // Hace que los botones ocupen todo el ancho
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 12px; // Aumenta el padding para que sean más fáciles de presionar
+  }
+  // --- FIN: ESTILOS MÓVILES ---
 `;
 
-// --- INICIO: NUEVOS ESTILOS PARA EL PASO 2 ---
 const Step2Title = styled.h3`
   font-size: 16px;
   font-weight: 500;
@@ -325,7 +384,6 @@ const OptionBox = styled.label`
     border-color: #adb5bd;
   }
   
-  // Estilo cuando el checkbox dentro está seleccionado
   &:has(input:checked) {
     border-color: #007bff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
@@ -337,19 +395,19 @@ const OptionBoxCheckbox = styled.input`
   height: 20px;
   margin-right: 12px;
 `;
-// --- FIN: NUEVOS ESTILOS PARA EL PASO 2 ---
 
-// --- COMPONENTE PRINCIPAL ---
-
+// --- COMPONENTE PRINCIPAL (SIN CAMBIOS EN LA LÓGICA) ---
 export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [responseData, setResponseData] = useState(null);
   const [copyStates, setCopyStates] = useState({ pin: false, url: false });
   const token = useSelector(state => state.auth.token);
+
+  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const [fechaValue, setFechaValue] = useState(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
-  // Memoizar el selector para evitar re-renders innecesarios
   const vehicles = useSelector(state => state.vehicle.vehicles, (prev, next) => {
-    // Comparación personalizada para evitar re-renders si los datos no han cambiado
     return JSON.stringify(prev) === JSON.stringify(next);
   });
 
@@ -361,7 +419,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     usaCaducidad: cuentaEspejoData?.usaCaducidad || false,
     fechaCaducidad: cuentaEspejoData?.fechaCaducidad || '',
     accesoLibre: false,
-    // --- CAMBIO: Actualizado para el nuevo paso 2 ---
     metodoEnvio: '', 
   });
 
@@ -380,10 +437,8 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     }
   }, [cuentaEspejoData]);
 
-  // Efecto adicional para sincronizar los IDs cuando los vehículos estén disponibles
   useEffect(() => {
     if (cuentaEspejoData && vehicles.length > 0) {
-      // Convertir el string de IDs a array y asegurar que coincidan con los vehículos disponibles
       let dispositivosArray = [];
       if (cuentaEspejoData.ids_dispositivos) {
         if (typeof cuentaEspejoData.ids_dispositivos === 'string') {
@@ -393,7 +448,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
         }
       }
       
-      // Verificar que todos los IDs existan en los vehículos disponibles
       const validIds = dispositivosArray.filter(id => 
         vehicles.some(vehicle => vehicle.id == id)
       );
@@ -416,7 +470,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
 
   const steps = ['Datos principales', 'Medio de envío', 'Confirmación', 'Acceso'];
 
-  // Memoizar la transformación de vehículos para evitar crear nuevas referencias
   const unidades = useMemo(() => {
     return vehicles.map(vehicle => ({
       id: vehicle.id,
@@ -439,7 +492,17 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
     }
   };
 
-  // Función helper para convertir array de IDs a string
+   // --- CAMBIO 3: Nueva función para manejar el cambio de fecha desde el DateTimePicker ---
+   const handleDateChange = (newValue) => {
+    // Formatear la fecha a un string compatible con el input 'datetime-local'
+    const formattedDate = newValue ? new Date(newValue.getTime() - (newValue.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '';
+    setFormData(prev => ({
+        ...prev,
+        fechaCaducidad: formattedDate
+    }));
+    setIsDatePickerOpen(false); // Cierra el picker al seleccionar
+  };
+
   const convertIdsToString = (idsArray) => {
     if (Array.isArray(idsArray)) {
       return idsArray.join(',');
@@ -452,7 +515,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       let response;
       
       if (cuentaEspejoData?.id) {
-        // Actualizar cuenta espejo existente
         response = await updateCuentasEspejo(token, {
           id: cuentaEspejoData.id,
           nombre: formData.nombre,
@@ -463,7 +525,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
           libre: formData.accesoLibre,
         });
       } else {
-        // Crear nueva cuenta espejo
         response = await createCuentasEspejo(token, {
           nombre: formData.nombre,
           email: formData.email,
@@ -476,11 +537,9 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       
       if(response.status == 200){
         if (cuentaEspejoData?.id) {
-          // Si es actualización, no mostrar el card de acceso
           alert('¡Cuenta espejo actualizada exitosamente!');
           onBack();
         } else {
-          // Si es creación, mostrar el card de acceso
           setResponseData({
             pin: response.pin,
             url: response.url
@@ -505,7 +564,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
       usaCaducidad: false,
       fechaCaducidad: '',
       accesoLibre: false,
-      // --- CAMBIO: Actualizado para el nuevo paso 2 ---
       metodoEnvio: '', 
     });
     setSelectUnidades([]);
@@ -586,22 +644,41 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
                 <Checkbox type="checkbox" id="usaCaducidad" name="usaCaducidad" checked={formData.usaCaducidad} onChange={handleChange} />
                 <Label htmlFor="usaCaducidad" style={{ marginBottom: 0 }}>Fecha caducidad</Label>
               </CheckboxWrapper>
+
               <FormGroup>
-                <Input type="datetime-local" id="fechaCaducidad" name="fechaCaducidad" value={formData.fechaCaducidad} onChange={handleChange} disabled={!formData.usaCaducidad} />
-              </FormGroup>
+                  {isMobile ? (
+
+                  <MobileInputDateTime
+                    value={formData.fechaCaducidad ? new Date(formData.fechaCaducidad) : null}
+                    onChange={handleDateChange} // Esta función ya la tienes y actualiza el estado
+                    disabled={!formData.usaCaducidad} // <-- ¡Esta es la línea clave que lo habilita/deshabilita!
+                  />
+                   
+                  ) : (
+                    // Versión de Escritorio (la que ya tenías)
+                    <Input 
+                      type="datetime-local" 
+                      id="fechaCaducidad" 
+                      name="fechaCaducidad" 
+                      value={formData.fechaCaducidad} 
+                      onChange={handleChange} 
+                      disabled={!formData.usaCaducidad} 
+                    />
+                  )}
+                </FormGroup>
+
               <CheckboxWrapper>
                 <Checkbox type="checkbox" id="accesoLibre" name="accesoLibre" checked={formData.accesoLibre} onChange={handleChange} />
                 <Label htmlFor="accesoLibre" style={{ marginBottom: 0 }}>Acceso libre</Label>
               </CheckboxWrapper>
           </StepContent>
 
-          {/* --- INICIO: CONTENIDO DEL PASO 2 ACTUALIZADO --- */}
-          <StepContent> 
+          <StepContent> {/* Paso 2 */}
               <Step2Title>¿Por dónde quieres enviar la cuenta espejo?</Step2Title>
               <FormGroup>
                 <OptionBox>
                   <OptionBoxCheckbox 
-                    type="radio" // Usamos radio para que solo se pueda seleccionar uno
+                    type="radio"
                     name="metodoEnvio" 
                     value="portapapeles"
                     checked={formData.metodoEnvio === 'portapapeles'}
@@ -611,7 +688,6 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
                 </OptionBox>
               </FormGroup>
           </StepContent>
-          {/* --- FIN: CONTENIDO DEL PASO 2 ACTUALIZADO --- */}
 
           <StepContent> {/* Paso 3 */}
               <Summary>
@@ -625,7 +701,7 @@ export function CuentasEspejoForm({ onBack, cuentaEspejoData }) {
               </Summary>
           </StepContent>
 
-          <StepContent> {/* Paso 4 - Card de Acceso */}
+          <StepContent> {/* Paso 4 */}
             {responseData && (
               <AccessCard>
                 <AccessCardHeader>

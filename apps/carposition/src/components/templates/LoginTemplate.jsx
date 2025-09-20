@@ -17,7 +17,7 @@ import { login } from '@mi-monorepo/common/store/auth'; // Ajusta la ruta según
 import { useMediaQuery } from 'react-responsive';
 import { useLocation } from 'react-router-dom';
 
-import logo from "../../assets/logo_atlasgo.png"; // tu icono
+import logo from "../../assets/CarLogoModi.png"; // tu icono
 
 export function LoginTemplate() {
   const dispatch = useDispatch();
@@ -53,7 +53,7 @@ export function LoginTemplate() {
       <div className="brand-row">
         <div className="brand">
           {logo && <img src={logo} alt="Atlas Go" className="brand-icon" />}
-          <span className="brand-title">atlasgo</span>
+          <span className="brand-title">Carposition</span>
         </div>
       </div>
       
@@ -85,7 +85,7 @@ export function LoginTemplate() {
           <ContainerBtn>
             <Btnsave titulo="Iniciar sesión" bgcolor="#DBCD51" />
           </ContainerBtn>
-          <Divider />
+          {/* <Divider />
           <ContactCard
             icon={<FaWhatsapp />}
             title="¿Necesitas ayuda?"
@@ -107,7 +107,7 @@ export function LoginTemplate() {
             iconBg="#fbe8e8"
             linkColor="#d93025"
             linkHoverColor="#b3140b"
-          />
+          /> */}
         </form>
       </div>
     </Container>
@@ -174,13 +174,13 @@ const Container = styled.div`
   }
 
   .brand-icon {
-    width: 25px;
-    height: 25px;
+    width: 45px;
+    height: 45px;
   }
 
   .brand-title {
     color: #333333;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     margin-left: 5px;
   }
