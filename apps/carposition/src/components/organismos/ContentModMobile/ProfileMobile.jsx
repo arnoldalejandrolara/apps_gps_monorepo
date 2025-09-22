@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { IoMoonOutline, IoSunnyOutline } from 'react-icons/io5';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-// --- 1. DATOS FALSOS (MOCK DATA) ---
+
+// --- 1. SE AÑADE EL ÍCONO DE LOGOUT ---
+import { IoMoonOutline, IoSunnyOutline, IoLogOutOutline } from 'react-icons/io5';
+
+// --- DATOS FALSOS (MOCK DATA) ---
 const mockUser = {
   name: 'Juan Pérez',
   email: 'juan.perez@email.com',
   phone: '+52 833 123 4567',
 };
 
-// --- 2. ESTILOS PARA EL COMPONENTE DE PERFIL ---
+// --- ESTILOS (SIN CAMBIOS) ---
 const ProfileContainer = styled.div`
   width: 100%;
   height: 100%;
@@ -85,7 +90,7 @@ const InfoValue = styled.span`
   color: #1c1c1e; /* Texto principal oscuro */
 `;
 
-const SettingsSection = styled(InfoSection)``; // Reutilizamos el estilo
+const SettingsSection = styled(InfoSection)``;
 
 const SettingsRow = styled.div`
   display: flex;
@@ -107,23 +112,52 @@ const ToggleSwitch = styled.label`
   input:checked + span:before { transform: translateX(20px); }
 `;
 
-export const ProfileMobile = () => {
-  const [user, setUser] = useState(mockUser);
-  
-  // --- 3. ESTADO LOCAL PARA EL MODO OSCURO ---
-  // En una app real, esto vendría de tu ThemeContext
-  const [isDarkMode, setIsDarkMode] = useState(true);
+// --- 2. NUEVOS ESTILOS PARA LA SECCIÓN Y BOTÓN DE LOGOUT ---
+const LogoutSection = styled(InfoSection)`
+  padding: 8px; // Un poco menos de padding para que el botón se ajuste mejor
+`;
 
+const LogoutButton = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  
+  color: #D32F2F; /* Rojo profesional */
+  font-size: 13px;
+  font-weight: 500;
+  
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #FEEBEE; /* Un fondo rojo muy sutil al pasar el mouse */
+  }
+`;
+
+
+export const ProfileMobile = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(mockUser);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  // const dispatch = useDispatch();
   const handleThemeChange = () => {
     setIsDarkMode(prevMode => !prevMode);
-    // AQUÍ LLAMARÍAS A LA FUNCIÓN DE TU THEME CONTEXT
-    // Por ejemplo: setTheme(isDarkMode ? 'light' : 'dark');
     console.log(`Modo oscuro ${!isDarkMode ? 'activado' : 'desactivado'}`);
   };
 
   const getInitial = (name) => {
     return name ? name.charAt(0).toUpperCase() : '?';
   };
+
+  const handleLogout = () => {
+    // dispatch(logout());
+    navigate('/login');
+};
 
   return (
     <ProfileContainer>
@@ -162,6 +196,15 @@ export const ProfileMobile = () => {
             </ToggleSwitch>
           </SettingsRow>
         </SettingsSection>
+
+        {/* --- 4. SECCIÓN DE LOGOUT AGREGADA --- */}
+        <LogoutSection>
+          <LogoutButton onClick={handleLogout}>
+            <IoLogOutOutline style={{ marginRight: '8px', fontSize: '16px' }} />
+            Cerrar Sesión
+          </LogoutButton>
+        </LogoutSection>
+
       </Content>
     </ProfileContainer>
   );

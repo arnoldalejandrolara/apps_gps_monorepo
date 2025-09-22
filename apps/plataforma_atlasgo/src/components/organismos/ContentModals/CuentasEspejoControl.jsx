@@ -24,6 +24,29 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     const [data, setData] = useState([]);
     const [cuentaEspejoData, setCuentaEspejoData] = useState(null);
 
+    // const data = React.useMemo(() => {
+    //     const nombres = ['Angelique Morse', 'Benny Fisher', 'Charlie Brown', 'Diana Prince', 'Evan Ross', 'Fiona Green', 'George Harrison', 'Hannah Montana', 'Ian Somerhalder', 'Jessica Alba', 'Kevin James', 'Laura Croft', 'Mike Tyson', 'Nancy Drew', 'Oscar Wilde', 'Penelope Cruz', 'Quentin Tarantino', 'Rachel Zane', 'Steve Rogers', 'Taylor Swift'];
+    //     const empresas = ['Wuckert Inc', 'Stark Industries', 'Wayne Enterprises', 'Daily Planet', 'Oscorp', 'Cyberdyne Systems', 'Tyrell Corporation', 'Umbrella Corp'];
+    //     const tipos = ['Content Creator', 'Admin', 'User', 'Moderator'];
+    //     const estados = ['Active', 'Banned', 'Pending', 'Suspended'];
+    
+    //     return Array.from({ length: 20 }, (_, i) => {
+    //         const nombreCompleto = nombres[i % nombres.length];
+    //         const [primerNombre, apellido] = nombreCompleto.split(' ');
+    //         const email = `${primerNombre.toLowerCase()}${i}@yahoo.com`;
+    
+    //         return {
+    //             id: i + 1,
+    //             nombre: nombreCompleto,
+    //             email: email,
+    //             telefono: `+46 8 123 ${i + 1}`,
+    //             empresa: empresas[i % empresas.length],
+    //             tipo_usuario: tipos[i % tipos.length],
+    //             status: estados[i % estados.length],
+    //         };
+    //     });
+    // }, []);
+
     useEffect(() => {
         const handleResize = () => {
             setIsMobile(window.innerWidth < 768);
@@ -95,15 +118,11 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                                             <PointIcon>
                                                 <FaMapMarkerAlt />
                                             </PointIcon>
-
-                                            <PointDetails>
-                                                <PointInfo>
-                                                    <PointName>{point.name}</PointName>
-                                                    <PointLocation>{point.location}</PointLocation>
-                                                </PointInfo>
-                                                <PointCategory category={point.category}>{point.category}</PointCategory>
-                                            </PointDetails>
-
+                                            <PointInfo>
+                                                <PointName>{point.name}</PointName>
+                                                <PointLocation>{point.location}</PointLocation>
+                                            </PointInfo>
+                                            <PointCategory category={point.category}>{point.category}</PointCategory>
                                             <CardActions>
                                                 <IconButton title="Editar Punto"><FaEdit /></IconButton>
                                                 <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
@@ -147,14 +166,6 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
         </ComponentWrapper>
     );
 }
-
-const PointDetails = styled.div`
-    grid-area: info;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-`;
 
 // --- Estilos de AnimatedView ---
 const AnimatedView = styled.div`
@@ -262,19 +273,15 @@ const PointsList = styled.div`
 `;
 
 const PointCard = styled.div`
-    display: grid;
-    grid-template-areas:
-        "icon info"
-        "actions actions";
-    grid-template-columns: auto 1fr;
-    gap: 0 15px;
-    align-items: center;
-    background: #FFFFFF;
-    padding: 5px 12px;
-    border-radius: 8px;
-    border: 1px solid #E9ECEF;
+    display: flex; 
+    align-items: center; 
+    background: #FFFFFF; 
+    padding: 12px;
+    border-radius: 8px; 
+    border: 1px solid #E9ECEF; 
     margin-bottom: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
+    @media (max-width: 480px) { flex-wrap: wrap; padding: 12px; }
 `;
 
 const PointIcon = styled.div`
@@ -319,21 +326,16 @@ const PointCategory = styled.span`
     font-weight: 500; 
     padding: 4px 10px; 
     border-radius: 12px;
+    margin-right: 20px; 
+    flex-shrink: 0;
     color: #343A40;
     background-color: #E9ECEF;
-    margin-top: 6px;
-    align-self: flex-start;
 `;
 
 const CardActions = styled.div` 
-    grid-area: actions;
     display: flex; 
-    justify-content: space-around;
     align-items: center; 
-    width: 100%;
-    padding-top: 12px;
-    margin-top: 12px;
-    border-top: 1px solid #e9ecef;
+    gap: 10px; 
 `;
 
 const IconButton = styled.button`

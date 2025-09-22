@@ -18,32 +18,18 @@ export function Sidebar({onToggleNotifications}) {
     const [activeSubMenu, setActiveSubMenu] = useState(null);
     const [subMenuTop, setSubMenuTop] = useState(0);
     const { openModal } = useModal();
-    const [isAlertsPanelOpen, setAlertsPanelOpen] = useState(false);
-    const [alertsPanelTop, setAlertsPanelTop] = useState(0);
     
     const showPdiMarkers = useSelector((state) => state.pdiView.showPdiMarkers);
     const showGeofences = useSelector((state) => state.geofenceView.showGeofences);
-
-    const pdiItemRef = useRef(null);
-    const pdiItemIndex = menuItems.findIndex(item => item.id === 'pdi');
 
     const cerrarSesion = () => {
         dispatch(logout());
         navigate('/login');
     };
 
-    const handleOpenPdiTable = () => {
-        // openModal(
-        //     <PuntosInteresControl initialView="table" />,
-        //     'Control de Puntos de Interes', 
-        //     'large'
-        // );
-        alert('Funcionalidad en desarrollo ver pdi en mapa');
-    };
-    
     const handleOpenPdiForm = () => {
         openModal(
-            <PuntosInteresControl initialView="form" />, // <-- Pasa la prop para abrir el formulario directamente
+            <PuntosInteresControl initialView="form" />,
             'Agregar Nuevo Punto de Interés',
              'large'
         );
@@ -51,7 +37,15 @@ export function Sidebar({onToggleNotifications}) {
     
     const handleMouseEnter = (index, e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        setSubMenuTop(rect.top);
+        let newTopPosition = rect.top; // Posición por defecto para todos los ítems
+
+        // **Lógica clave: Si es el ítem de logout, se calcula una nueva posición para que aparezca arriba**
+        if (index === 'logout') {
+            const subMenuHeightEstimate = 50; // Altura estimada en píxeles del submenú de logout
+            newTopPosition = rect.bottom - subMenuHeightEstimate;
+        }
+        
+        setSubMenuTop(newTopPosition);
         setActiveSubMenu(index);
     };
 
@@ -60,21 +54,16 @@ export function Sidebar({onToggleNotifications}) {
     };
 
     const handleSubMenuClick = (item) => {
-        console.log('Submenu item clicked:', item);
-
         if (item.action === 'openPdiTable') {
-            // handleOpenPdiTable();
             dispatch(togglePdiMarkers());
         } else if (item.action === 'openPdiForm') {
             handleOpenPdiForm();
         } else if (item.action === 'openAlertsPanel') {
-            console.log('Toggle Notifications');
             onToggleNotifications();
         } else if (item.action === 'logout') {
             cerrarSesion();
         }else if(item.action === 'viewGeocercas'){
             dispatch(toggleGeofences());
-          
         }else {
             navigate(item.to); 
         }
@@ -104,11 +93,8 @@ export function Sidebar({onToggleNotifications}) {
                             const isGeofenceActive = item.id === 'geocercas' && showGeofences; 
                             const isReduxActive = isPdiActive || isGeofenceActive;
 
-
                             return (
                                 <SidebarItem
-                                    // --> 5. ASIGNA LA REFERENCIA AL ÍTEM CORRECTO
-                                    ref={item.id === 'pdi' ? pdiItemRef : null}
                                     key={item.label + index}
                                     onMouseEnter={(e) => handleMouseEnter(index, e)}
                                     className={isHoverActive || isReduxActive ? 'active' : ''}
@@ -119,6 +105,7 @@ export function Sidebar({onToggleNotifications}) {
                         })}
                     </div>
                     <BottomOptions>
+                        {/* Se restaura la funcionalidad onMouseEnter para logout */}
                         <SidebarItem 
                           onMouseEnter={(e) => handleMouseEnter('logout', e)}
                           className={activeSubMenu === 'logout' ? 'active' : ''}
@@ -134,9 +121,10 @@ export function Sidebar({onToggleNotifications}) {
                     key={activeItemIndex} 
                     style={{ top: `${subMenuTop}px` }}
                 >
-                    <h4>{itemToShow.label}</h4>
+                    {/* Se oculta el título 'Salir' solo para el submenú de logout */}
+                    {activeItemIndex !== 'logout' && <h4>{itemToShow.label}</h4>}
+                    
                     {itemToShow.subMenu.map(subItem => {
-                        // --> 2. CREA UNA CONSTANTE PARA SABER SI ESTE SUB-ITEM ESTÁ ACTIVO
                         const isPdiSubItemActive = subItem.action === 'openPdiTable' && showPdiMarkers;
                         const isGeofenceSubItemActive = subItem.action === 'viewGeocercas' && showGeofences;
                         const isSubItemActive = isPdiSubItemActive || isGeofenceSubItemActive;
@@ -145,7 +133,6 @@ export function Sidebar({onToggleNotifications}) {
                             <SubMenuItem 
                                 key={subItem.label} 
                                 onClick={() => handleSubMenuClick(subItem)}
-                                // --> 3. PASA LA CONSTANTE COMO UNA PROP 'isActive'
                                 isActive={isSubItemActive}
                             >
                                 {subItem.label}
@@ -262,8 +249,6 @@ const SubMenuItem = styled.div`
     color: #007BFF;
   }
   
-  // --> 4. AÑADE ESTE BLOQUE DE CÓDIGO
-  // Aplica estos estilos si la prop 'isActive' es true
   ${props => props.isActive && css`
     background-color: #E6F2FF;
     color: #0069D9;

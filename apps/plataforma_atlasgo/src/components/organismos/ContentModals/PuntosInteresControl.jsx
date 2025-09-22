@@ -118,7 +118,6 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                                         <PointIcon>
                                             <FaMapMarkerAlt />
                                         </PointIcon>
-                                        
                                         <PointDetails>
                                             <PointInfo>
                                                 <PointName>{point.nombre}</PointName>
@@ -126,7 +125,6 @@ export function PuntosInteresControl({ initialView = 'table' }) {
                                             </PointInfo>
                                             <PointCategory category={point.categoria}>{point.categoria}</PointCategory>
                                         </PointDetails>
-
                                         <CardActions>
                                             <IconButton title="Editar Punto" onClick={() => handleEditPoint(point)}><FaEdit /></IconButton>
                                             <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>

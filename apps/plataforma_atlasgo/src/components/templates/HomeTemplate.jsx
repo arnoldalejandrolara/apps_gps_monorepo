@@ -1,9 +1,8 @@
 import styled, { keyframes } from "styled-components";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps';
-import DeckGL from '@deck.gl/react';
-import { ScenegraphLayer } from '@deck.gl/mesh-layers';
-import { TripBuilder } from '../../utilities/TripBuilder';
+// 1. Limpieza de importaciones: solo necesitamos Map de react-map-gl
+import Map from 'react-map-gl/mapbox';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import { useWebSocket } from "../../context/WebSocketContext";
@@ -13,19 +12,19 @@ import { SidebarListaCar } from "../organismos/sidebar/SidebarListaCar.jsx";
 import "../../styled-components/sweetAlert.css";
 import { useCommandDialog } from "../../utilities/useCommandDialog.jsx";
 
-// Ventana flotante SIEMPRE visible en la esquina inferior izquierda
+// La ventana flotante no necesita cambios
 function VehicleWindowInfo({ vehicle }) {
-    
+    if (!vehicle) return null;
+
     return (
         <WindowContainer>
             <Header>
-                <span>Unidad #1</span>
+                <span>Unidad #{vehicle.id || 'N/A'}</span>
             </Header>
             <Body>
-                <Row><strong>Estado:</strong> Encendido</Row>
-                <Row><strong>Chofer:</strong> Lara</Row>
+                <Row><strong>Estado:</strong> {vehicle.info?.status || 'Encendido'}</Row>
+                <Row><strong>Chofer:</strong> {vehicle.info?.driver || 'Lara'}</Row>
                 <Row><strong>Última actualización:</strong> N/A</Row>
-                {/* Puedes agregar más información aquí */}
             </Body>
         </WindowContainer>
     );
@@ -38,156 +37,50 @@ export function HomeTemplate() {
 
     const showCommandDialog = useCommandDialog({ setAlertMessage, setAlertSeverity });
 
-    const [timestamp, setTimestamp] = useState(0);
+    // 2. Eliminación de estados y hooks de DeckGL:
+    // Se eliminó 'timestamp', 'startTimeRef', 'animationFrameRef' y el useEffect para la animación.
     const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
-    const startTimeRef = useRef(null);
-    const animationFrameRef = useRef(null);
-
     const selectedVehicles = useSelector((state) => state.vehicle?.selectedVehicles || []);
     const dispatch = useDispatch();
-
     const token = useSelector((state) => state.auth?.token);
 
     const [viewState, setViewState] = useState({
-        longitude: -101.956114,
-        latitude: 22.653024,
-        zoom: 5,
+        longitude: -98.1726, // Centrado cerca de Miramar, Tamaulipas
+        latitude: 22.3331,
+        zoom: 10,
         pitch: 0,
         bearing: 0,
     });
 
     const { sendMessage, addMessageHandler } = useWebSocket();
-
+    
     useEffect(() => {
-        console.log("MapaTemplate MONTADO");
-        return () => {
-            console.log("MapaTemplate DESMONTADO");
-        };
-    }, []);
-
-    useEffect(() => {
+        // Este efecto sigue funcionando para centrar el mapa en un vehículo seleccionado
         if (selectedVehicles.length > 0) {
             const selectedVehicle = selectedVehicles[0];
             if (
                 selectedVehicle?.route &&
                 Array.isArray(selectedVehicle.route) &&
-                selectedVehicle.route.length > 0 &&
-                Array.isArray(selectedVehicle.route[0]) &&
-                selectedVehicle.route[0].length >= 2
+                selectedVehicle.route.length > 0
             ) {
                 const [lng, lat] = selectedVehicle.route[0];
-                if (
-                    typeof lat === "number" &&
-                    typeof lng === "number" &&
-                    !isNaN(lat) &&
-                    !isNaN(lng) &&
-                    lat >= -90 &&
-                    lat <= 90 &&
-                    lng >= -180 &&
-                    lng <= 180
-                ) {
-                    setViewState({
+                if (typeof lat === "number" && typeof lng === "number") {
+                    setViewState(prev => ({
+                        ...prev,
                         longitude: lng,
                         latitude: lat,
                         zoom: 15,
-                        pitch: 0,
-                        bearing: 0,
-                        transitionDuration: 500,
-                    });
+                        transitionDuration: 1000, // react-map-gl maneja la transición suave
+                    }));
                 }
             }
         }
     }, [selectedVehicles]);
+    
+    const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-    useEffect(() => {
-        const animate = (currentTime) => {
-            if (!startTimeRef.current) {
-                startTimeRef.current = currentTime;
-            }
-            const elapsedTime = (currentTime - startTimeRef.current) / 1000;
-            setTimestamp(elapsedTime * 10);
-            animationFrameRef.current = requestAnimationFrame(animate);
-        };
-
-        if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
-        }
-        startTimeRef.current = performance.now();
-        setTimestamp(0);
-        animationFrameRef.current = requestAnimationFrame(animate);
-
-        return () => {
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-            }
-        };
-    }, [selectedVehicles]);
-
-    const trips = useMemo(() => {
-        if (!selectedVehicles.length) return [];
-        return selectedVehicles
-            .map((vehicle) => {
-                if (!vehicle.route || vehicle.route.length === 0) {
-                    return null;
-                }
-                const waypoints = vehicle.route;
-                return new TripBuilder({
-                    waypoints: waypoints,
-                    speed: 100,
-                    turnSpeed: 90,
-                    loop: false,
-                });
-            })
-            .filter((trip) => trip !== null);
-    }, [selectedVehicles]);
-
-    useEffect(() => {
-        const cleanup = addMessageHandler((data) => {
-            try {
-                // Aquí tu lógica de procesamiento de mensajes
-            } catch (error) {
-                console.error("Error al procesar el mensaje:", error);
-            }
-        });
-        return cleanup;
-    }, [addMessageHandler]);
-
-    const baseScale = 1;
-    const zoomFactor = Math.pow(2, 19 - viewState.zoom);
-    const dynamicScale = baseScale * zoomFactor;
-    const API_URL = import.meta.env.VITE_API_URL;
-
-    const layers = useMemo(() => {
-        if (!selectedVehicles.length || !trips.length) return [];
-        const layers_vehicles = selectedVehicles.map((vehicle, index) => {
-            const trip = trips[index];
-            if (!trip) return null;
-            const frame = trip.getFrame(timestamp);
-            if (!frame) return null;
-            const layer = new ScenegraphLayer({
-                id: `vehicle-${vehicle.id}`,
-                data: [
-                    {
-                        position: frame.point,
-                        info: vehicle.info,
-                    },
-                ],
-                scenegraph: `${API_URL}/unidades/model3d?type=car&r=255&g=0&b=0`,
-                getPosition: (d) => d.position,
-                getOrientation: [0, 180 - frame.heading, 90],
-                sizeScale: dynamicScale,
-                _lighting: "pbr",
-                pickable: true,
-                onClick: (info) => {
-                    // No hace falta condicional, no hay botón de cerrar
-                },
-            });
-            return layer;
-        }).filter(layer => layer !== null);
-        return layers_vehicles;
-    }, [selectedVehicles, trips, timestamp, dynamicScale]);
-
-    // Mostrar SIEMPRE la info del primer vehículo seleccionado (si hay alguno)
+    // Se eliminó el 'useMemo' para 'trips' y 'layers' ya que no se usa DeckGL.
+    
     const vehicleToShow = selectedVehicles.length > 0 ? selectedVehicles[0] : null;
 
     return (
@@ -195,41 +88,21 @@ export function HomeTemplate() {
             <MainContent>
                 <SidebarListaCar vehicles={vehicles} handleCardClick={() => {}} />
                 <MapSection>
-                    {/* Ventana flotante SIEMPRE en la esquina inferior izquierda */}
                     <VehicleWindowInfo vehicle={vehicleToShow} />
-                    <DeckGL
-                        initialViewState={viewState}
-                        controller={true}
-                        layers={layers}
-                        onViewStateChange={(params) => setViewState(params.viewState)}
+                    
+                    {/* 3. Modificación del componente Map */}
+                    <Map
+                        // viewState controla la cámara del mapa
+                        {...viewState}
+                        // onMove actualiza el estado cuando el usuario mueve el mapa
+                        onMove={evt => setViewState(evt.viewState)}
+                        mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
+                        // Estilo de mapa oscuro proporcionado por Mapbox
+                        mapStyle="mapbox://styles/mapbox/dark-v11" 
+                        style={{ width: '100%', height: '100%' }}
                     >
-                        <Map
-                            mapId="64d9b619826759eb"
-                            mapTypeId={"roadmap"}
-                            colorScheme={"LIGHT"}
-                            defaultZoom={14}
-                            defaultCenter={{ lat: 19.4326, lng: -99.1332 }}
-                            onTilesLoaded={() => {
-                                console.log(
-                                    "Mapa cargado correctamente - Tiles cargados"
-                                );
-                            }}
-                            options={{
-                                mapTypeControl: false,
-                                mapTypeControlOptions: {
-                                    style: 2,
-                                    position: 3,
-                                },
-                                streetViewControl: false,
-                                fullscreenControl: false,
-                                zoomControl: true,
-                                zoomControlOptions: {
-                                    position: 3,
-                                },
-                                gestureHandling: "cooperative",
-                            }}
-                        />
-                    </DeckGL>
+                        {/* Aquí podrías agregar marcadores para los vehículos si lo deseas */}
+                    </Map>
                 </MapSection>
             </MainContent>
 
@@ -246,6 +119,7 @@ export function HomeTemplate() {
     );
 }
 
+// Los styled-components no necesitan cambios
 const slideOutLeft = keyframes`
   from {
     transform: translateX(0);
@@ -305,20 +179,20 @@ const MapSection = styled.section`
   position: relative;
 `;
 
-// Estilos para la ventana flotante en la esquina inferior izquierda
 const WindowContainer = styled.div`
   position: absolute;
   left: 32px;
   bottom: 32px;
   z-index: 1200;
-  background: #fff;
+  background-color: #2c3e50; /* Color oscuro para que combine */
+  color: #ecf0f1; /* Texto claro */
   border-radius: 6px;
-  box-shadow: 0 8px 32px #0003;
+  box-shadow: 0 8px 32px #00000050;
   min-width: 260px;
   max-width: 350px;
   padding: 18px 22px 16px 22px;
   font-size: 15px;
-  border: 1px solid #e3e3e3;
+  border: 1px solid #34495e;
   animation: fadeIn 0.25s;
   @keyframes fadeIn {
     from { opacity: 0; transform: scale(.92); }
@@ -331,15 +205,19 @@ const Header = styled.div`
   align-items: center;
   font-weight: bold;
   margin-bottom: 10px;
+  color: #ffffff;
 `;
 
 const Body = styled.div`
   display: flex;
   flex-direction: column;
   gap: 7px;
-  color: #222;
+  color: #bdc3c7; /* Color de texto secundario */
 `;
 
 const Row = styled.div`
   font-size: 15px;
+  strong {
+    color: #ecf0f1;
+  }
 `;

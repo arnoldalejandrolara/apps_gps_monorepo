@@ -4,12 +4,12 @@ import { FaPlus, FaMapMarkerAlt, FaEdit, FaTrash, FaRegEye } from 'react-icons/f
 import { MdOutlineGrass } from 'react-icons/md';
 import { TablaPuntosInteres } from '../table/table.jsx';
 import { mockPagosData, dummyPointsOfInterest } from '../../../utilities/dataEstatica.jsx';
-import { CuentasEspejoForm } from '../formularios/CuentasEspejoForm.jsx';
+import { GeoCercasForm } from '../formularios/GeoCercasForm.jsx';
 import { useSelector } from 'react-redux';
-import { getCuentasEspejoTable } from '@mi-monorepo/common/services';
+import { getIconosGeocercas, getGeocercasTable } from '@mi-monorepo/common/services';
 
 // --- Componente Principal ---
-export function CuentasEspejoControl({ initialView = 'table' }) {
+export function GeoCercasControl({ initialView = 'table' }) {
     const [view, setView] = useState(initialView); // <-- Usa la prop para el estado inicial
 
     const [points, setPoints] = useState(dummyPointsOfInterest);
@@ -19,10 +19,15 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     const [sorting, setSorting] = useState([]);
     const [pageCount, setPageCount] = useState(Math.ceil(mockPagosData.length / 10));
     const [totalRows, setTotalRows] = useState(mockPagosData.length);
+
+    const [selectedGeoCerca, setSelectedGeoCerca] = useState(null);
     // const [view, setView] = useState('table'); // Estado para controlar la vista
-    const token = useSelector(state => state.auth.token);
+
+    const [iconos, setIconos] = useState([]);
+
+    const { token } = useSelector(state => state.auth);
+
     const [data, setData] = useState([]);
-    const [cuentaEspejoData, setCuentaEspejoData] = useState(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -42,35 +47,85 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
     // Función para manejar el clic en el botón de volver
     const handleBackClick = () => {
         setView('table');
-        setCuentaEspejoData(null);
+        setSelectedGeoCerca(null);
+        fetchData();
     };
 
-    const handlePaginationChange = (updater) => {
-        const newPagination =
-            typeof updater === 'function' ? updater(pagination) : updater;
-        setPagination(newPagination);
-        fetchData(newPagination);
-    };
-
-    const fetchData = async (pagination) => {
-        const response = await getCuentasEspejoTable(token, pagination.pageIndex, pagination.pageSize, sorting, null, '');
-        setTotalRows(response.table.recordsTotal);
-        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+    const fetchData = async () => {
+        const response = await getGeocercasTable(token, pagination.pageIndex, pagination.pageSize, sorting, '');
         setData(response.table.data);
-
-        console.log(response);
+        setPageCount(Math.ceil(response.table.recordsTotal / pagination.pageSize));
+        setTotalRows(response.table.recordsTotal);
     };
 
     useEffect(() => {
-        if(token){
-            fetchData(pagination);
+        const fetchIconos = async () => {
+            const response = await getIconosGeocercas(token);
+            setIconos(response.iconos);
+        }
+
+        if(token) {
+            fetchIconos();
+            fetchData();
         }
     }, [token]);
 
-    const handleEdit = (row) => {
-        console.log(row);
-        setCuentaEspejoData(row);
+    const handleEditGeoCerca = (point) => {
         setView('form');
+        console.log(point);
+        
+        // Parsear el polígono si viene como string WKT
+        if (point.polygon && typeof point.polygon === 'string') {
+            const parsedPolygon = parseWKTPolygon(point.polygon);
+            point.polygon = parsedPolygon;
+        }
+        
+        setSelectedGeoCerca(point);
+    };
+
+    // Función para parsear string WKT a array de coordenadas
+    const parseWKTPolygon = (wktString) => {
+        try {
+            //console.log('Parseando coordenadas:', wktString);
+            
+            // Si ya es un array, retornarlo directamente
+            if (Array.isArray(wktString)) {
+                //console.log('Ya es un array:', wktString);
+                return wktString;
+            }
+            
+            // Si es string, intentar parsearlo
+            if (typeof wktString === 'string') {
+                // Buscar todos los pares de coordenadas en el string
+                // Patrón: (-número,número)
+                const coordinateMatches = wktString.match(/\(-?\d+\.?\d*,-?\d+\.?\d*\)/g);
+                
+                if (coordinateMatches) {
+                    //console.log('Coordenadas encontradas:', coordinateMatches);
+                    
+                    const coordinatePairs = coordinateMatches.map(match => {
+                        // Limpiar paréntesis y extraer números
+                        const cleanMatch = match.replace(/[()]/g, '');
+                        const [lng, lat] = cleanMatch.split(',').map(Number);
+                        
+                        //console.log('Par parseado:', [lat, lng]);
+                        return [lat, lng]; // Convertir a formato [lat, lng]
+                    });
+                    
+                    //console.log('Polígono parseado:', coordinatePairs);
+                    return coordinatePairs;
+                } else {
+                    console.error('No se encontraron coordenadas en el formato esperado');
+                    return [];
+                }
+            }
+            
+            console.error('Formato no reconocido:', typeof wktString);
+            return [];
+        } catch (error) {
+            console.error('Error al parsear coordenadas:', error);
+            return [];
+        }
     };
 
     return (
@@ -95,15 +150,11 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                                             <PointIcon>
                                                 <FaMapMarkerAlt />
                                             </PointIcon>
-
-                                            <PointDetails>
-                                                <PointInfo>
-                                                    <PointName>{point.name}</PointName>
-                                                    <PointLocation>{point.location}</PointLocation>
-                                                </PointInfo>
-                                                <PointCategory category={point.category}>{point.category}</PointCategory>
-                                            </PointDetails>
-
+                                            <PointInfo>
+                                                <PointName>{point.name}</PointName>
+                                                <PointLocation>{point.location}</PointLocation>
+                                            </PointInfo>
+                                            <PointCategory category={point.category}>{point.category}</PointCategory>
                                             <CardActions>
                                                 <IconButton title="Editar Punto"><FaEdit /></IconButton>
                                                 <IconButton title="Ver en el Mapa"><FaRegEye /></IconButton>
@@ -115,16 +166,16 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                             ) : (
                                 <TableWrapper>
                                     <TablaPuntosInteres
-                                        type="cuentas-espejo"
+                                        type="geocercas"
                                         data={data}
                                         isLoading={isLoading}
                                         pagination={pagination}
-                                        onPaginationChange={handlePaginationChange}
+                                        onPaginationChange={setPagination}
                                         sorting={sorting}
                                         onSortingChange={setSorting}
                                         pageCount={pageCount}
                                         totalRows={totalRows}
-                                        onEdit={handleEdit}
+                                        onEdit={handleEditGeoCerca}
                                     />
                                 </TableWrapper>
                             )
@@ -140,21 +191,13 @@ export function CuentasEspejoControl({ initialView = 'table' }) {
                     
                     {/* Vista del formulario */}
                     <AnimatedView $isActive={view === 'form'} $direction="right">
-                        <CuentasEspejoForm onBack={handleBackClick} cuentaEspejoData={cuentaEspejoData} />
+                        <GeoCercasForm onBack={handleBackClick} iconos={iconos} geoCerca={selectedGeoCerca} />
                     </AnimatedView>
                 </AnimatedViewContainer>
             </ContentArea>
         </ComponentWrapper>
     );
 }
-
-const PointDetails = styled.div`
-    grid-area: info;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-`;
 
 // --- Estilos de AnimatedView ---
 const AnimatedView = styled.div`
@@ -262,19 +305,15 @@ const PointsList = styled.div`
 `;
 
 const PointCard = styled.div`
-    display: grid;
-    grid-template-areas:
-        "icon info"
-        "actions actions";
-    grid-template-columns: auto 1fr;
-    gap: 0 15px;
-    align-items: center;
-    background: #FFFFFF;
-    padding: 5px 12px;
-    border-radius: 8px;
-    border: 1px solid #E9ECEF;
+    display: flex; 
+    align-items: center; 
+    background: #FFFFFF; 
+    padding: 12px;
+    border-radius: 8px; 
+    border: 1px solid #E9ECEF; 
     margin-bottom: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease;
+    @media (max-width: 480px) { flex-wrap: wrap; padding: 12px; }
 `;
 
 const PointIcon = styled.div`
@@ -319,21 +358,16 @@ const PointCategory = styled.span`
     font-weight: 500; 
     padding: 4px 10px; 
     border-radius: 12px;
+    margin-right: 20px; 
+    flex-shrink: 0;
     color: #343A40;
     background-color: #E9ECEF;
-    margin-top: 6px;
-    align-self: flex-start;
 `;
 
 const CardActions = styled.div` 
-    grid-area: actions;
     display: flex; 
-    justify-content: space-around;
     align-items: center; 
-    width: 100%;
-    padding-top: 12px;
-    margin-top: 12px;
-    border-top: 1px solid #e9ecef;
+    gap: 10px; 
 `;
 
 const IconButton = styled.button`

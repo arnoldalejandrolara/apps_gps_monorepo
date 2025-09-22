@@ -3,7 +3,15 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { FaTimes, FaUserCog, FaCar, FaBell, FaRoute, FaChartBar, FaMapPin, FaDrawPolygon, FaCalendarAlt, FaUsers, FaTachometerAlt, FaGasPump, FaMapSigns, FaLayerGroup } from 'react-icons/fa';
 import { IoClose } from "react-icons/io5";
+import { useModal } from '../../../hooks/useModal';
 
+import { UserControlComponent } from '../ContentModals/UserControl';
+import { DeviceConfigComponent } from '../ContentModals/DeviceConfig';
+import { NotifiConfigComponent } from '../ContentModals/NotifiConfig';
+import { ReportsMobile } from '../ContentModals/ReportsMobile';
+import { PuntosInteresControl } from '../ContentModals/PuntosInteresControl';
+import { GeoCercasControl } from '../ContentModals/GeoCercasControl';
+import { CuentasEspejoControl } from '../ContentModals/CuentasEspejoControl';
 
 const topMenuItems = [
     { icon: <FaUserCog />, label: 'Control de Usuarios', to: '/configuration-user' },
@@ -12,24 +20,31 @@ const topMenuItems = [
 ];
 
 const mainMenuItems = [
-    // { icon: <FaRoute />, label: 'Rutas', to: '/routes' },
     { icon: <FaChartBar />, label: 'Reportes', to: '/reports' },
     { icon: <FaMapPin />, label: 'Puntos de Interes', to: '/pdi' },
     { icon: <FaDrawPolygon />, label: 'Geocercas', to: '/geocercas' },
     { icon: <FaUsers />, label: 'Cuentas Espejo', to: '/mirror-accounts' },
-    // { icon: <FaCalendarAlt />, label: 'Eventos', to: '/events' },
-    // { icon: <FaTachometerAlt />, label: 'Dashboard', to: '/dashboard' },
-    // { icon: <FaGasPump />, label: 'Dashboard Combustible', to: '/fuel-dashboard' },
-    // { icon: <FaMapSigns />, label: 'Viajes', to: '/trips' },
-    // { icon: <FaLayerGroup />, label: 'Grupos', to: '/groups' },
 ];
 
 export function LeftSidebar({ isOpen, onClose, onMenuItemClick }) {
     const navigate = useNavigate();
+    const { openModal } = useModal();
+
 
     const handleItemClick = (item) => {
         // Llama a la función del padre para abrir el modal
-        onMenuItemClick(item);
+        // onMenuItemClick(item);
+
+        switch (item.to) {
+            case '/configuration-user': openModal(<UserControlComponent />,'Control de Usuarios','large'); break;
+            case '/device-config': openModal(<DeviceConfigComponent />,'Configuracion de Dispositivos' , 'large'); break;
+            case '/notifications-config': openModal(<NotifiConfigComponent />,'Configuracion de Notificaciones' , 'large'); break;
+            case '/reports_mobile': openModal(<ReportsMobile /> , 'Reportes','extraLarge' ); break;
+            case '/pdi': openModal(<PuntosInteresControl />,'Puntos de Interes', 'large'); break;
+            case '/geocercas': openModal(<GeoCercasControl />, 'Geocercas', 'large'); break;
+            case '/mirror-accounts': openModal(<CuentasEspejoControl />,'Cuentas Espejo' , 'extraMedium'); break;
+            default: openModal(<p>Contenido para {item.label}</p>); 'small';
+        }
         // Cierra el sidebar
         onClose();
     };
