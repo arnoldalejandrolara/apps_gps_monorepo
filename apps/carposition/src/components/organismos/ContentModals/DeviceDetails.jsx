@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { styled } from 'styled-components';
-import { FaExclamationTriangle, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
+import { FaExclamationTriangle, FaClock, FaMapMarkerAlt, FaPalette, FaSave } from 'react-icons/fa';
+import { CompactPicker } from 'react-color';
+import { getMarcasUnidades, getTiposUnidades, getDatosDispositivo, updateDatosDispositivo } from '@mi-monorepo/common/services';
 
 // --- Componente del contenido de detalles ---
 export function DeviceDetailsContent({ device }) {
@@ -10,18 +13,81 @@ export function DeviceDetailsContent({ device }) {
     const [poiAlarmActive, setPoiAlarmActive] = useState(false);
 
     const [speedLimit, setSpeedLimit] = useState('');
+    const [showColorPicker, setShowColorPicker] = useState(false);
 
+    const token = useSelector((state) => state.auth?.token);
+
+    const [marcasUnidades, setMarcasUnidades] = useState([]);
+
+    const [tiposUnidades, setTiposUnidades] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    console.log(device);
     // Estado para la información editable
     const [editableInfo, setEditableInfo] = useState({
-        name: device?.name || '',
-        driver: device?.driver || '',
-        plate: device?.plate || '',
-        color: device?.color || '',
+        name: device?.info.nombre || '',
+        driver: device?.info.chofer || '',
+        plate: device?.info.placas || '',
+        color: '#' + device?.info.color || '',
         type: device?.type || '',
-        brand: device?.brand || '',
-        model: device?.model || '',
-        year: device?.year || '',
+        brand: device?.info.marca || '',
+        model: device?.info.modelo || '',
+        year: device?.info.anio || '',
     });
+
+    useEffect(() => {
+        const fetchDatosDispositivo = async () => {
+            if (token && device) {
+                const response = await getDatosDispositivo(token, device.imei);
+                console.log(response);
+                setEditableInfo({
+                    name: response.data.nombre || '',
+                    driver: response.data.chofer || '',
+                    plate: response.data.placa || '',
+                    color: '#' + response.data.color || '',
+                    type: response.data.id_tipo || '',
+                    brand: response.data.id_marca || '',
+                    model: response.data.modelo || '',
+                    year: response.data.anio || '',
+                });   
+            }
+        };
+        fetchDatosDispositivo();
+        
+    }, [device]);
+
+    // Cerrar el color picker cuando se hace clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showColorPicker && !event.target.closest('.color-picker-container')) {
+                setShowColorPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showColorPicker]);
+
+    // Fetch marcas de unidades
+    useEffect(() => {
+        const fetchData = async () => {
+            if (token) {
+                try {
+                    const response = await getMarcasUnidades(token);
+                    setMarcasUnidades(response.marcas);
+
+                    const responseTipos = await getTiposUnidades(token);
+                    setTiposUnidades(responseTipos.tipos);
+                } catch (error) {
+                    console.error('Error fetching marcas:', error);
+                }
+            }
+        };
+
+        fetchData();
+    }, [token]);
 
     if (!device) {
         return <p>Selecciona un vehículo para ver los detalles.</p>;
@@ -31,9 +97,54 @@ export function DeviceDetailsContent({ device }) {
         const { name, value } = e.target;
         setEditableInfo(prev => ({ ...prev, [name]: value }));
     };
+
+    const handleColorChange = (color) => {
+        setEditableInfo(prev => ({ ...prev, color: color.hex }));
+    };
+
+    const handleColorChangeComplete = (color) => {
+        setEditableInfo(prev => ({ ...prev, color: color.hex }));
+        setShowColorPicker(false);
+    };
+
+    const handleSave = async () => {
+        if (!token || !device?.imei) {
+            console.error('Token o IMEI no disponible');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            // Preparar los datos para enviar
+            const dataToSave = {
+                nombre: editableInfo.name,
+                chofer: editableInfo.driver,
+                placa: editableInfo.plate,
+                color: editableInfo.color.replace('#', ''),
+                id_marca: editableInfo.brand,
+                modelo: editableInfo.model,
+                anio: editableInfo.year,
+                id_tipo: editableInfo.type
+            };
+
+            const response = await updateDatosDispositivo(token, device.imei, dataToSave);
+            console.log('Datos guardados exitosamente:', response);
+            
+            // Aquí podrías mostrar una notificación de éxito
+            alert('Datos guardados exitosamente');
+            
+        } catch (error) {
+            console.error('Error al guardar los datos:', error);
+            alert('Error al guardar los datos. Por favor, inténtalo de nuevo.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
     
     // Los datos del dispositivo se desestructuran para un acceso más fácil
-    const { status, serialNumber } = device;
+    const { status } = device;
+    const serialNumber = device?.info.num_serie || 'N/A';
+
 
     return (
         <ContentWrapper>
@@ -50,7 +161,7 @@ export function DeviceDetailsContent({ device }) {
                         />
                     </InfoGroup>
                     <InfoGroup>
-                        <Label>Conductor</Label>
+                        <Label>Chofer</Label>
                         <StyledInput 
                             type="text" 
                             name="driver" 
@@ -91,12 +202,16 @@ export function DeviceDetailsContent({ device }) {
                     </InfoGroup>
                     <InfoGroup>
                         <Label>Marca</Label>
-                        <StyledInput 
-                            type="text" 
+                        <StyledSelect 
                             name="brand" 
                             value={editableInfo.brand} 
-                            onChange={handleInputChange} 
-                        />
+                            onChange={handleInputChange}
+                        >
+                            <option value="0">Seleccionar marca</option>
+                            {marcasUnidades.map(marca => (
+                                <option key={marca.id} value={marca.id}>{marca.nombre}</option>
+                            ))}
+                        </StyledSelect>
                     </InfoGroup>
                     <InfoGroup>
                         <Label>No. de Serie</Label>
@@ -104,23 +219,59 @@ export function DeviceDetailsContent({ device }) {
                     </InfoGroup>
                     <InfoGroup>
                         <Label>Color</Label>
-                        <StyledInput 
-                            type="text" 
-                            name="color" 
-                            value={editableInfo.color} 
-                            onChange={handleInputChange} 
-                        />
+                        <ColorPickerContainer className="color-picker-container">
+                            <ColorPreview 
+                                color={editableInfo.color || '#007BFF'}
+                                onClick={() => setShowColorPicker(!showColorPicker)}
+                            >
+                                <FaPalette />
+                            </ColorPreview>
+                            <ColorInput 
+                                type="text" 
+                                name="color" 
+                                value={editableInfo.color} 
+                                onChange={handleInputChange}
+                                placeholder="#000000"
+                            />
+                            {showColorPicker && (
+                                <ColorPickerDropdown>
+                                    <CompactPicker
+                                        color={editableInfo.color || '#007BFF'}
+                                        onChange={handleColorChangeComplete}
+                                        colors={[
+                                            '#4D4D4D', '#999999', '#FFFFFF', '#F44E3B',
+                                            '#FE9200', '#FCDC00', '#DBDF00', '#A4DD00',
+                                            '#68CCCA', '#73D8FF', '#AEA1FF', '#FDA1FF',
+                                            '#333333', '#808080', '#CCCCCC', '#D33115',
+                                            '#E27300', '#FCC400', '#B0BC00', '#68BC00',
+                                            '#16A5A5', '#009CE0', '#7B64FF', '#FA28FF'
+                                        ]}
+                                    />
+                                </ColorPickerDropdown>
+                            )}
+                        </ColorPickerContainer>
                     </InfoGroup>
                     <InfoGroup>
                         <Label>Tipo</Label>
-                        <StyledInput 
-                            type="text" 
+                        <StyledSelect 
                             name="type" 
                             value={editableInfo.type} 
                             onChange={handleInputChange} 
-                        />
+                        >
+                            <option value="0">Seleccionar tipo</option>
+                            {tiposUnidades.map(tipo => (
+                                <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                            ))}
+                        </StyledSelect>
                     </InfoGroup>
                 </GridContainer>
+                
+                <ButtonContainer>
+                    <SaveButton onClick={handleSave} disabled={isSaving}>
+                        <FaSave />
+                        {isSaving ? 'Guardando...' : 'Guardar'}
+                    </SaveButton>
+                </ButtonContainer>
             </Section>
 
             <Section>
@@ -285,10 +436,34 @@ const StyledInput = styled.input`
     }
 `;
 
+// Estilo para el select de marca - idéntico a StyledInput
+const StyledSelect = styled.select`
+    width: 100%;
+    height: 35px;
+    font-size: 14px;
+    color: #495057;
+    margin: 0;
+    padding: 8px 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid #CED4DA;
+    outline: none;
+    transition: all 0.2s ease;
+
+    &:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+    &:disabled {
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+    }
+`;
+
 const StatusDisplay = styled(InfoDisplay)`
-    color: ${({ status }) => status === 'Online' ? '#155724' : '#721c24'};
-    background-color: ${({ status }) => status === 'Online' ? '#D4EDDA' : '#F8D7DA'};
-    border-color: ${({ status }) => status === 'Online' ? '#C3E6CB' : '#F5C6CB'};
+    color: ${({ status }) => status === 'Activo' ? '#155724' : '#721c24'};
+    background-color: ${({ status }) => status === 'Activo' ? '#D4EDDA' : '#F8D7DA'};
+    border-color: ${({ status }) => status === 'Activo' ? '#C3E6CB' : '#F5C6CB'};
     font-weight: 500;
     text-align: left;
 `;
@@ -397,5 +572,116 @@ const StyledCheckbox = styled.input`
             border-width: 0 1px 1px 0;
             transform: rotate(45deg);
         }
+    }
+`;
+
+// --- Estilos para el Color Picker ---
+const ColorPickerContainer = styled.div`
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const ColorPreview = styled.div`
+    width: 35px;
+    height: 35px;
+    background-color: ${props => props.color};
+    border: 2px solid #CED4DA;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+
+    &:hover {
+        border-color: #007BFF;
+        transform: scale(1.05);
+    }
+`;
+
+const ColorInput = styled.input`
+    flex: 1;
+    height: 35px;
+    font-size: 14px;
+    color: #495057;
+    padding: 8px 10px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid #CED4DA;
+    outline: none;
+    transition: all 0.2s ease;
+
+    &:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+`;
+
+const ColorPickerDropdown = styled.div`
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    margin-top: 5px;
+    
+    /* Override react-color styles for better integration */
+    .compact-picker {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        border-radius: 8px !important;
+        border: 1px solid #CED4DA !important;
+        background: white !important;
+    }
+`;
+
+const ButtonContainer = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-top: 5px;
+`;
+
+const SaveButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    min-width: 120px;
+    height: 40px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0 16px;
+
+    &:hover:not(:disabled) {
+        background-color: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px rgba(40, 167, 69, 0.3);
+    }
+
+    &:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    svg {
+        font-size: 16px;
     }
 `;

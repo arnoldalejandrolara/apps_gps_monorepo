@@ -140,7 +140,8 @@ export const WebSocketProvider = ({ children }) => {
                                     placas: vehicle.placa,
                                     modelo: vehicle.unidad_modelo,
                                     color: hexToRgb(vehicle.unidad_color),
-                                    chofer: vehicle.unidad_chofer
+                                    chofer: vehicle.unidad_chofer,
+                                    num_serie: vehicle.num_serie,
                                 }
                             };
                             vehicles_array.push(vehicleObject);

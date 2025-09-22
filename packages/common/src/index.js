@@ -78,5 +78,8 @@ export {
     getDispositivosAsignadosByUser,
     updateDispositivosAsignadosByUser,
     asignarPermisos,
-    validateTokenFromUrl
+    validateTokenFromUrl,
+    getMarcasUnidades,
+    getTiposUnidades,
+    getDatosDispositivo
 } from './services/index.js';
