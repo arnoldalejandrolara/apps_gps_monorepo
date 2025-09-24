@@ -30,3 +30,21 @@ export async function getRouteToday(token, imei) {
 
     return await handleApiResponse(res, 'Error al obtener la ruta del último día');
 }
+
+export async function getDatosDispositivo(token, imei) {
+    const res = await fetch(`${getApiUrl()}/dispositivos/${imei}`, {
+        headers: getCommonHeaders(token)
+    });
+
+    return await handleApiResponse(res, 'Error al obtener los datos del dispositivo');
+}
+
+export async function updateDatosDispositivo(token, imei, data) {
+    const res = await fetch(`${getApiUrl()}/dispositivos/${imei}`, {
+        method: 'PUT',
+        headers: getCommonHeaders(token),
+        body: JSON.stringify(data)
+    });
+
+    return await handleApiResponse(res, 'Error al actualizar los datos del dispositivo');
+}

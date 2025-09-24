@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { styled } from 'styled-components';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
 import { TablaPuntosInteres } from '../table/table.jsx';
@@ -25,6 +25,7 @@ export function UserControlComponent() {
     const [totalRows, setTotalRows] = useState(0);
 
     const token = useSelector(state => state.auth.token);
+    const isInitialMount = useRef(true);
 
     const handleShowForm = (user = null) => {
         setEditingUser(user);
@@ -90,6 +91,13 @@ export function UserControlComponent() {
     // Debounce search: fetch only after user stops typing
     useEffect(() => {
         if (!token) return;
+        
+        // Skip the initial mount to avoid double fetch
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        
         const handler = setTimeout(() => {
             setPagination(prev => {
                 if (prev.pageIndex === 0) {
@@ -100,7 +108,7 @@ export function UserControlComponent() {
             });
         }, 450);
         return () => clearTimeout(handler);
-    }, [searchTerm, token]);
+    }, [searchTerm]);
     
     return (
         <ComponentWrapper>

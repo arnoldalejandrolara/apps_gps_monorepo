@@ -412,9 +412,20 @@ export function MapboxMap({ viewState, onViewStateChange, vehicles, selectedVehi
                 position = animatedData.position;
                 heading = animatedData.heading;
             } else {
+                // Verificar que el vehículo tenga coordenadas válidas en posicion_actual
+                if (!vehicle.posicion_actual || 
+                    !vehicle.posicion_actual.lng || 
+                    !vehicle.posicion_actual.lat ||
+                    typeof vehicle.posicion_actual.lng !== 'number' ||
+                    typeof vehicle.posicion_actual.lat !== 'number' ||
+                    isNaN(vehicle.posicion_actual.lng) ||
+                    isNaN(vehicle.posicion_actual.lat)) {
+                    return null; // No mostrar marker si no hay coordenadas válidas
+                }
+                
                 position = [
-                    vehicle.posicion_actual?.lng || -101.956114,
-                    vehicle.posicion_actual?.lat || 22.653024
+                    vehicle.posicion_actual.lng,
+                    vehicle.posicion_actual.lat
                 ];
             }
             

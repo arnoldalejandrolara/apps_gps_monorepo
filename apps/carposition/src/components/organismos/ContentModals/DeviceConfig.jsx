@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { useSelector } from 'react-redux';
 
 import { styled } from 'styled-components';
 import { FaCar, FaArrowLeft, FaSearch, FaFilter } from 'react-icons/fa';
@@ -35,9 +35,13 @@ export function DeviceConfigComponent() {
         setView('list');
     };
 
-    const filteredDevices = dummyDevices.filter(device =>
-        device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.plate.toLowerCase().includes(searchTerm.toLowerCase())
+    const vehicles = useSelector((state) => state.vehicle?.vehicles || []);
+
+    console.log(vehicles);
+
+    const filteredDevices = vehicles.filter(device =>
+        device.imei.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.info.nombre.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -65,12 +69,12 @@ export function DeviceConfigComponent() {
                                 key={device.id} 
                                 onClick={() => handleShowDetails(device)}
                             >
-                                <IconWrapper status={device.status}>
+                                <IconWrapper status={device.info.id_status_motor}>
                                     <FaCar />
                                 </IconWrapper>
                                 <DeviceInfo>
-                                    <DeviceName>{device.name}</DeviceName>
-                                    <DevicePlate>{device.plate}</DevicePlate>
+                                    <DeviceName>{device.info.nombre}</DeviceName>
+                                    <DevicePlate>{device.info.placas}</DevicePlate>
                                 </DeviceInfo>
                                 <DeviceStatus status={device.status}>{device.status}</DeviceStatus>
                             </DeviceCard>
@@ -86,7 +90,7 @@ export function DeviceConfigComponent() {
                             Regresar
                         </BackButton>
                         {selectedDevice && (
-                            <DeviceTitle>{selectedDevice.name}</DeviceTitle>
+                            <DeviceTitle>{selectedDevice.info.nombre}</DeviceTitle>
                         )}
                     </DetailsHeader>
                     <DeviceDetailsContent device={selectedDevice} />
@@ -224,8 +228,8 @@ const IconWrapper = styled.div`
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: ${({ status }) => status === 'Online' ? '#D4EDDA' : '#F8D7DA'};
-    color: ${({ status }) => status === 'Online' ? '#28A745' : '#DC3545'};
+    background-color: ${({ status }) => status === 1 ? '#D4EDDA' : '#F8D7DA'};
+    color: ${({ status }) => status === 1 ? '#28A745' : '#DC3545'};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -261,8 +265,8 @@ const DeviceStatus = styled.span`
     padding: 4px 10px;
     border-radius: 12px;
     flex-shrink: 0;
-    color: ${({ status }) => status === 'Online' ? '#28A745' : '#DC3545'};
-    background-color: ${({ status }) => status === 'Online' ? '#D4EDDA' : '#F8D7DA'};
+    color: ${({ status }) => status === 'Activo' ? '#28A745' : '#DC3545'};
+    background-color: ${({ status }) => status === 'Activo' ? '#D4EDDA' : '#F8D7DA'};
 `;
 
 const DetailsHeader = styled.div`
