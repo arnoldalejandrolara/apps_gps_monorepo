@@ -40,6 +40,9 @@ export const ThemeContext = createContext(null);
 export const ModalContext = createContext();
 
 function App() {
+    const { pathname } = useLocation();
+    const [isAppLoading, setIsAppLoading] = useState(pathname !== '/login');
+
     const [themeuse, setTheme] = useState('dark');
     const theme = themeuse === 'light' ? 'light' : 'dark';
     const themeStyles = theme === 'light' ? Light : Dark;
@@ -73,11 +76,27 @@ function App() {
         },
     };
 
-    const { pathname } = useLocation();
     const navigate = useNavigate();
 
     // Hook para capturar token de URL
     useTokenFromUrl();
+
+    useEffect(() => {
+        // Si estamos fuera del login y la app está en modo carga...
+        if (pathname !== '/login' && isAppLoading) {
+            // ...espera 2 segundos y luego desactiva la pantalla de carga.
+            const timer = setTimeout(() => {
+                setIsAppLoading(false);
+            }, 2000); // 2 segundos
+
+            return () => clearTimeout(timer);
+        }
+        // Si navegamos de vuelta al login, reseteamos el estado para la próxima vez.
+        else if (pathname === '/login') {
+            setIsAppLoading(true);
+        }
+    }, [pathname, isAppLoading]); // Se ejecuta cuando cambia la ruta o el estado de carga.
+
 
     useEffect(() => {
         setNavigate(navigate);
@@ -138,6 +157,7 @@ function App() {
         }
     }, [selectedVehicles]);
 
+
     return (
         <AuthProvider>
             <ModalContext.Provider value={modalValue}>
@@ -145,38 +165,32 @@ function App() {
                 <ThemeProvider theme={themeStyles}>
                     <UbicacionProvider>
                         <WebSocketProvider>
-                            {pathname === '/login' ? (
-                                <Login />
-                            ) : pathname === '/loading' ? (
-                                <Loading />
+                            {/* 👇 CAMBIO 3: Se ajusta la lógica de renderizado principal */}
+                            {isAppLoading && pathname !== '/login' ? (
+                                <Loading /> // Muestra la carga si es necesario
+                            ) : pathname === '/login' ? (
+                                <Login /> // Muestra el login si es la ruta
                             ) : (
+                                // Si no, muestra la aplicación principal
                                 <AppGrid>
-                                    {/* 👇 2. OCULTA el HamburgerButton si es móvil/tablet */}
                                     {!isMobileOrTablet && (
                                         <HamburgerButton onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>
                                             <IoMenu />
                                         </HamburgerButton>
                                     )}
-
-                                    {/* 👇 3. MUESTRA el nuevo menú de 3 puntos SOLO si es móvil/tablet */}
                                     {isMobileOrTablet && <MobileOptionsMenu />}
-
                                     {!isMobileOrTablet && (
                                     <VehicleListButton 
                                         onClick={() => setVehicleListOpen(!vehicleListOpen)}
                                         isOpen={vehicleListOpen}
                                     />
                                     )}
-
-                                   {/* --- CAMBIO 4: Conectamos MobileDetails al estado correcto --- */}
                                    {isMobileOrTablet && (
                                         <MobileDetails 
-                                            isOpen={!!selectedVehicleId} // Se muestra si hay un vehículo seleccionado
-                                            onClose={handleCloseMobileDetails} // Le pasamos la función para cerrarse
+                                            isOpen={!!selectedVehicleId} 
+                                            onClose={handleCloseMobileDetails} 
                                         />
                                     )}
-                                    
-                                    {/* --- CAMBIO 5: Se corrige el estado que controla MobileListUnidades --- */}
                                     {isMobileOrTablet && 
                                         <MobileListUnidades 
                                             isOpen={vehicleListMobileOpen} 
@@ -191,9 +205,7 @@ function App() {
                                     <LeftSidebar
                                         isOpen={leftSidebarOpen}
                                         onClose={() => setLeftSidebarOpen(false)}
-                                        
                                     />
-
                                     <ReusableModal
                                         isOpen={isModalOpen}
                                         onClose={() => setIsModalOpen(false)}
@@ -203,33 +215,22 @@ function App() {
                                     >
                                         {modalContent}
                                     </ReusableModal>
-
                                     <VehicleList 
                                         isOpen={vehicleListOpen} 
                                         onClose={() => setVehicleListOpen(false)} 
                                         onVehicleSelect={handleVehicleSelect} 
                                     />
-                                    
                                     <FloatingActionButtons isVisible={!!selectedVehicleId && !isMobileOrTablet} />
-
                                     <Container className={`${sidebarOpen ? "sidebar-active" : ""} ${notifiOpen ? "notifi-active" : ""}`}>
-                                        
                                         {notifiOpen && <Overlay onClick={() => setNotifiOpen(false)} />}
-
-                                   
                                         <section className="mapaView">
                                             <HomeTemplate />
-
-                                            {/* 👇 4. RENDERIZA LA NUEVA TARJETA */}
                                             <VehicleInfoCard
                                                 isVisible={!!selectedVehicleId && !isMobileOrTablet}
                                                 vehicle={selectedVehicleId}
-                                                onClose={() => setSelectedVehicleId(null)} // Para cerrar la tarjeta
+                                                onClose={() => setSelectedVehicleId(null)}
                                             />
- 
                                         </section>
-
-                                         {/* --- 4. RENDERIZA CONDICIONALMENTE EL MENÚ --- */}
                                          { isMobileOrTablet ? (
                                             <BottomMenu 
                                                 onViewChange={setActiveOverlay}
@@ -240,14 +241,11 @@ function App() {
                                                 <Sidebar {...sidebarProps} />
                                             </section>
                                         )}
-                                        
-
                                         <section className='ContentNotifi'>
                                             <Notificaciones state={notifiOpen} setState={() => setNotifiOpen(!notifiOpen)} />
                                         </section>
                                         <PWAPrompt />
                                         <InstallPWA />
-                                        
                                         {alertMessage && (
                                             <AlertContainer key={alertKey}>
                                                 <Stack sx={{ width: '100%' }} spacing={2}>
@@ -257,16 +255,12 @@ function App() {
                                                 </Stack>
                                             </AlertContainer>
                                         )}
-
                                     {activeOverlay && (
                                         <OverlayContainer>
                                             <ActiveContentMobile view={activeOverlay} />
                                         </OverlayContainer>
                                     )}
                                     </Container>
-
-                                 
-                                    
                                 </AppGrid>
                             )}
                         </WebSocketProvider>

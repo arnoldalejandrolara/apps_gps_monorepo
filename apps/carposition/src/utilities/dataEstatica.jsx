@@ -304,14 +304,14 @@ export const menuItems = [
         { label: 'Configurar', to: '/notifications-config' } 
     ]
   },
-  {
-      label: "Reportes",
-      icon: <FaChartBar />, 
-      subMenu: [
-          { label: "Crear Reporte", to: "/reports/new" },
-          { label: "Historial de Reportes", to: "/reports/history" }
-      ]
-  },
+//   {
+//       label: "Reportes",
+//       icon: <FaChartBar />, 
+//       subMenu: [
+//           { label: "Crear Reporte", to: "/reports/new" },
+//           { label: "Historial de Reportes", to: "/reports/history" }
+//       ]
+//   },
   {
       id: 'geocercas',
       label: "Geocercas",
@@ -347,7 +347,7 @@ export const logoutItem = {
   label: "Salir",
   icon: <CiLogout />,
   subMenu: [
-      { label: "Confirmar Salida", action: 'logout' }
+      { label: "Salir", action: 'logout' }
   ]
 };
 

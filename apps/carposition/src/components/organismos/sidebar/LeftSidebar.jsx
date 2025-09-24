@@ -8,7 +8,7 @@ import { useModal } from '../../../hooks/useModal';
 import { UserControlComponent } from '../ContentModals/UserControl';
 import { DeviceConfigComponent } from '../ContentModals/DeviceConfig';
 import { NotifiConfigComponent } from '../ContentModals/NotifiConfig';
-import { ReportsMobile } from '../ContentModals/ReportsMobile';
+import { ReportsComponent } from '../ContentModals/ReportsControl';
 import { PuntosInteresControl } from '../ContentModals/PuntosInteresControl';
 import { GeoCercasControl } from '../ContentModals/GeoCercasControl';
 import { CuentasEspejoControl } from '../ContentModals/CuentasEspejoControl';
@@ -39,7 +39,7 @@ export function LeftSidebar({ isOpen, onClose, onMenuItemClick }) {
             case '/configuration-user': openModal(<UserControlComponent />,'Control de Usuarios','large'); break;
             case '/device-config': openModal(<DeviceConfigComponent />,'Configuracion de Dispositivos' , 'large'); break;
             case '/notifications-config': openModal(<NotifiConfigComponent />,'Configuracion de Notificaciones' , 'large'); break;
-            case '/reports_mobile': openModal(<ReportsMobile /> , 'Reportes','extraLarge' ); break;
+            case '/reports': openModal(<ReportsComponent /> , 'Reportes','extraLarge' ); break;
             case '/pdi': openModal(<PuntosInteresControl />,'Puntos de Interes', 'large'); break;
             case '/geocercas': openModal(<GeoCercasControl />, 'Geocercas', 'large'); break;
             case '/mirror-accounts': openModal(<CuentasEspejoControl />,'Cuentas Espejo' , 'extraMedium'); break;
