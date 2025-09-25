@@ -164,7 +164,7 @@ export function GeoCercasForm({ onBack, iconos, geoCerca }) {
         polygon: formData.polygon,
         id_icono: formData.icono,
         hex_color: formData.color.replace('#', ''),
-        comentarios: formData.descripcion
+        comentarios: formData.descripcion || ''
       };
       const response = geoCerca?.id ? await updateGeocerca(token, geoCerca.id, payload) : await createGeocerca(token, payload);
       if(response.status === 200){

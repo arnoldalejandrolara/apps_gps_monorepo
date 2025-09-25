@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -142,8 +142,14 @@ const LogoutButton = styled.button`
 
 export const ProfileMobile = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(mockUser);
+  //const [user, setUser] = useState(mockUser);
   const [isDarkMode, setIsDarkMode] = useState(true);
+
+
+  const user = useSelector((state) => state.auth?.user || "");
+
+  console.log({user_profile: user});
+
   // const dispatch = useDispatch();
   const handleThemeChange = () => {
     setIsDarkMode(prevMode => !prevMode);
@@ -166,21 +172,21 @@ export const ProfileMobile = () => {
       </Header>
       <Content>
         <AvatarCircle>
-          {getInitial(user.name)}
+          {getInitial(user.nickname)}
         </AvatarCircle>
 
         <InfoSection>
           <InfoRow>
             <InfoLabel>Nombre de Usuario</InfoLabel>
-            <InfoValue>{user.name}</InfoValue>
+            <InfoValue>{user.nickname}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Correo Electrónico</InfoLabel>
-            <InfoValue>{user.email}</InfoValue>
+            <InfoValue>{user.correo}</InfoValue>
           </InfoRow>
           <InfoRow>
             <InfoLabel>Teléfono</InfoLabel>
-            <InfoValue>{user.phone}</InfoValue>
+            <InfoValue>{user.telefono}</InfoValue>
           </InfoRow>
         </InfoSection>
 

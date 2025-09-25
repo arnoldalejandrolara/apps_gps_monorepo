@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useSelector } from 'react-redux';
 import {
   IoCarSportOutline,
   IoPersonOutline,
@@ -127,6 +128,8 @@ export const MobileDetails = ({ isOpen, onClose }) => {
     isDragging: false,
   });
 
+  const selectedVehicle = useSelector((state) => state.vehicle?.selectedVehicles[0] || null);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overscrollBehaviorY = 'contain';
@@ -136,7 +139,7 @@ export const MobileDetails = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  const activeVehicle = mockVehicle;
+  const activeVehicle = selectedVehicle;
 
   const deltaY = dragState.isDragging ? dragState.currentY - dragState.startY : 0;
   const translateY = dragState.isDragging ? Math.max(0, deltaY) : 0;

@@ -4,6 +4,7 @@ import { FaTachometerAlt, FaClock, FaTimes, FaMapMarkerAlt, FaCalendarAlt, FaKey
 import { IoMdBatteryCharging } from "react-icons/io";
 import { LuMinimize } from "react-icons/lu";
 import { TbWindowMinimize } from "react-icons/tb";
+import { useSelector } from 'react-redux';
 
 // --- Sub-componente ProgressBar (SIN CAMBIOS) ---
 const ProgressBar = ({ label, value, color = '#28a745' }) => (
@@ -18,20 +19,22 @@ const ProgressBar = ({ label, value, color = '#28a745' }) => (
 
 // --- Componente Principal de la Tarjeta ---
 export function VehicleInfoCard({ isVisible, onClose, onMinimize }) {
+
+    const selectedVehicle = useSelector((state) => state.vehicle?.selectedVehicles[0] || null);
     
     const mockVehicleData = {
-      name: 'Kenworth T680',
-      date: '08/09/2025 11:05:15',
-      ignition: true,
-      timeOn: '5h 01m',
-      speed: '75',
-      orientation: 'Noroeste',
-      fuel1: 91,
-      fuel2: 65,
-      fuel3: 20,
-      coords: '22.257, -97.842',
-      address: 'Blvd. de los Ríos, Miramar, Tamaulipas',
-      voltage: 94
+      name: selectedVehicle?.info.nombre || 'N/A',
+      date: selectedVehicle?.posicion_actual.fecha || 'N/A',
+      ignition: selectedVehicle?.posicion_actual.id_status_motor == 1 ? true : false,
+      timeOn: selectedVehicle?.posicion_actual.detenido || 'N/A',
+      speed: selectedVehicle?.posicion_actual.velocidad || '0',
+      orientation: selectedVehicle?.posicion_actual.orientacion || 'N/A',
+      fuel1: selectedVehicle?.posicion_actual.tanque1 || null,
+      fuel2: selectedVehicle?.posicion_actual.tanque2 || null,
+      fuel3: selectedVehicle?.posicion_actual.tanque3 || null,
+      coords: selectedVehicle?.posicion_actual.coordenadas || 'N/A',
+      address: selectedVehicle?.posicion_actual.direccion || 'N/A',
+      voltage: selectedVehicle?.posicion_actual.voltaje_principal || '0'
     };
 
     return (
@@ -79,10 +82,10 @@ export function VehicleInfoCard({ isVisible, onClose, onMinimize }) {
             <Section>
                 <SectionTitle>Medidores</SectionTitle>
                 <MetersContainer>
-                    <ProgressBar label="Tanque 1" value={mockVehicleData.fuel1} />
-                    <ProgressBar label="Tanque 2" value={mockVehicleData.fuel2} />
-                    <ProgressBar label="Tanque 3" value={mockVehicleData.fuel3} />
-                    <ProgressBar label="Voltaje" value={mockVehicleData.voltage} color="#ffc107" />
+                    {mockVehicleData.fuel1 && (<ProgressBar label="Tanque 1" value={mockVehicleData.fuel1} />)}
+                    {mockVehicleData.fuel2 && (<ProgressBar label="Tanque 2" value={mockVehicleData.fuel2} />)}
+                    {mockVehicleData.fuel3 && (<ProgressBar label="Tanque 3" value={mockVehicleData.fuel3} />)}
+                    {mockVehicleData.voltage && (<ProgressBar label="Voltaje" value={mockVehicleData.voltage} color="#ffc107" />)}
                 </MetersContainer>
             </Section>
             
